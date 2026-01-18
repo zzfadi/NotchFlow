@@ -1,0 +1,821 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+    "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow_NotchFlow.bundle/Assets.xcassets" : {
+      "inputs" : [
+        {
+          "kind" : "directory",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Resources/Assets.xcassets"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "directory",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow_NotchFlow.bundle/Assets.xcassets"
+        }
+      ]
+    }
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.DynamicNotchKit-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/sources",
+      "importPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotch.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchHoverBehavior.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchStyle.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+HelperViews.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+Label.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/BlurModifier.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchControllable.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchPanel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/EnvironmentValues+Extensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/NSScreen+Extensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/VisualEffectView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchShape.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchlessView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "DynamicNotchKit",
+      "moduleOutputPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules/DynamicNotchKit.swiftmodule",
+      "objects" : [
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotch.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchHoverBehavior.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchState.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchStyle.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchInfo+HelperViews.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchInfo+Label.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchInfo.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/BlurModifier.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchControllable.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/DynamicNotchPanel.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/EnvironmentValues+Extensions.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/NSScreen+Extensions.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/VisualEffectView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/NotchContentView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/NotchShape.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/NotchView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/NotchlessView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/include/DynamicNotchKit-Swift.h",
+        "-swift-version",
+        "6",
+        "-Xfrontend",
+        "-experimental-lazy-typecheck",
+        "-Xfrontend",
+        "-experimental-skip-all-function-bodies",
+        "-Xfrontend",
+        "-experimental-allow-module-with-compiler-errors",
+        "-Xfrontend",
+        "-empty-abi-descriptor",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-user-module-version",
+        "1.0.0",
+        "-package-name",
+        "dynamicnotchkit"
+      ],
+      "outputFileMapPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules/DynamicNotchKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : true,
+      "sources" : [
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotch.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchHoverBehavior.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchState.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchStyle.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+HelperViews.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+Label.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/BlurModifier.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchControllable.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchPanel.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/EnvironmentValues+Extensions.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/NSScreen+Extensions.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/VisualEffectView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchContentView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchShape.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchlessView.swift"
+      ],
+      "tempsPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.NotchFlow-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/sources",
+      "importPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/AppDelegate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/NotchFlowApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NavigationState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NotchManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/SettingsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigScanner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/FogNoteView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteStorage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeScanner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/ExpandedView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/MainNotchView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/DerivedSources/resource_bundle_accessor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<NotchFlow-arm64-apple-macosx26.0-debug.module-resources>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules/DynamicNotchKit.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "NotchFlow",
+      "moduleOutputPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules/NotchFlow.swiftmodule",
+      "objects" : [
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/AppDelegate.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/NotchFlowApp.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/NavigationState.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/NotchManager.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/SettingsManager.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/AIConfigModel.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/AIConfigScanner.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/AIConfigView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/FogNoteView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/NoteModel.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/NoteStorage.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/WorktreeModel.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/WorktreeScanner.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/WorktreeView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/ExpandedView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/MainNotchView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/SettingsView.swift.o",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/resource_bundle_accessor.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+        "-module-cache-path",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "NotchFlow_main",
+        "-swift-version",
+        "5",
+        "-Xfrontend",
+        "-experimental-lazy-typecheck",
+        "-Xfrontend",
+        "-experimental-skip-all-function-bodies",
+        "-Xfrontend",
+        "-experimental-allow-module-with-compiler-errors",
+        "-Xfrontend",
+        "-empty-abi-descriptor",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "notchflow"
+      ],
+      "outputFileMapPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules/NotchFlow.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : true,
+      "sources" : [
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/AppDelegate.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/NotchFlowApp.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NavigationState.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NotchManager.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/SettingsManager.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigModel.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigScanner.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/FogNoteView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteModel.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteStorage.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeModel.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeScanner.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/ExpandedView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/MainNotchView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/SettingsView.swift",
+        "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/DerivedSources/resource_bundle_accessor.swift"
+      ],
+      "tempsPath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "DynamicNotchKit" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "DynamicNotchKit",
+      "-package-name",
+      "dynamicnotchkit",
+      "-c",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotch.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchHoverBehavior.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchState.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchStyle.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+HelperViews.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+Label.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/BlurModifier.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchControllable.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchPanel.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/EnvironmentValues+Extensions.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/NSScreen+Extensions.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/VisualEffectView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchContentView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchShape.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchlessView.swift",
+      "-I",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/include/DynamicNotchKit-Swift.h",
+      "-swift-version",
+      "6",
+      "-Xfrontend",
+      "-experimental-lazy-typecheck",
+      "-Xfrontend",
+      "-experimental-skip-all-function-bodies",
+      "-Xfrontend",
+      "-experimental-allow-module-with-compiler-errors",
+      "-Xfrontend",
+      "-empty-abi-descriptor",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-user-module-version",
+      "1.0.0",
+      "-package-name",
+      "dynamicnotchkit",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "NotchFlow" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "NotchFlow",
+      "-package-name",
+      "notchflow",
+      "-c",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/AppDelegate.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/NotchFlowApp.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NavigationState.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NotchManager.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/SettingsManager.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigModel.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigScanner.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/FogNoteView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteModel.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteStorage.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeModel.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeScanner.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/ExpandedView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/MainNotchView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/SettingsView.swift",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/DerivedSources/resource_bundle_accessor.swift",
+      "-I",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+      "-module-cache-path",
+      "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "NotchFlow_main",
+      "-swift-version",
+      "5",
+      "-Xfrontend",
+      "-experimental-lazy-typecheck",
+      "-Xfrontend",
+      "-experimental-skip-all-function-bodies",
+      "-Xfrontend",
+      "-experimental-allow-module-with-compiler-errors",
+      "-Xfrontend",
+      "-empty-abi-descriptor",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "notchflow",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "DynamicNotchKit" : [
+
+    ],
+    "NotchFlow" : [
+      "DynamicNotchKit"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotch.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchHoverBehavior.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotch/DynamicNotchStyle.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+HelperViews.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo+Label.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/DynamicNotchInfo/DynamicNotchInfo.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/BlurModifier.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchControllable.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/DynamicNotchPanel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/EnvironmentValues+Extensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/NSScreen+Extensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Utility/VisualEffectView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchShape.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/checkouts/DynamicNotchKit/Sources/DynamicNotchKit/Views/NotchlessView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/DynamicNotchKit.build/sources"
+    },
+    "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/AppDelegate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/App/NotchFlowApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NavigationState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/NotchManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Core/SettingsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigScanner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/AIConfig/AIConfigView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/FogNoteView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/FogNote/NoteStorage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeScanner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/MiniApps/Worktree/WorktreeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/ExpandedView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/MainNotchView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/NotchFlow/Views/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/DerivedSources/resource_bundle_accessor.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/NotchFlow.build/sources"
+    },
+    "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/fadialzuabi/Code/ios-first/NotchFlow/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

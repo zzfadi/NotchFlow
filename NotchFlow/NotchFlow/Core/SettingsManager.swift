@@ -137,12 +137,15 @@ extension Color {
     }
 
     var hexString: String {
-        guard let components = NSColor(self).cgColor.components else {
-            return "000000"
+        // Convert to sRGB color space to ensure consistent RGB component extraction
+        guard let nsColor = NSColor(self).usingColorSpace(.sRGB),
+              let components = nsColor.cgColor.components,
+              components.count >= 3 else {
+            return "FF69B4" // Default pink if conversion fails
         }
-        let r = Int(components[0] * 255)
-        let g = Int(components[1] * 255)
-        let b = Int(components[2] * 255)
+        let r = Int(max(0, min(255, components[0] * 255)))
+        let g = Int(max(0, min(255, components[1] * 255)))
+        let b = Int(max(0, min(255, components[2] * 255)))
         return String(format: "%02X%02X%02X", r, g, b)
     }
 }

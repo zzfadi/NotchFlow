@@ -293,10 +293,12 @@ struct WorktreeRowView: View {
     // MARK: - Actions
 
     private func openInTerminal(_ path: URL) {
+        // Escape single quotes by replacing ' with '\'' for safe shell interpolation
+        let escapedPath = path.path.replacingOccurrences(of: "'", with: "'\\''")
         let script = """
         tell application "Terminal"
             activate
-            do script "cd '\(path.path)'"
+            do script "cd '\(escapedPath)'"
         end tell
         """
         if let appleScript = NSAppleScript(source: script) {
@@ -307,7 +309,7 @@ struct WorktreeRowView: View {
 
     private func openInVSCode(_ path: URL) {
         let task = Process()
-        task.launchPath = "/usr/bin/env"
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         task.arguments = ["code", path.path]
         try? task.run()
     }

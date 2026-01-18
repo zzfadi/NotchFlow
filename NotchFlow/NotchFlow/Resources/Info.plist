@@ -31,7 +31,7 @@
 	<key>NSAppleEventsUsageDescription</key>
 	<string>NotchFlow needs access to send Apple Events to open Terminal and other applications.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2025 NotchFlow. All rights reserved.</string>
+	<string>Copyright © 2026 NotchFlow. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

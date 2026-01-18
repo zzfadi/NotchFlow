@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	App Sandbox is disabled because NotchFlow needs to:
+	1. Scan arbitrary directories for git worktrees and AI config files
+	2. Read/write notes to ~/Documents/FogNotes/
+	3. Execute shell commands (open Terminal, VS Code)
+	4. Send Apple Events to Terminal.app
+	
+	These operations require access beyond what sandboxed entitlements allow.
+	The app still uses user-selected.read-write for file picker operations.
+-->
 <plist version="1.0">
 <dict>
 	<key>com.apple.security.app-sandbox</key>

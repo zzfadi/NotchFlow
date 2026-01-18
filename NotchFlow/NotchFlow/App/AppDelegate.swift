@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import DynamicNotchKit
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     var notchManager: NotchManager?
     var statusItem: NSStatusItem?

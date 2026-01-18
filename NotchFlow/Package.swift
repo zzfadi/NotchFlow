@@ -18,7 +18,14 @@ let package = Package(
         .executableTarget(
             name: "NotchFlow",
             dependencies: ["DynamicNotchKit"],
-            path: "NotchFlow"
+            path: "NotchFlow",
+            exclude: [
+                "Resources/Info.plist",
+                "Resources/NotchFlow.entitlements"
+            ],
+            resources: [
+                .process("Resources/Assets.xcassets")
+            ]
         )
     ]
 )
