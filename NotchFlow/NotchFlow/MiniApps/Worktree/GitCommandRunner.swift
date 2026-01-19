@@ -269,6 +269,109 @@ actor GitCommandRunner {
         return try? result.get()
     }
 
+    // MARK: - Merge Detection (for cleanup)
+
+    /// Detects the main branch name (main or master)
+    func getMainBranch(in repoPath: URL) async -> String? {
+        // Try 'main' first, then 'master'
+        for branch in ["main", "master"] {
+            let result = await run(["rev-parse", "--verify", branch], in: repoPath)
+            if case .success = result {
+                return branch
+            }
+        }
+        return nil
+    }
+
+    /// Checks if a branch is fully merged into another branch
+    func isBranchMerged(branch: String, into targetBranch: String, in repoPath: URL) async -> Bool {
+        // Use merge-base --is-ancestor: returns 0 if branch is ancestor of target
+        let result = await run(["merge-base", "--is-ancestor", branch, targetBranch], in: repoPath)
+        return result.isSuccess
+    }
+
+    /// Gets the number of commits in branch that are not in targetBranch
+    func getUnmergedCommitCount(branch: String, relativeTo targetBranch: String, in repoPath: URL) async -> Int {
+        let result = await run(["rev-list", "\(targetBranch)..\(branch)", "--count"], in: repoPath)
+        guard case .success(let output) = result else {
+            return 0
+        }
+        return Int(output) ?? 0
+    }
+
+    /// Checks if a remote branch exists
+    func remoteBranchExists(branch: String, remote: String = "origin", in repoPath: URL) async -> Bool {
+        let result = await run(["ls-remote", "--heads", remote, branch], in: repoPath)
+        guard case .success(let output) = result else {
+            return false
+        }
+        return !output.isEmpty
+    }
+
+    /// Gets the date of the last commit on a branch
+    func getLastCommitDate(branch: String, in repoPath: URL) async -> Date? {
+        let result = await run(["log", "-1", "--format=%aI", branch], in: repoPath)
+        guard case .success(let output) = result else {
+            return nil
+        }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: output)
+    }
+
+    /// Gets comprehensive merge info for a branch
+    func getMergeInfo(for branch: String, in repoPath: URL) async -> MergeInfo? {
+        guard let mainBranch = await getMainBranch(in: repoPath) else {
+            return nil
+        }
+
+        async let isMerged = isBranchMerged(branch: branch, into: mainBranch, in: repoPath)
+        async let commitsAhead = getUnmergedCommitCount(branch: branch, relativeTo: mainBranch, in: repoPath)
+        async let remoteBranchExists = remoteBranchExists(branch: branch, in: repoPath)
+        async let lastCommitDate = getLastCommitDate(branch: branch, in: repoPath)
+
+        return MergeInfo(
+            isMergedToMain: await isMerged,
+            mainBranch: mainBranch,
+            commitsAheadOfMain: await commitsAhead,
+            remoteBranchExists: await remoteBranchExists,
+            lastCommitDate: await lastCommitDate,
+            mergedAt: nil // Could be determined via reflog but adds complexity
+        )
+    }
+
+    /// Calculates the disk size of a directory (non-isolated to avoid async iterator warning)
+    nonisolated func getDirectorySize(at path: URL) -> UInt64? {
+        let fileManager = FileManager.default
+        var totalSize: UInt64 = 0
+
+        guard let enumerator = fileManager.enumerator(
+            at: path,
+            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
+            options: []
+        ) else {
+            return nil
+        }
+
+        for case let fileURL as URL in enumerator {
+            guard let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+                  resourceValues.isRegularFile == true,
+                  let fileSize = resourceValues.fileSize else {
+                continue
+            }
+            totalSize += UInt64(fileSize)
+        }
+
+        return totalSize
+    }
+
+    /// Deletes a local branch
+    func deleteBranch(_ branch: String, force: Bool = false, in repoPath: URL) async -> Result<Void, GitError> {
+        let flag = force ? "-D" : "-d"
+        let result = await run(["branch", flag, branch], in: repoPath)
+        return result.map { _ in () }
+    }
+
     // MARK: - Commit Graph (for visualization)
 
     func getCommitGraph(in repoPath: URL, maxCommits: Int = 20) async -> [GraphCommit] {
@@ -350,5 +453,16 @@ struct GraphCommit: Identifiable {
 
     var tagRefs: [String] {
         refs.filter { $0.hasPrefix("tag:") }.map { $0.replacingOccurrences(of: "tag: ", with: "") }
+    }
+}
+
+// MARK: - Result Extension
+
+extension Result {
+    var isSuccess: Bool {
+        if case .success = self {
+            return true
+        }
+        return false
     }
 }

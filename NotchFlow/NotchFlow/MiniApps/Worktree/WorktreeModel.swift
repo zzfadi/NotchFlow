@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Git Status
 
@@ -253,5 +254,218 @@ struct WorktreeRelationship: Identifiable {
 
     var branchNames: [String] {
         [mainWorktree.branch] + linkedWorktrees.map { $0.branch }
+    }
+}
+
+// MARK: - Cleanup Types
+
+/// Indicates how safe a worktree is to clean up
+enum CleanupStatus: Equatable {
+    /// Branch merged, clean working tree, no stashes - safe to remove
+    case safe
+    /// Branch merged but has uncommitted changes or stashes
+    case merged
+    /// Branch not merged to main - may have unmerged work
+    case unmerged
+    /// Main worktree or protected branch - cannot be removed
+    case protected
+    /// Status not yet determined
+    case unknown
+
+    var displayName: String {
+        switch self {
+        case .safe: return "Safe to Remove"
+        case .merged: return "Merged"
+        case .unmerged: return "Unmerged"
+        case .protected: return "Protected"
+        case .unknown: return "Unknown"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .safe: return "checkmark.circle.fill"
+        case .merged: return "arrow.triangle.merge"
+        case .unmerged: return "arrow.triangle.branch"
+        case .protected: return "lock.shield.fill"
+        case .unknown: return "questionmark.circle"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .safe: return .green
+        case .merged: return .orange
+        case .unmerged: return .gray
+        case .protected: return .blue
+        case .unknown: return .gray
+        }
+    }
+}
+
+/// Information about branch merge status relative to main
+struct MergeInfo: Equatable {
+    let isMergedToMain: Bool
+    let mainBranch: String
+    let commitsAheadOfMain: Int
+    let remoteBranchExists: Bool
+    let lastCommitDate: Date?
+    let mergedAt: Date?
+
+    var mergeStatusDescription: String {
+        if isMergedToMain {
+            if let mergedAt = mergedAt {
+                let formatter = RelativeDateTimeFormatter()
+                formatter.unitsStyle = .abbreviated
+                return "Merged \(formatter.localizedString(for: mergedAt, relativeTo: Date()))"
+            }
+            return "Merged to \(mainBranch)"
+        } else {
+            if commitsAheadOfMain > 0 {
+                return "\(commitsAheadOfMain) commit\(commitsAheadOfMain == 1 ? "" : "s") ahead of \(mainBranch)"
+            }
+            return "Not merged to \(mainBranch)"
+        }
+    }
+}
+
+/// Warnings that should be shown before cleaning up a worktree
+enum CleanupWarning: Equatable, Identifiable {
+    case uncommittedChanges(count: Int)
+    case unpushedCommits(count: Int)
+    case stashesPresent(count: Int)
+    case recentActivity(days: Int)
+    case remoteBranchStillExists
+
+    var id: String {
+        switch self {
+        case .uncommittedChanges: return "uncommitted"
+        case .unpushedCommits: return "unpushed"
+        case .stashesPresent: return "stashes"
+        case .recentActivity: return "recent"
+        case .remoteBranchStillExists: return "remote"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .uncommittedChanges: return "pencil.circle.fill"
+        case .unpushedCommits: return "arrow.up.circle.fill"
+        case .stashesPresent: return "tray.full.fill"
+        case .recentActivity: return "clock.fill"
+        case .remoteBranchStillExists: return "cloud.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .uncommittedChanges: return .orange
+        case .unpushedCommits: return .red
+        case .stashesPresent: return .purple
+        case .recentActivity: return .blue
+        case .remoteBranchStillExists: return .cyan
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .uncommittedChanges(let count):
+            return "\(count) uncommitted change\(count == 1 ? "" : "s")"
+        case .unpushedCommits(let count):
+            return "\(count) unpushed commit\(count == 1 ? "" : "s")"
+        case .stashesPresent(let count):
+            return "\(count) stash\(count == 1 ? "" : "es") present"
+        case .recentActivity(let days):
+            return days == 0 ? "Active today" : "Active \(days) day\(days == 1 ? "" : "s") ago"
+        case .remoteBranchStillExists:
+            return "Remote branch still exists"
+        }
+    }
+
+    var severity: Int {
+        switch self {
+        case .uncommittedChanges: return 3
+        case .unpushedCommits: return 4
+        case .stashesPresent: return 2
+        case .recentActivity: return 1
+        case .remoteBranchStillExists: return 1
+        }
+    }
+}
+
+/// A worktree that is a candidate for cleanup
+struct CleanupCandidate: Identifiable, Equatable {
+    let id: UUID
+    let worktree: Worktree
+    let cleanupStatus: CleanupStatus
+    let mergeInfo: MergeInfo?
+    let diskSize: UInt64?
+    let warnings: [CleanupWarning]
+
+    init(
+        id: UUID = UUID(),
+        worktree: Worktree,
+        cleanupStatus: CleanupStatus,
+        mergeInfo: MergeInfo? = nil,
+        diskSize: UInt64? = nil,
+        warnings: [CleanupWarning] = []
+    ) {
+        self.id = id
+        self.worktree = worktree
+        self.cleanupStatus = cleanupStatus
+        self.mergeInfo = mergeInfo
+        self.diskSize = diskSize
+        self.warnings = warnings
+    }
+
+    var isSafeToRemove: Bool {
+        cleanupStatus == .safe
+    }
+
+    var hasWarnings: Bool {
+        !warnings.isEmpty
+    }
+
+    var highestSeverityWarning: CleanupWarning? {
+        warnings.max(by: { $0.severity < $1.severity })
+    }
+
+    var formattedDiskSize: String {
+        guard let size = diskSize else { return "—" }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(size))
+    }
+
+    static func == (lhs: CleanupCandidate, rhs: CleanupCandidate) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.worktree.id == rhs.worktree.id &&
+        lhs.cleanupStatus == rhs.cleanupStatus &&
+        lhs.mergeInfo == rhs.mergeInfo &&
+        lhs.diskSize == rhs.diskSize &&
+        lhs.warnings == rhs.warnings
+    }
+}
+
+/// Result of a cleanup operation for a single worktree
+struct CleanupResult: Identifiable, Equatable {
+    let id: UUID
+    let worktree: Worktree
+    let success: Bool
+    let error: String?
+    let deletedBranch: Bool
+
+    init(
+        id: UUID = UUID(),
+        worktree: Worktree,
+        success: Bool,
+        error: String? = nil,
+        deletedBranch: Bool = false
+    ) {
+        self.id = id
+        self.worktree = worktree
+        self.success = success
+        self.error = error
+        self.deletedBranch = deletedBranch
     }
 }
