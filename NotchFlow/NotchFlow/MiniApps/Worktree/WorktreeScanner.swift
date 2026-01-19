@@ -159,8 +159,19 @@ class WorktreeScanner: ObservableObject {
             }
         }
 
+        // Remove duplicates (same worktree can be discovered via parent repo and direct scan)
+        var seen = Set<String>()
+        let uniqueWorktrees = allWorktrees.filter { worktree in
+            let key = worktree.path.standardizedFileURL.path
+            if seen.contains(key) {
+                return false
+            }
+            seen.insert(key)
+            return true
+        }
+
         // Group worktrees by parent repository
-        return groupWorktreesByRepo(allWorktrees)
+        return groupWorktreesByRepo(uniqueWorktrees)
     }
 
     private func scanDirectory(_ directory: URL) async -> [Worktree] {
