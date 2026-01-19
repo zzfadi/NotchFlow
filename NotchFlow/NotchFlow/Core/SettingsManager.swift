@@ -8,9 +8,9 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     case `default` = "Default"
     case large = "Large"
     case custom = "Custom"
-    
+
     var id: String { rawValue }
-    
+
     var size: CGSize {
         switch self {
         case .compact:
@@ -23,7 +23,7 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
             return CGSize(width: 400, height: 280) // Fallback, actual custom size stored separately
         }
     }
-    
+
     static func preset(for size: CGSize) -> NotchSizePreset {
         for preset in [NotchSizePreset.compact, .default, .large] {
             if abs(preset.size.width - size.width) < 1 && abs(preset.size.height - size.height) < 1 {
@@ -36,9 +36,9 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
 
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
-    
+
     // MARK: - Size Constraints
-    
+
     static let minNotchWidth: CGFloat = 280
     static let maxNotchWidth: CGFloat = 600
     static let minNotchHeight: CGFloat = 180
@@ -77,9 +77,9 @@ class SettingsManager: ObservableObject {
     var accentColor: Color {
         Color(hex: accentColorHex) ?? .pink
     }
-    
+
     // MARK: - Per-App Size Methods
-    
+
     func sizeForApp(_ app: MiniApp) -> CGSize {
         if let sizeDict = appSizes[app.rawValue],
            let width = sizeDict["width"],
@@ -88,14 +88,14 @@ class SettingsManager: ObservableObject {
         }
         return NotchSizePreset.default.size
     }
-    
+
     func setSize(_ size: CGSize, for app: MiniApp) {
         let clampedWidth = max(Self.minNotchWidth, min(Self.maxNotchWidth, size.width))
         let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
         appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
         saveSettings()
     }
-    
+
     /// Updates size in memory for live UI updates during drag, without persisting to disk.
     /// Call `setSize(_:for:)` when the drag ends to persist.
     func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
@@ -103,17 +103,17 @@ class SettingsManager: ObservableObject {
         let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
         appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
     }
-    
+
     func presetForApp(_ app: MiniApp) -> NotchSizePreset {
         return NotchSizePreset.preset(for: sizeForApp(app))
     }
-    
+
     func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
         if preset != .custom {
             setSize(preset.size, for: app)
         }
     }
-    
+
     func resetAllSizesToDefault() {
         appSizes = [:]
         saveSettings()
@@ -150,7 +150,7 @@ class SettingsManager: ObservableObject {
         } else {
             fogNotesDirectory = defaultFogNotesDirectory()
         }
-        
+
         // Load per-app sizes
         if let sizesData = defaults.dictionary(forKey: Keys.appSizes) as? [String: [String: CGFloat]] {
             appSizes = sizesData
@@ -233,14 +233,14 @@ extension Color {
         guard let srgbColor = nsColor.usingColorSpace(.sRGB) else {
             return "FF69B4" // Default pink if color space conversion fails
         }
-        
+
         // Extract RGB components using NSColor's component accessors for reliability
         var red: CGFloat = 0
         var green: CGFloat = 0
         var blue: CGFloat = 0
         var alpha: CGFloat = 0
         srgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        
+
         let r = Int(max(0, min(255, red * 255)))
         let g = Int(max(0, min(255, green * 255)))
         let b = Int(max(0, min(255, blue * 255)))

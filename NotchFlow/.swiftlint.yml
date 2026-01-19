@@ -25,7 +25,7 @@ opt_in_rules:
 
 line_length:
   warning: 120
-  error: 200
+  error: 150
   ignores_comments: true
   ignores_urls: true
 

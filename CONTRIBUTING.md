@@ -2,15 +2,15 @@
 
 Thank you for your interest in contributing to NotchFlow! This document provides guidelines and instructions for contributing.
 
-## Code of Conduct
+## Community Guidelines
 
-Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+Please be respectful, inclusive, and constructive in all interactions when contributing to NotchFlow.
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-1. Check existing [issues](https://github.com/YOUR_USERNAME/NotchFlow/issues) to avoid duplicates
+1. Check existing [issues](https://github.com/zzfadi/NotchFlow/issues) to avoid duplicates
 2. Use the bug report template when creating a new issue
 3. Include:
    - macOS version
