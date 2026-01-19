@@ -1,0 +1,36 @@
+excluded:
+  - .build
+  - Package.swift
+
+disabled_rules:
+  - trailing_comma
+  - identifier_name
+  - type_body_length
+  - file_length
+  - function_body_length
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - contains_over_first_not_nil
+  - discouraged_object_literal
+  - empty_string
+  - explicit_init
+  - first_where
+  - joined_default_parameter
+  - redundant_nil_coalescing
+  - single_test_class
+  - sorted_first_last
+  - yoda_condition
+
+line_length:
+  warning: 120
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+nesting:
+  type_level: 3
+  function_level: 3
+
+reporter: "xcode"
