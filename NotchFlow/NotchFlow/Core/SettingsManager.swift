@@ -54,6 +54,7 @@ class SettingsManager: ObservableObject {
         static let fogNotesDirectory = "fogNotesDirectory"
         static let accentColor = "accentColor"
         static let appSizes = "appSizes"
+        static let isPinned = "isPinned"
     }
 
     // MARK: - Published Properties
@@ -61,6 +62,7 @@ class SettingsManager: ObservableObject {
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false
     @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
     @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
+    @AppStorage("isPinned") var isPinned: Bool = false
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []
