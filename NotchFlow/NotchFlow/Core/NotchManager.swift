@@ -6,6 +6,8 @@ import DynamicNotchKit
 @MainActor
 class NotchManager: ObservableObject {
     private var notch: DynamicNotch<AnyView, AnyView, AnyView>?
+    private var globalClickMonitor: Any?
+    private var localClickMonitor: Any?
     @Published var isExpanded: Bool = false
     @Published var navigationState = NavigationState()
 
@@ -32,6 +34,37 @@ class NotchManager: ObservableObject {
             )
         } compactTrailing: {
             AnyView(EmptyView())
+        }
+        
+        setupClickAwayMonitor()
+    }
+    
+    private func setupClickAwayMonitor() {
+        // Global monitor: detects clicks outside the app (e.g., on desktop, other apps)
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self,
+                      self.isExpanded,
+                      !SettingsManager.shared.isPinned else { return }
+                await self.collapse()
+            }
+        }
+        
+        // Local monitor: detects clicks inside the app but outside the notch content
+        // This handles clicks on the notch window's transparent/background areas
+        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            guard let self = self,
+                  self.isExpanded,
+                  !SettingsManager.shared.isPinned else { return event }
+            
+            // Check if click is on a window that's not interactive content
+            // The event target window being nil or the click being on background triggers collapse
+            if let window = event.window, window.contentView?.hitTest(event.locationInWindow) == nil {
+                Task { @MainActor in
+                    await self.collapse()
+                }
+            }
+            return event // Always pass through the event
         }
     }
 
@@ -62,6 +95,14 @@ class NotchManager: ObservableObject {
     }
 
     func cleanup() {
+        if let monitor = globalClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalClickMonitor = nil
+        }
+        if let monitor = localClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            localClickMonitor = nil
+        }
         Task {
             await notch?.hide()
         }
