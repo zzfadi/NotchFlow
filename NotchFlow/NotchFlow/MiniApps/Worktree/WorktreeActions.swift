@@ -29,7 +29,9 @@ enum WorktreeActions {
         } catch {
             let alert = NSAlert()
             alert.messageText = "Unable to Open in VS Code"
-            alert.informativeText = "The 'code' command could not be found. Please ensure VS Code is installed and the 'code' command is in your PATH."
+            alert.informativeText =
+                "The 'code' command could not be found. " +
+                "Please ensure VS Code is installed and the 'code' command is in your PATH."
             alert.alertStyle = .warning
             alert.addButton(withTitle: "OK")
             alert.runModal()

@@ -434,8 +434,10 @@ struct ActionCardButton: View {
                 lastFetch: Date().addingTimeInterval(-3600)
             ),
             recentCommits: [
-                CommitInfo(id: "abc123", shortHash: "abc123", message: "Fix bug", author: "Dev", date: Date(), isHead: true),
-                CommitInfo(id: "def456", shortHash: "def456", message: "Add feature", author: "Dev", date: Date().addingTimeInterval(-86400), isHead: false)
+                CommitInfo(id: "abc123", shortHash: "abc123", message: "Fix bug",
+                           author: "Dev", date: Date(), isHead: true),
+                CommitInfo(id: "def456", shortHash: "def456", message: "Add feature",
+                           author: "Dev", date: Date().addingTimeInterval(-86400), isHead: false)
             ],
             stashCount: 2
         ),
