@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MainNotchView: View {
     @EnvironmentObject var navigationState: NavigationState
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     private var currentSize: CGSize {
         settings.sizeForApp(navigationState.activeApp)
@@ -63,7 +63,7 @@ struct MainNotchView: View {
 }
 
 struct PinButton: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
     
     var body: some View {
         Button {
@@ -88,7 +88,7 @@ struct TabButton: View {
     let isActive: Bool
     let action: () -> Void
 
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     var body: some View {
         Button(action: action) {
