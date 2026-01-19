@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct MainNotchView: View {
     @EnvironmentObject var navigationState: NavigationState
@@ -59,6 +60,12 @@ struct MainNotchView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.black.opacity(0.9))
         )
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            // Validate and clamp sizes when screen configuration changes
+            for app in MiniApp.allCases {
+                settings.validateSizeForCurrentScreen(app)
+            }
+        }
     }
 }
 
