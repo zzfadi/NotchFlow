@@ -77,9 +77,9 @@ Access Settings from the menu bar icon to configure:
 
 1. Click the menu bar icon or use the keyboard shortcut to show the notch
 2. Use the tab buttons to switch between mini-apps:
-   - **WT** (left) - Worktree browser
-   - **AI** (right) - AI config finder
-   - **Note** (right) - Quick notes
+   - **WT** (left side) - Worktree browser
+   - **AI** (right side, first) - AI config finder
+   - **Note** (right side, second) - Quick notes
 3. Click outside to collapse
 
 ## License

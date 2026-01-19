@@ -92,6 +92,9 @@ class WorktreeScanner: ObservableObject {
         ) else { return }
 
         for item in contents {
+            // Check for cancellation to allow long scans to be interrupted
+            if Task.isCancelled { return }
+
             guard let isDirectory = try? item.resourceValues(forKeys: [.isDirectoryKey]).isDirectory,
                   isDirectory == true else { continue }
 

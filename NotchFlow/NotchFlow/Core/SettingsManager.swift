@@ -138,14 +138,22 @@ extension Color {
 
     var hexString: String {
         // Convert to sRGB color space to ensure consistent RGB component extraction
-        guard let nsColor = NSColor(self).usingColorSpace(.sRGB),
-              let components = nsColor.cgColor.components,
-              components.count >= 3 else {
-            return "FF69B4" // Default pink if conversion fails
+        // First get NSColor, then convert to sRGB to handle extended color spaces properly
+        let nsColor = NSColor(self)
+        guard let srgbColor = nsColor.usingColorSpace(.sRGB) else {
+            return "FF69B4" // Default pink if color space conversion fails
         }
-        let r = Int(max(0, min(255, components[0] * 255)))
-        let g = Int(max(0, min(255, components[1] * 255)))
-        let b = Int(max(0, min(255, components[2] * 255)))
+        
+        // Extract RGB components using NSColor's component accessors for reliability
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        srgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        
+        let r = Int(max(0, min(255, red * 255)))
+        let g = Int(max(0, min(255, green * 255)))
+        let b = Int(max(0, min(255, blue * 255)))
         return String(format: "%02X%02X%02X", r, g, b)
     }
 }

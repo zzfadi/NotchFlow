@@ -1,4 +1,21 @@
 import SwiftUI
+import AppKit
+
+// MARK: - Shared Utilities
+
+/// Presents an NSOpenPanel to browse for a folder and returns the selected path
+func browseForFolder(completion: @escaping (String?) -> Void) {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = false
+    panel.canChooseDirectories = true
+    panel.allowsMultipleSelection = false
+
+    if panel.runModal() == .OK {
+        completion(panel.url?.path)
+    } else {
+        completion(nil)
+    }
+}
 
 struct SettingsView: View {
     @StateObject private var settings = SettingsManager.shared
@@ -134,19 +151,6 @@ struct WorktreeSettingsView: View {
         .formStyle(.grouped)
         .padding()
     }
-
-    private func browseForFolder(completion: @escaping (String?) -> Void) {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-
-        if panel.runModal() == .OK {
-            completion(panel.url?.path)
-        } else {
-            completion(nil)
-        }
-    }
 }
 
 struct AIConfigSettingsView: View {
@@ -204,19 +208,6 @@ struct AIConfigSettingsView: View {
         .formStyle(.grouped)
         .padding()
     }
-
-    private func browseForFolder(completion: @escaping (String?) -> Void) {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-
-        if panel.runModal() == .OK {
-            completion(panel.url?.path)
-        } else {
-            completion(nil)
-        }
-    }
 }
 
 struct FogNoteSettingsView: View {
@@ -246,19 +237,6 @@ struct FogNoteSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
-    }
-
-    private func browseForFolder(completion: @escaping (String?) -> Void) {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-
-        if panel.runModal() == .OK {
-            completion(panel.url?.path)
-        } else {
-            completion(nil)
-        }
     }
 }
 

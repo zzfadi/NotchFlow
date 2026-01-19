@@ -311,7 +311,17 @@ struct WorktreeRowView: View {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         task.arguments = ["code", path.path]
-        try? task.run()
+        do {
+            try task.run()
+        } catch {
+            // Show alert if VS Code command fails (not installed or not in PATH)
+            let alert = NSAlert()
+            alert.messageText = "Unable to Open in VS Code"
+            alert.informativeText = "The 'code' command could not be found. Please ensure VS Code is installed and the 'code' command is in your PATH."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 
     private func openInFinder(_ path: URL) {

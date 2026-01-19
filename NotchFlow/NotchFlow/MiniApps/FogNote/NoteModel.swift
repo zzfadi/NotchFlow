@@ -41,7 +41,7 @@ struct Note: Identifiable, Codable, Equatable {
     }
 
     var wordCount: Int {
-        content.split(separator: " ").count
+        content.split(whereSeparator: \.isWhitespace).count
     }
 
     mutating func update(content: String) {

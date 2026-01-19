@@ -253,7 +253,7 @@ struct NoteEditorView: View {
 
             // Status bar
             HStack {
-                Text("\(content.split(separator: " ").count) words")
+                Text("\(content.split(whereSeparator: \.isWhitespace).count) words")
                     .font(.system(size: 9))
                     .foregroundColor(.gray)
 

@@ -148,9 +148,11 @@ class NoteStorage: ObservableObject {
 
     private func sanitizeFilename(_ name: String) -> String {
         let invalidChars = CharacterSet(charactersIn: "/\\?%*|\"<>:")
-        return name
+        let sanitized = name
             .components(separatedBy: invalidChars)
             .joined(separator: "_")
             .trimmingCharacters(in: .whitespaces)
+        // Return a default filename if the sanitized result is empty
+        return sanitized.isEmpty ? "Untitled" : sanitized
     }
 }

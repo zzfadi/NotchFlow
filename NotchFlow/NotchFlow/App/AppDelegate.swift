@@ -10,6 +10,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         setupNotch()
+        
+        // Show the notch after a short delay to ensure window is ready
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            await notchManager?.expand()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -60,7 +66,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showPreferences() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        // Activate the app and open the Settings window
+        NSApp.activate(ignoringOtherApps: true)
+        // Use SettingsLink behavior - this selector is available on macOS 13+
+        // and is the standard way SwiftUI Settings scenes are opened
+        if #available(macOS 13.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
     }
 
     @objc func quitApp() {
