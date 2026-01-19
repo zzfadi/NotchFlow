@@ -263,13 +263,13 @@ struct WorktreeRelationship: Identifiable {
 enum CleanupStatus: Equatable {
     /// Branch merged, clean working tree, no stashes - safe to remove
     case safe
-    /// Branch merged but has uncommitted changes or stashes
+    /// Branch merged but has warnings (uncommitted changes, stashes, unpushed commits, recent activity, etc.)
     case merged
     /// Branch not merged to main - may have unmerged work
     case unmerged
     /// Main worktree or protected branch - cannot be removed
     case protected
-    /// Status not yet determined
+    /// Status not yet determined or git commands failed
     case unknown
 
     var displayName: String {
@@ -300,6 +300,22 @@ enum CleanupStatus: Equatable {
         case .protected: return .blue
         case .unknown: return .gray
         }
+    }
+}
+
+extension CleanupStatus: Comparable {
+    private var sortOrder: Int {
+        switch self {
+        case .safe: return 0
+        case .merged: return 1
+        case .unmerged: return 2
+        case .unknown: return 3
+        case .protected: return 4
+        }
+    }
+
+    static func < (lhs: CleanupStatus, rhs: CleanupStatus) -> Bool {
+        lhs.sortOrder < rhs.sortOrder
     }
 }
 
@@ -434,7 +450,8 @@ struct CleanupCandidate: Identifiable, Equatable {
         guard let size = diskSize else { return "—" }
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
-        return formatter.string(fromByteCount: Int64(size))
+        // Use clamping to prevent overflow for sizes > Int64.max
+        return formatter.string(fromByteCount: Int64(clamping: size))
     }
 
     static func == (lhs: CleanupCandidate, rhs: CleanupCandidate) -> Bool {
@@ -451,21 +468,49 @@ struct CleanupCandidate: Identifiable, Equatable {
 struct CleanupResult: Identifiable, Equatable {
     let id: UUID
     let worktree: Worktree
-    let success: Bool
-    let error: String?
-    let deletedBranch: Bool
+    let outcome: Outcome
+
+    /// Outcome of the cleanup operation - either success or failure
+    enum Outcome: Equatable {
+        case success(deletedBranch: Bool, branchDeletionError: String?)
+        case failure(error: String)
+    }
+
+    // Computed properties for backward compatibility
+    var success: Bool {
+        if case .success = outcome { return true }
+        return false
+    }
+
+    var error: String? {
+        if case .failure(let error) = outcome { return error }
+        return nil
+    }
+
+    var deletedBranch: Bool {
+        if case .success(let deleted, _) = outcome { return deleted }
+        return false
+    }
+
+    var branchDeletionError: String? {
+        if case .success(_, let error) = outcome { return error }
+        return nil
+    }
 
     init(
         id: UUID = UUID(),
         worktree: Worktree,
         success: Bool,
         error: String? = nil,
-        deletedBranch: Bool = false
+        deletedBranch: Bool = false,
+        branchDeletionError: String? = nil
     ) {
         self.id = id
         self.worktree = worktree
-        self.success = success
-        self.error = error
-        self.deletedBranch = deletedBranch
+        if success {
+            self.outcome = .success(deletedBranch: deletedBranch, branchDeletionError: branchDeletionError)
+        } else {
+            self.outcome = .failure(error: error ?? "Unknown error")
+        }
     }
 }

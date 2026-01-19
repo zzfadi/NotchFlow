@@ -39,6 +39,8 @@ struct CleanupCandidatesView: View {
 
             if scanner.isScanning {
                 scanningView
+            } else if let error = scanner.errorMessage {
+                errorStateView(error)
             } else if scanner.candidates.isEmpty {
                 emptyStateView
             } else {
@@ -144,6 +146,44 @@ struct CleanupCandidatesView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.blue)
+            .padding(.bottom, 16)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func errorStateView(_ error: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 40))
+                .foregroundColor(.orange)
+
+            Text("Scan Error")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+
+            Text(error)
+                .font(.system(size: 12))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            Spacer()
+
+            HStack(spacing: 12) {
+                Button("Dismiss") {
+                    onDismiss()
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.gray)
+
+                Button("Retry") {
+                    scanner.scan(from: repositoryGroups)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+            }
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

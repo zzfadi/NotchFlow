@@ -54,44 +54,45 @@ actor GitCommandRunner {
 
     // MARK: - Git Status
 
-    func getStatus(for worktreePath: URL) async -> GitStatusSummary {
+    func getStatus(for worktreePath: URL) async -> Result<GitStatusSummary, GitError> {
         let result = await run(["status", "--porcelain=v1"], in: worktreePath)
 
-        guard case .success(let output) = result else {
-            return GitStatusSummary()
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            var summary = GitStatusSummary()
+
+            for line in output.components(separatedBy: "\n") where line.count >= 2 {
+                let index = line.index(line.startIndex, offsetBy: 2)
+                let statusCode = String(line.prefix(upTo: index))
+
+                // Parse status codes (XY format where X=staging, Y=working tree)
+                let x = statusCode.first ?? " "
+                let y = statusCode.dropFirst().first ?? " "
+
+                // Count conflicts
+                if x == "U" || y == "U" || (x == "A" && y == "A") || (x == "D" && y == "D") {
+                    summary.conflicted += 1
+                    continue
+                }
+
+                // Staged changes (index)
+                if x != " " && x != "?" {
+                    summary.staged += 1
+                }
+
+                // Working tree changes
+                switch y {
+                case "M": summary.modified += 1
+                case "D": summary.deleted += 1
+                case "?": summary.untracked += 1
+                default: break
+                }
+            }
+
+            return .success(summary)
         }
-
-        var summary = GitStatusSummary()
-
-        for line in output.components(separatedBy: "\n") where line.count >= 2 {
-            let index = line.index(line.startIndex, offsetBy: 2)
-            let statusCode = String(line.prefix(upTo: index))
-
-            // Parse status codes (XY format where X=staging, Y=working tree)
-            let x = statusCode.first ?? " "
-            let y = statusCode.dropFirst().first ?? " "
-
-            // Count conflicts
-            if x == "U" || y == "U" || (x == "A" && y == "A") || (x == "D" && y == "D") {
-                summary.conflicted += 1
-                continue
-            }
-
-            // Staged changes (index)
-            if x != " " && x != "?" {
-                summary.staged += 1
-            }
-
-            // Working tree changes
-            switch y {
-            case "M": summary.modified += 1
-            case "D": summary.deleted += 1
-            case "?": summary.untracked += 1
-            default: break
-            }
-        }
-
-        return summary
     }
 
     // MARK: - Remote Tracking
@@ -166,57 +167,61 @@ actor GitCommandRunner {
 
     // MARK: - Recent Commits
 
-    func getRecentCommits(in worktreePath: URL, count: Int = 5) async -> [CommitInfo] {
+    func getRecentCommits(in worktreePath: URL, count: Int = 5) async -> Result<[CommitInfo], GitError> {
         let format = "%H|%h|%s|%an|%aI"
         let result = await run(
             ["log", "-\(count)", "--format=\(format)"],
             in: worktreePath
         )
 
-        guard case .success(let output) = result else {
-            return []
-        }
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            // Get current HEAD
+            let headResult = await run(["rev-parse", "HEAD"], in: worktreePath)
+            let headHash = (try? headResult.get()) ?? ""
 
-        // Get current HEAD
-        let headResult = await run(["rev-parse", "HEAD"], in: worktreePath)
-        let headHash = (try? headResult.get()) ?? ""
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime]
 
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime]
+            let commits = output.components(separatedBy: "\n").compactMap { line -> CommitInfo? in
+                let parts = line.split(separator: "|", maxSplits: 4).map(String.init)
+                guard parts.count >= 5 else { return nil }
 
-        return output.components(separatedBy: "\n").compactMap { line -> CommitInfo? in
-            let parts = line.split(separator: "|", maxSplits: 4).map(String.init)
-            guard parts.count >= 5 else { return nil }
+                let fullHash = parts[0]
+                let shortHash = parts[1]
+                let message = parts[2]
+                let author = parts[3]
+                let dateString = parts[4]
 
-            let fullHash = parts[0]
-            let shortHash = parts[1]
-            let message = parts[2]
-            let author = parts[3]
-            let dateString = parts[4]
+                let date = dateFormatter.date(from: dateString) ?? Date()
 
-            let date = dateFormatter.date(from: dateString) ?? Date()
+                return CommitInfo(
+                    id: fullHash,
+                    shortHash: shortHash,
+                    message: message,
+                    author: author,
+                    date: date,
+                    isHead: fullHash == headHash
+                )
+            }
 
-            return CommitInfo(
-                id: fullHash,
-                shortHash: shortHash,
-                message: message,
-                author: author,
-                date: date,
-                isHead: fullHash == headHash
-            )
+            return .success(commits)
         }
     }
 
     // MARK: - Stash Count
 
-    func getStashCount(in worktreePath: URL) async -> Int {
+    func getStashCount(in worktreePath: URL) async -> Result<Int, GitError> {
         let result = await run(["stash", "list"], in: worktreePath)
 
-        guard case .success(let output) = result else {
-            return 0
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            return .success(output.components(separatedBy: "\n").filter { !$0.isEmpty }.count)
         }
-
-        return output.components(separatedBy: "\n").filter { !$0.isEmpty }.count
     }
 
     // MARK: - Worktree Management
@@ -254,14 +259,15 @@ actor GitCommandRunner {
 
     // MARK: - Branch Information
 
-    func getAllBranches(in repoPath: URL) async -> [String] {
+    func getAllBranches(in repoPath: URL) async -> Result<[String], GitError> {
         let result = await run(["branch", "-a", "--format=%(refname:short)"], in: repoPath)
 
-        guard case .success(let output) = result else {
-            return []
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            return .success(output.components(separatedBy: "\n").filter { !$0.isEmpty })
         }
-
-        return output.components(separatedBy: "\n").filter { !$0.isEmpty }
     }
 
     func getMergeBase(branch1: String, branch2: String, in repoPath: URL) async -> String? {
@@ -286,22 +292,27 @@ actor GitCommandRunner {
     /// Checks if a branch is fully merged into another branch
     func isBranchMerged(branch: String, into targetBranch: String, in repoPath: URL) async -> Bool {
         // Use merge-base --is-ancestor: returns 0 if branch is ancestor of target
-        let result = await run(["merge-base", "--is-ancestor", branch, targetBranch], in: repoPath)
+        // The "--" separator prevents branch names from being interpreted as options
+        let result = await run(["merge-base", "--is-ancestor", "--", branch, targetBranch], in: repoPath)
         return result.isSuccess
     }
 
     /// Gets the number of commits in branch that are not in targetBranch
-    func getUnmergedCommitCount(branch: String, relativeTo targetBranch: String, in repoPath: URL) async -> Int {
-        let result = await run(["rev-list", "\(targetBranch)..\(branch)", "--count"], in: repoPath)
-        guard case .success(let output) = result else {
-            return 0
+    func getUnmergedCommitCount(branch: String, relativeTo targetBranch: String, in repoPath: URL) async -> Result<Int, GitError> {
+        // The "--" separator prevents branch names from being interpreted as options
+        let result = await run(["rev-list", "--count", "--", "\(targetBranch)..\(branch)"], in: repoPath)
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            return .success(Int(output) ?? 0)
         }
-        return Int(output) ?? 0
     }
 
     /// Checks if a remote branch exists
     func remoteBranchExists(branch: String, remote: String = "origin", in repoPath: URL) async -> Bool {
-        let result = await run(["ls-remote", "--heads", remote, branch], in: repoPath)
+        // The "--" separator prevents branch names from being interpreted as options
+        let result = await run(["ls-remote", "--heads", "--", remote, branch], in: repoPath)
         guard case .success(let output) = result else {
             return false
         }
@@ -310,7 +321,8 @@ actor GitCommandRunner {
 
     /// Gets the date of the last commit on a branch
     func getLastCommitDate(branch: String, in repoPath: URL) async -> Date? {
-        let result = await run(["log", "-1", "--format=%aI", branch], in: repoPath)
+        // The "--" separator prevents branch names from being interpreted as options
+        let result = await run(["log", "-1", "--format=%aI", "--", branch], in: repoPath)
         guard case .success(let output) = result else {
             return nil
         }
@@ -326,14 +338,17 @@ actor GitCommandRunner {
         }
 
         async let isMerged = isBranchMerged(branch: branch, into: mainBranch, in: repoPath)
-        async let commitsAhead = getUnmergedCommitCount(branch: branch, relativeTo: mainBranch, in: repoPath)
+        async let commitsAheadResult = getUnmergedCommitCount(branch: branch, relativeTo: mainBranch, in: repoPath)
         async let remoteBranchExists = remoteBranchExists(branch: branch, in: repoPath)
         async let lastCommitDate = getLastCommitDate(branch: branch, in: repoPath)
+
+        // Extract value from Result, defaulting to 0 on failure
+        let commitsAhead = (try? await commitsAheadResult.get()) ?? 0
 
         return MergeInfo(
             isMergedToMain: await isMerged,
             mainBranch: mainBranch,
-            commitsAheadOfMain: await commitsAhead,
+            commitsAheadOfMain: commitsAhead,
             remoteBranchExists: await remoteBranchExists,
             lastCommitDate: await lastCommitDate,
             mergedAt: nil // Could be determined via reflog but adds complexity
@@ -374,33 +389,34 @@ actor GitCommandRunner {
 
     // MARK: - Commit Graph (for visualization)
 
-    func getCommitGraph(in repoPath: URL, maxCommits: Int = 20) async -> [GraphCommit] {
+    func getCommitGraph(in repoPath: URL, maxCommits: Int = 20) async -> Result<[GraphCommit], GitError> {
         let format = "%H|%P|%s|%D"
         let result = await run(
             ["log", "--all", "-\(maxCommits)", "--format=\(format)"],
             in: repoPath
         )
 
-        guard case .success(let output) = result else {
-            return []
-        }
+        switch result {
+        case .failure(let error):
+            return .failure(error)
+        case .success(let output):
+            let commits = output.components(separatedBy: "\n").compactMap { line -> GraphCommit? in
+                let parts = line.split(separator: "|", maxSplits: 3, omittingEmptySubsequences: false).map(String.init)
+                guard parts.count >= 3 else { return nil }
 
-        return output.components(separatedBy: "\n").compactMap { line -> GraphCommit? in
-            let parts = line.split(separator: "|", maxSplits: 3, omittingEmptySubsequences: false).map(String.init)
-            guard parts.count >= 3 else { return nil }
+                let hash = parts[0]
+                let parents = parts[1].split(separator: " ").map(String.init)
+                let message = parts[2]
+                let refs = parts.count > 3 ? parts[3] : ""
 
-            let hash = parts[0]
-            let parents = parts[1].split(separator: " ").map(String.init)
-            let message = parts[2]
-            let refs = parts.count > 3 ? parts[3] : ""
-
-            return GraphCommit(
-                hash: hash,
-                shortHash: String(hash.prefix(7)),
-                parents: parents,
-                message: message,
-                refs: refs.components(separatedBy: ", ").filter { !$0.isEmpty }
-            )
+                return GraphCommit(
+                    hash: hash,
+                    parents: parents,
+                    message: message,
+                    refs: refs.components(separatedBy: ", ").filter { !$0.isEmpty }
+                )
+            }
+            return .success(commits)
         }
     }
 }
@@ -427,21 +443,14 @@ enum GitError: Error, LocalizedError {
 // MARK: - Graph Commit (for visualization)
 
 struct GraphCommit: Identifiable {
-    let id: String
     let hash: String
-    let shortHash: String
     let parents: [String]
     let message: String
     let refs: [String]
 
-    init(hash: String, shortHash: String, parents: [String], message: String, refs: [String]) {
-        self.id = hash
-        self.hash = hash
-        self.shortHash = shortHash
-        self.parents = parents
-        self.message = message
-        self.refs = refs
-    }
+    // Computed properties to avoid data duplication
+    var id: String { hash }
+    var shortHash: String { String(hash.prefix(7)) }
 
     var isMergeCommit: Bool {
         parents.count > 1

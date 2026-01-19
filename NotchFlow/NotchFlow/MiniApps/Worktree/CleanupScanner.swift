@@ -68,13 +68,8 @@ class CleanupScanner: ObservableObject {
             }
 
             if !Task.isCancelled {
-                // Sort by cleanup status: safe first, then merged, then unmerged
-                candidates = newCandidates.sorted { lhs, rhs in
-                    let order: [CleanupStatus] = [.safe, .merged, .unmerged, .unknown, .protected]
-                    let lhsIndex = order.firstIndex(of: lhs.cleanupStatus) ?? 999
-                    let rhsIndex = order.firstIndex(of: rhs.cleanupStatus) ?? 999
-                    return lhsIndex < rhsIndex
-                }
+                // Sort by cleanup status using Comparable conformance: safe first, then merged, then unmerged, etc.
+                candidates = newCandidates.sorted { $0.cleanupStatus < $1.cleanupStatus }
             }
 
             isScanning = false
@@ -97,7 +92,7 @@ class CleanupScanner: ObservableObject {
 
             let worktree = candidate.worktree
 
-            // Remove the worktree (force to handle any uncommitted changes if user confirmed)
+            // Remove the worktree with force flag (bypasses checks for uncommitted changes or locks)
             let removeResult = await gitRunner.removeWorktree(
                 at: worktree.path,
                 force: true,
@@ -107,21 +102,29 @@ class CleanupScanner: ObservableObject {
             switch removeResult {
             case .success:
                 var deletedBranch = false
+                var branchDeletionError: String?
 
-                // Delete the branch if requested and worktree was successfully removed
+                // Delete branch only if: user requested it, not the main worktree, not a detached HEAD,
+                // and not the main/master branch (which should never be deleted)
                 if deleteBranches && !worktree.isMainWorktree && !worktree.isDetached && worktree.branch != "main" && worktree.branch != "master" {
                     let branchResult = await gitRunner.deleteBranch(
                         worktree.branch,
                         force: true,
                         in: worktree.parentRepo
                     )
-                    deletedBranch = branchResult.isSuccess
+                    switch branchResult {
+                    case .success:
+                        deletedBranch = true
+                    case .failure(let error):
+                        branchDeletionError = error.localizedDescription
+                    }
                 }
 
                 results.append(CleanupResult(
                     worktree: worktree,
                     success: true,
-                    deletedBranch: deletedBranch
+                    deletedBranch: deletedBranch,
+                    branchDeletionError: branchDeletionError
                 ))
 
             case .failure(let error):
@@ -162,17 +165,26 @@ class CleanupScanner: ObservableObject {
         }
 
         // Gather information in parallel (skip merge detection for detached HEAD worktrees)
-        async let statusTask = gitRunner.getStatus(for: worktree.path)
-        async let stashCountTask = gitRunner.getStashCount(in: worktree.path)
+        async let statusResult = gitRunner.getStatus(for: worktree.path)
+        async let stashCountResult = gitRunner.getStashCount(in: worktree.path)
         async let remoteTrackingTask = worktree.isDetached ? nil : gitRunner.getRemoteTracking(for: worktree.path, branch: worktree.branch)
 
         let mergeInfo: MergeInfo? = worktree.isDetached ? nil : await gitRunner.getMergeInfo(for: worktree.branch, in: worktree.parentRepo)
-        let status = await statusTask
-        let stashCount = await stashCountTask
+        let statusValue = await statusResult
+        let stashCountValue = await stashCountResult
         let remoteTracking = await remoteTrackingTask
 
-        // Calculate disk size (synchronous, non-isolated)
-        let diskSize = gitRunner.getDirectorySize(at: worktree.path)
+        // Extract values from Result types, defaulting on failure
+        let status = (try? statusValue.get()) ?? GitStatusSummary()
+        let stashCount = (try? stashCountValue.get()) ?? 0
+        let statusFailed = statusValue.isSuccess == false
+        let stashFailed = stashCountValue.isSuccess == false
+
+        // Calculate disk size off main thread (file system enumeration can be slow)
+        let worktreePath = worktree.path
+        let diskSize = await Task.detached {
+            GitCommandRunner.shared.getDirectorySize(at: worktreePath)
+        }.value
 
         // Build warnings list
         var warnings: [CleanupWarning] = []
@@ -204,13 +216,20 @@ class CleanupScanner: ObservableObject {
         warnings.sort { $0.severity > $1.severity }
 
         // Determine cleanup status
+        // Classification logic:
+        // - .safe: Branch merged to main AND no warnings
+        // - .merged: Branch merged to main BUT has warnings
+        // - .unmerged: Branch not merged to main (may contain unmerged work)
+        // - .unknown: Critical git commands failed
         let cleanupStatus: CleanupStatus
-        if mergeInfo?.isMergedToMain == true {
-            if warnings.isEmpty {
-                cleanupStatus = .safe
-            } else {
-                cleanupStatus = .merged
-            }
+        if statusFailed && stashFailed {
+            // Critical git commands failed - cannot determine status safely
+            cleanupStatus = .unknown
+        } else if worktree.isDetached {
+            // Detached HEAD worktrees have no branch to merge - classify based on warnings only
+            cleanupStatus = warnings.isEmpty ? .safe : .merged
+        } else if mergeInfo?.isMergedToMain == true {
+            cleanupStatus = warnings.isEmpty ? .safe : .merged
         } else {
             cleanupStatus = .unmerged
         }
