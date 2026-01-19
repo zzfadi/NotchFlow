@@ -30,6 +30,10 @@
 		A100000C001 /* WorktreeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000C000 /* WorktreeModel.swift */; };
 		A100000D001 /* WorktreeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000D000 /* WorktreeScanner.swift */; };
 		A100000E001 /* WorktreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000E000 /* WorktreeView.swift */; };
+		A1000015001 /* GitCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000015000 /* GitCommandRunner.swift */; };
+		A1000016001 /* WorktreeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016000 /* WorktreeDetailView.swift */; };
+		A1000017001 /* WorktreeGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017000 /* WorktreeGraphView.swift */; };
+		A1000018001 /* WorktreeManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000018000 /* WorktreeManagementView.swift */; };
 
 		/* AIConfig */
 		A100000F001 /* AIConfigModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000F000 /* AIConfigModel.swift */; };
@@ -69,6 +73,10 @@
 		A100000C000 /* WorktreeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeModel.swift; sourceTree = "<group>"; };
 		A100000D000 /* WorktreeScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeScanner.swift; sourceTree = "<group>"; };
 		A100000E000 /* WorktreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeView.swift; sourceTree = "<group>"; };
+		A1000015000 /* GitCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitCommandRunner.swift; sourceTree = "<group>"; };
+		A1000016000 /* WorktreeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeDetailView.swift; sourceTree = "<group>"; };
+		A1000017000 /* WorktreeGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeGraphView.swift; sourceTree = "<group>"; };
+		A1000018000 /* WorktreeManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeManagementView.swift; sourceTree = "<group>"; };
 
 		/* AIConfig */
 		A100000F000 /* AIConfigModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigModel.swift; sourceTree = "<group>"; };
@@ -186,6 +194,10 @@
 				A100000C000 /* WorktreeModel.swift */,
 				A100000D000 /* WorktreeScanner.swift */,
 				A100000E000 /* WorktreeView.swift */,
+				A1000015000 /* GitCommandRunner.swift */,
+				A1000016000 /* WorktreeDetailView.swift */,
+				A1000017000 /* WorktreeGraphView.swift */,
+				A1000018000 /* WorktreeManagementView.swift */,
 			);
 			path = Worktree;
 			sourceTree = "<group>";
@@ -289,6 +301,10 @@
 				A100000C001 /* WorktreeModel.swift in Sources */,
 				A100000D001 /* WorktreeScanner.swift in Sources */,
 				A100000E001 /* WorktreeView.swift in Sources */,
+				A1000015001 /* GitCommandRunner.swift in Sources */,
+				A1000016001 /* WorktreeDetailView.swift in Sources */,
+				A1000017001 /* WorktreeGraphView.swift in Sources */,
+				A1000018001 /* WorktreeManagementView.swift in Sources */,
 				A100000F001 /* AIConfigModel.swift in Sources */,
 				A1000010001 /* AIConfigScanner.swift in Sources */,
 				A1000011001 /* AIConfigView.swift in Sources */,

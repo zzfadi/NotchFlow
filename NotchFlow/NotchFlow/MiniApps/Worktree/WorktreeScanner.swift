@@ -4,11 +4,15 @@ import Combine
 class WorktreeScanner: ObservableObject {
     @Published var repositoryGroups: [RepositoryGroup] = []
     @Published var isScanning: Bool = false
+    @Published var isFetchingStatus: Bool = false
     @Published var lastScanDate: Date?
     @Published var errorMessage: String?
+    @Published var scanProgress: Double = 0
 
     private let settings = SettingsManager.shared
+    private let gitRunner = GitCommandRunner.shared
     private var scanTask: Task<Void, Never>?
+    private var statusTask: Task<Void, Never>?
 
     // MARK: - Public Methods
 
@@ -18,6 +22,7 @@ class WorktreeScanner: ObservableObject {
         scanTask = Task { @MainActor in
             isScanning = true
             errorMessage = nil
+            scanProgress = 0
 
             let groups = await performScan()
 
@@ -25,21 +30,100 @@ class WorktreeScanner: ObservableObject {
                 repositoryGroups = groups
                 lastScanDate = Date()
                 isScanning = false
+
+                // Fetch rich status for all worktrees
+                await fetchAllStatus()
             }
         }
     }
 
     func cancelScan() {
         scanTask?.cancel()
+        statusTask?.cancel()
         isScanning = false
+        isFetchingStatus = false
+    }
+
+    func refreshStatus() {
+        statusTask?.cancel()
+        statusTask = Task { @MainActor in
+            await fetchAllStatus()
+        }
+    }
+
+    func refreshWorktree(_ worktree: Worktree) {
+        Task { @MainActor in
+            await fetchStatusForWorktree(worktree)
+        }
+    }
+
+    // MARK: - Status Fetching
+
+    private func fetchAllStatus() async {
+        isFetchingStatus = true
+
+        for groupIndex in repositoryGroups.indices {
+            for worktreeIndex in repositoryGroups[groupIndex].worktrees.indices {
+                if Task.isCancelled { break }
+
+                let worktree = repositoryGroups[groupIndex].worktrees[worktreeIndex]
+                let updatedWorktree = await fetchStatusData(for: worktree)
+
+                await MainActor.run {
+                    repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
+                }
+            }
+        }
+
+        await MainActor.run {
+            isFetchingStatus = false
+        }
+    }
+
+    private func fetchStatusForWorktree(_ worktree: Worktree) async {
+        guard let groupIndex = repositoryGroups.firstIndex(where: { $0.worktrees.contains(worktree) }),
+              let worktreeIndex = repositoryGroups[groupIndex].worktrees.firstIndex(of: worktree) else {
+            return
+        }
+
+        let updatedWorktree = await fetchStatusData(for: worktree)
+
+        await MainActor.run {
+            repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
+        }
+    }
+
+    private func fetchStatusData(for worktree: Worktree) async -> Worktree {
+        async let status = gitRunner.getStatus(for: worktree.path)
+        async let remoteTracking = worktree.isDetached ? nil : gitRunner.getRemoteTracking(for: worktree.path, branch: worktree.branch)
+        async let stashCount = gitRunner.getStashCount(in: worktree.path)
+        async let recentCommits = gitRunner.getRecentCommits(in: worktree.path, count: 3)
+
+        return Worktree(
+            id: worktree.id,
+            path: worktree.path,
+            branch: worktree.branch,
+            lastModified: worktree.lastModified,
+            parentRepo: worktree.parentRepo,
+            isMainWorktree: worktree.isMainWorktree,
+            commitHash: worktree.commitHash,
+            isDetached: worktree.isDetached,
+            status: await status,
+            remoteTracking: await remoteTracking,
+            recentCommits: await recentCommits,
+            stashCount: await stashCount
+        )
     }
 
     // MARK: - Private Scanning Methods
 
     private func performScan() async -> [RepositoryGroup] {
         var allWorktrees: [Worktree] = []
+        let totalPaths = settings.worktreeScanPaths.count
 
-        for pathString in settings.worktreeScanPaths {
+        for (index, pathString) in settings.worktreeScanPaths.enumerated() {
+            if Task.isCancelled { break }
+
             let path = URL(fileURLWithPath: pathString)
 
             guard FileManager.default.fileExists(atPath: path.path) else {
@@ -48,6 +132,10 @@ class WorktreeScanner: ObservableObject {
 
             let worktrees = await scanDirectory(path)
             allWorktrees.append(contentsOf: worktrees)
+
+            await MainActor.run {
+                scanProgress = Double(index + 1) / Double(totalPaths)
+            }
         }
 
         // Group worktrees by parent repository
