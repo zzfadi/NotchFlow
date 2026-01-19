@@ -1,6 +1,6 @@
 # NotchFlow
 
-[![CI](https://github.com/zzfadi/ios-first/actions/workflows/ci.yml/badge.svg)](https://github.com/zzfadi/ios-first/actions/workflows/ci.yml)
+[![CI](https://github.com/zzfadi/NotchFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/zzfadi/NotchFlow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A macOS notch app with three integrated developer-focused mini-apps.

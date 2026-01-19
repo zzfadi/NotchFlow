@@ -7,7 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var notchManager: NotchManager?
     var statusItem: NSStatusItem?
     var settingsWindow: NSWindow?
-    
+
     // Store observer tokens to remove them later
     private var notificationObservers: [NSObjectProtocol] = []
 
@@ -15,7 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
         setupNotch()
         setupNotifications()
-        
+
         // Show the notch after a short delay to ensure window is ready
         Task {
             try? await Task.sleep(for: .milliseconds(500))
@@ -29,12 +29,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NotificationCenter.default.removeObserver(observer)
         }
         notificationObservers.removeAll()
-        
+
         notchManager?.cleanup()
     }
-    
+
     // MARK: - Notification Setup
-    
+
     private func setupNotifications() {
         let hideObserver = NotificationCenter.default.addObserver(
             forName: .hideNotch,
@@ -46,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         notificationObservers.append(hideObserver)
-        
+
         let showObserver = NotificationCenter.default.addObserver(
             forName: .showNotch,
             object: nil,
@@ -57,7 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         notificationObservers.append(showObserver)
-        
+
         let settingsObserver = NotificationCenter.default.addObserver(
             forName: .showSettings,
             object: nil,
@@ -120,11 +120,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        
+
         // Create a new settings window
         let settingsView = SettingsView()
         let hostingController = NSHostingController(rootView: settingsView)
-        
+
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 500),
             styleMask: [.titled, .closable, .resizable],
@@ -136,7 +136,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
-        
+
         settingsWindow = window
         NSApp.activate(ignoringOtherApps: true)
     }

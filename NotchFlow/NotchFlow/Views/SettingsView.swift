@@ -77,7 +77,7 @@ struct GeneralSettingsView: View {
             Section {
                 ColorPicker("Accent Color", selection: accentColorBinding)
             }
-            
+
             Section("Notch Size") {
                 Picker("Configure for", selection: $selectedApp) {
                     ForEach(MiniApp.allCases) { app in
@@ -85,10 +85,10 @@ struct GeneralSettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                
+
                 let currentPreset = settings.presetForApp(selectedApp)
                 let currentSize = settings.sizeForApp(selectedApp)
-                
+
                 Picker("Size Preset", selection: presetBinding) {
                     ForEach(NotchSizePreset.allCases.filter { $0 != .custom }) { preset in
                         Text(preset.rawValue).tag(preset)
@@ -99,7 +99,7 @@ struct GeneralSettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Width: \(Int(currentSize.width))pt")
@@ -115,7 +115,7 @@ struct GeneralSettingsView: View {
                         in: SettingsManager.minNotchWidth...SettingsManager.maxNotchWidth,
                         step: 10
                     )
-                    
+
                     HStack {
                         Text("Height: \(Int(currentSize.height))pt")
                             .font(.caption)
@@ -133,15 +133,15 @@ struct GeneralSettingsView: View {
                 }
                 .disabled(currentPreset != .custom)
                 .opacity(currentPreset == .custom ? 1.0 : 0.5)
-                
+
                 HStack {
                     Button("Reset All Apps to Default") {
                         settings.resetAllSizesToDefault()
                     }
                     .foregroundColor(.orange)
-                    
+
                     Spacer()
-                    
+
                     Text("Drag bottom-right corner of notch to resize")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -165,7 +165,7 @@ struct GeneralSettingsView: View {
             set: { settings.accentColorHex = $0.hexString }
         )
     }
-    
+
     private var presetBinding: Binding<NotchSizePreset> {
         Binding(
             get: { settings.presetForApp(selectedApp) },
@@ -177,7 +177,7 @@ struct GeneralSettingsView: View {
             }
         )
     }
-    
+
     private var widthBinding: Binding<CGFloat> {
         Binding(
             get: { settings.sizeForApp(selectedApp).width },
@@ -187,7 +187,7 @@ struct GeneralSettingsView: View {
             }
         )
     }
-    
+
     private var heightBinding: Binding<CGFloat> {
         Binding(
             get: { settings.sizeForApp(selectedApp).height },
