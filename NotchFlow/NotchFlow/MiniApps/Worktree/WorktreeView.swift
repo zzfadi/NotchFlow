@@ -6,6 +6,22 @@ struct WorktreeView: View {
     @State private var selectedWorktree: Worktree?
     @State private var searchText: String = ""
     @State private var expandedRepos: Set<UUID> = []
+    @State private var viewMode: ViewMode = .list
+    @State private var showingDetail: Bool = false
+    @State private var showingCreateSheet: Bool = false
+    @State private var refreshRotation: Double = 0
+
+    enum ViewMode: String, CaseIterable {
+        case list = "List"
+        case graph = "Graph"
+
+        var icon: String {
+            switch self {
+            case .list: return "list.bullet"
+            case .graph: return "point.3.connected.trianglepath.dotted"
+            }
+        }
+    }
 
     var filteredGroups: [RepositoryGroup] {
         if searchText.isEmpty {
@@ -24,20 +40,32 @@ struct WorktreeView: View {
         }
     }
 
+    var totalWorktrees: Int {
+        scanner.repositoryGroups.flatMap { $0.worktrees }.count
+    }
+
+    var dirtyWorktrees: Int {
+        scanner.repositoryGroups.flatMap { $0.worktrees }.filter { $0.status?.isClean == false }.count
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Header with search and refresh
-            headerView
+        HSplitView {
+            // Left panel - List
+            VStack(spacing: 0) {
+                headerView
+                Divider()
+                mainContent
+            }
+            .frame(minWidth: 250)
 
-            Divider()
-
-            // Content
-            if scanner.isScanning {
-                scanningView
-            } else if scanner.repositoryGroups.isEmpty {
-                emptyStateView
-            } else {
-                worktreeListView
+            // Right panel - Detail (when selected)
+            if showingDetail, let worktree = selectedWorktree {
+                WorktreeDetailView(
+                    worktree: worktree,
+                    onClose: { showingDetail = false },
+                    onRefresh: { scanner.refreshWorktree(worktree) }
+                )
+                .frame(minWidth: 280, maxWidth: 320)
             }
         }
         .onAppear {
@@ -50,35 +78,130 @@ struct WorktreeView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        HStack(spacing: 8) {
-            // Search field
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 10))
+        VStack(spacing: 8) {
+            // Stats bar
+            HStack(spacing: 12) {
+                StatBadge(
+                    icon: "arrow.triangle.branch",
+                    value: "\(totalWorktrees)",
+                    label: "worktrees",
+                    color: .cyan
+                )
 
-                TextField("Search worktrees", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 11))
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(6)
+                if dirtyWorktrees > 0 {
+                    StatBadge(
+                        icon: "exclamationmark.circle",
+                        value: "\(dirtyWorktrees)",
+                        label: "dirty",
+                        color: .orange
+                    )
+                }
 
-            // Refresh button
-            Button(action: {
-                scanner.scan()
-            }) {
-                Image(systemName: scanner.isScanning ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
-                    .font(.system(size: 11))
-                    .foregroundColor(.gray)
+                Spacer()
+
+                // View mode toggle
+                Picker("View", selection: $viewMode) {
+                    ForEach(ViewMode.allCases, id: \.self) { mode in
+                        Image(systemName: mode.icon)
+                            .tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 70)
             }
-            .buttonStyle(.plain)
-            .disabled(scanner.isScanning)
-            .help("Refresh worktrees")
+
+            // Search and actions
+            HStack(spacing: 8) {
+                // Search field
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 10))
+
+                    TextField("Search worktrees", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11))
+
+                    if !searchText.isEmpty {
+                        Button(action: { searchText = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(6)
+
+                // Refresh button
+                Button(action: {
+                    scanner.scan()
+                }) {
+                    Image(systemName: scanner.isScanning ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
+                        .font(.system(size: 11))
+                        .foregroundColor(.gray)
+                        .rotationEffect(.degrees(refreshRotation))
+                }
+                .buttonStyle(.plain)
+                .disabled(scanner.isScanning)
+                .help("Refresh worktrees")
+                .onChange(of: scanner.isScanning) { _, isScanning in
+                    if isScanning {
+                        // Start continuous rotation
+                        withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {
+                            refreshRotation = 360
+                        }
+                    } else {
+                        // Stop and reset rotation
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            refreshRotation = 0
+                        }
+                    }
+                }
+            }
+
+            // Progress indicator
+            if scanner.isScanning || scanner.isFetchingStatus {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.5)
+
+                    Text(scanner.isScanning ? "Scanning..." : "Fetching status...")
+                        .font(.system(size: 9))
+                        .foregroundColor(.gray)
+
+                    Spacer()
+
+                    if scanner.isScanning {
+                        Text("\(Int(scanner.scanProgress * 100))%")
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
         }
         .padding(8)
+    }
+
+    // MARK: - Main Content
+
+    @ViewBuilder
+    private var mainContent: some View {
+        if scanner.isScanning && scanner.repositoryGroups.isEmpty {
+            scanningView
+        } else if scanner.repositoryGroups.isEmpty {
+            emptyStateView
+        } else {
+            switch viewMode {
+            case .list:
+                worktreeListView
+            case .graph:
+                worktreeGraphView
+            }
+        }
     }
 
     // MARK: - Scanning View
@@ -91,6 +214,10 @@ struct WorktreeView: View {
             Text("Scanning for worktrees...")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
+
+            Text("Checking \(Int(scanner.scanProgress * 100))%")
+                .font(.system(size: 10))
+                .foregroundColor(.gray.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -123,7 +250,7 @@ struct WorktreeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Worktree List
+    // MARK: - List View
 
     private var worktreeListView: some View {
         ScrollView {
@@ -137,6 +264,7 @@ struct WorktreeView: View {
                                     isSelected: selectedWorktree?.id == worktree.id,
                                     onSelect: {
                                         selectedWorktree = worktree
+                                        showingDetail = true
                                     }
                                 )
                             }
@@ -145,6 +273,45 @@ struct WorktreeView: View {
                 }
             }
             .padding(4)
+        }
+    }
+
+    // MARK: - Graph View
+
+    private var worktreeGraphView: some View {
+        ScrollView {
+            LazyVStack(spacing: 16) {
+                ForEach(filteredGroups) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Repository name
+                        HStack {
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.pink.opacity(0.8))
+
+                            Text(group.name)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+
+                            Spacer()
+
+                            if group.totalChanges > 0 {
+                                Text("\(group.totalChanges) changes")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+
+                        // Graph
+                        WorktreeGraphView(group: group)
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.02))
+                    .cornerRadius(8)
+                }
+            }
+            .padding(8)
         }
     }
 
@@ -174,7 +341,28 @@ struct WorktreeView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
 
+                // Compact graph preview
+                CompactWorktreeGraph(worktrees: group.worktrees)
+                    .padding(.horizontal, 4)
+
                 Spacer()
+
+                // Status indicators
+                if group.totalChanges > 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 8))
+                        Text("\(group.totalChanges)")
+                            .font(.system(size: 9))
+                    }
+                    .foregroundColor(.orange)
+                }
+
+                if group.hasUnpushedChanges {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.green)
+                }
 
                 Text("\(group.worktrees.count)")
                     .font(.system(size: 10))
@@ -192,6 +380,31 @@ struct WorktreeView: View {
     }
 }
 
+// MARK: - Stat Badge
+
+struct StatBadge: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundColor(color)
+
+            Text(value)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white)
+
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundColor(.gray)
+        }
+    }
+}
+
 // MARK: - Worktree Row View
 
 struct WorktreeRowView: View {
@@ -204,6 +417,9 @@ struct WorktreeRowView: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 8) {
+                // Status indicator
+                statusIndicator
+
                 // Branch icon
                 Image(systemName: worktree.isMainWorktree ? "house.fill" : "arrow.triangle.branch")
                     .font(.system(size: 10))
@@ -229,15 +445,24 @@ struct WorktreeRowView: View {
                         }
                     }
 
-                    Text(worktree.branchDisplayName)
-                        .font(.system(size: 10))
-                        .foregroundColor(.cyan.opacity(0.8))
-                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text(worktree.branchDisplayName)
+                            .font(.system(size: 10))
+                            .foregroundColor(.cyan.opacity(0.8))
+                            .lineLimit(1)
+
+                        // Remote tracking status
+                        if let tracking = worktree.remoteTracking, !tracking.isSynced {
+                            Text(tracking.summary)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(tracking.needsPush ? .green : .orange)
+                        }
+                    }
                 }
 
                 Spacer()
 
-                // Actions
+                // Right side info
                 if isHovering || isSelected {
                     HStack(spacing: 4) {
                         ActionButton(icon: "terminal", tooltip: "Open in Terminal") {
@@ -253,9 +478,18 @@ struct WorktreeRowView: View {
                         }
                     }
                 } else {
-                    Text(worktree.lastModified, style: .relative)
-                        .font(.system(size: 9))
-                        .foregroundColor(.gray)
+                    // Status summary and time
+                    HStack(spacing: 8) {
+                        if let status = worktree.status, !status.isClean {
+                            Text(status.summary)
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(.orange)
+                        }
+
+                        Text(worktree.lastModified, style: .relative)
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray)
+                    }
                 }
             }
             .padding(.horizontal, 8)
@@ -290,47 +524,38 @@ struct WorktreeRowView: View {
         }
     }
 
+    // MARK: - Status Indicator
+
+    private var statusIndicator: some View {
+        Group {
+            if let status = worktree.status {
+                Circle()
+                    .fill(status.isClean ? Color.green : (status.conflicted > 0 ? Color.red : Color.orange))
+                    .frame(width: 6, height: 6)
+            } else {
+                Circle()
+                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                    .frame(width: 6, height: 6)
+            }
+        }
+    }
+
     // MARK: - Actions
 
     private func openInTerminal(_ path: URL) {
-        // Escape single quotes by replacing ' with '\'' for safe shell interpolation
-        let escapedPath = path.path.replacingOccurrences(of: "'", with: "'\\''")
-        let script = """
-        tell application "Terminal"
-            activate
-            do script "cd '\(escapedPath)'"
-        end tell
-        """
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-        }
+        WorktreeActions.openInTerminal(path)
     }
 
     private func openInVSCode(_ path: URL) {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        task.arguments = ["code", path.path]
-        do {
-            try task.run()
-        } catch {
-            // Show alert if VS Code command fails (not installed or not in PATH)
-            let alert = NSAlert()
-            alert.messageText = "Unable to Open in VS Code"
-            alert.informativeText = "The 'code' command could not be found. Please ensure VS Code is installed and the 'code' command is in your PATH."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-        }
+        WorktreeActions.openInVSCode(path)
     }
 
     private func openInFinder(_ path: URL) {
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path.path)
+        WorktreeActions.openInFinder(path)
     }
 
     private func copyPath(_ path: URL) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(path.path, forType: .string)
+        WorktreeActions.copyPath(path)
     }
 }
 
@@ -357,6 +582,6 @@ struct ActionButton: View {
 
 #Preview {
     WorktreeView()
-        .frame(width: 400, height: 250)
+        .frame(width: 600, height: 350)
         .background(Color.black)
 }
