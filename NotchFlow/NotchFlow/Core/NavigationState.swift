@@ -1,6 +1,14 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let hideNotch = Notification.Name("hideNotch")
+    static let showNotch = Notification.Name("showNotch")
+    static let showSettings = Notification.Name("showSettings")
+}
+
 enum MiniApp: String, CaseIterable, Identifiable {
     case worktree = "Worktree"
     case aiConfig = "AI Config"
