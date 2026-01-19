@@ -218,7 +218,7 @@ struct WorktreeDetailView: View {
             }
 
             if let lastFetch = tracking.lastFetch {
-                Text("Last fetch: \(lastFetch, style: .relative) ago")
+                Text("Last fetch: \(lastFetch, style: .relative)")
                     .font(.system(size: 9))
                     .foregroundColor(.gray.opacity(0.7))
             }
@@ -380,28 +380,15 @@ struct WorktreeDetailView: View {
     // MARK: - Actions
 
     private func openInTerminal(_ path: URL) {
-        let escapedPath = path.path.replacingOccurrences(of: "'", with: "'\\''")
-        let script = """
-        tell application "Terminal"
-            activate
-            do script "cd '\(escapedPath)'"
-        end tell
-        """
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-        }
+        WorktreeActions.openInTerminal(path)
     }
 
     private func openInVSCode(_ path: URL) {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        task.arguments = ["code", path.path]
-        try? task.run()
+        WorktreeActions.openInVSCode(path)
     }
 
     private func openInFinder(_ path: URL) {
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path.path)
+        WorktreeActions.openInFinder(path)
     }
 }
 

@@ -530,42 +530,19 @@ struct WorktreeRowView: View {
     // MARK: - Actions
 
     private func openInTerminal(_ path: URL) {
-        let escapedPath = path.path.replacingOccurrences(of: "'", with: "'\\''")
-        let script = """
-        tell application "Terminal"
-            activate
-            do script "cd '\(escapedPath)'"
-        end tell
-        """
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-        }
+        WorktreeActions.openInTerminal(path)
     }
 
     private func openInVSCode(_ path: URL) {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        task.arguments = ["code", path.path]
-        do {
-            try task.run()
-        } catch {
-            let alert = NSAlert()
-            alert.messageText = "Unable to Open in VS Code"
-            alert.informativeText = "The 'code' command could not be found. Please ensure VS Code is installed and the 'code' command is in your PATH."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-        }
+        WorktreeActions.openInVSCode(path)
     }
 
     private func openInFinder(_ path: URL) {
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path.path)
+        WorktreeActions.openInFinder(path)
     }
 
     private func copyPath(_ path: URL) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(path.path, forType: .string)
+        WorktreeActions.copyPath(path)
     }
 }
 

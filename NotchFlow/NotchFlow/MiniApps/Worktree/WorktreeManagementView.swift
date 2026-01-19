@@ -196,7 +196,7 @@ struct CreateWorktreeSheet: View {
         Task {
             let branches = await gitRunner.getAllBranches(in: parentRepo)
             await MainActor.run {
-                availableBranches = branches.filter { !$0.contains("HEAD") }
+                availableBranches = branches.filter { !($0 == "HEAD" || $0.hasPrefix("HEAD ->") || $0.hasPrefix("origin/HEAD")) }
                 if let main = availableBranches.first(where: { $0 == "main" || $0 == "master" }) {
                     selectedBranch = main
                 } else if let first = availableBranches.first {
@@ -208,7 +208,7 @@ struct CreateWorktreeSheet: View {
 
     private func suggestPath() {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        let worktreesDir = home.appendingPathComponent(".claude-worktrees")
+        let worktreesDir = home.appendingPathComponent(".worktrees")
         let repoName = parentRepo.lastPathComponent
         worktreePath = worktreesDir.appendingPathComponent(repoName).appendingPathComponent("new-worktree").path
     }

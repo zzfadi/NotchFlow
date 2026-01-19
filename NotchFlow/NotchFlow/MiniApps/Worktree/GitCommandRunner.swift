@@ -49,8 +49,8 @@ actor GitCommandRunner {
 
         var summary = GitStatusSummary()
 
-        for line in output.components(separatedBy: "\n") where !line.isEmpty {
-            let index = line.index(line.startIndex, offsetBy: min(2, line.count))
+        for line in output.components(separatedBy: "\n") where line.count >= 2 {
+            let index = line.index(line.startIndex, offsetBy: 2)
             let statusCode = String(line.prefix(upTo: index))
 
             // Parse status codes (XY format where X=staging, Y=working tree)
@@ -112,9 +112,29 @@ actor GitCommandRunner {
             behind = Int(countParts.dropFirst().first ?? "0") ?? 0
         }
 
-        // Get last fetch time
-        let fetchHeadPath = worktreePath.appendingPathComponent(".git/FETCH_HEAD")
+        // Get last fetch time - handle both regular repos and worktrees
         let lastFetch: Date?
+        let gitPath = worktreePath.appendingPathComponent(".git")
+        var fetchHeadPath: URL
+
+        // Check if .git is a file (worktree) or directory (main repo)
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: gitPath.path, isDirectory: &isDirectory), !isDirectory.boolValue {
+            // This is a worktree - read the gitdir path from .git file
+            if let gitFileContents = try? String(contentsOf: gitPath, encoding: .utf8) {
+                let gitdirPath = gitFileContents
+                    .replacingOccurrences(of: "gitdir:", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                // Go up from worktrees/<name> to the main repo's .git directory
+                let gitdir = URL(fileURLWithPath: gitdirPath)
+                fetchHeadPath = gitdir.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("FETCH_HEAD")
+            } else {
+                fetchHeadPath = gitPath.appendingPathComponent("FETCH_HEAD")
+            }
+        } else {
+            fetchHeadPath = gitPath.appendingPathComponent("FETCH_HEAD")
+        }
+
         if let attrs = try? FileManager.default.attributesOfItem(atPath: fetchHeadPath.path) {
             lastFetch = attrs[.modificationDate] as? Date
         } else {
