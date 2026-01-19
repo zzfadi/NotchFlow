@@ -4,6 +4,10 @@ struct MainNotchView: View {
     @EnvironmentObject var navigationState: NavigationState
     @StateObject private var settings = SettingsManager.shared
 
+    private var currentSize: CGSize {
+        settings.sizeForApp(navigationState.activeApp)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Tab bar with mini-app icons
@@ -42,8 +46,12 @@ struct MainNotchView: View {
             // Content area
             ExpandedView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Bottom bar - swipe up to close, drag to resize
+            NotchBottomBar(currentApp: navigationState.activeApp)
         }
-        .frame(width: 400, height: 280)
+        .frame(width: currentSize.width, height: currentSize.height)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentSize)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.black.opacity(0.9))

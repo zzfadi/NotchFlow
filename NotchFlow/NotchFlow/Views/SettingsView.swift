@@ -54,12 +54,13 @@ struct SettingsView: View {
                 }
                 .tag(SettingsTab.fogNote)
         }
-        .frame(width: 500, height: 400)
+        .frame(width: 500, height: 500)
     }
 }
 
 struct GeneralSettingsView: View {
     @StateObject private var settings = SettingsManager.shared
+    @State private var selectedApp: MiniApp = .fogNote
 
     var body: some View {
         Form {
@@ -75,6 +76,76 @@ struct GeneralSettingsView: View {
 
             Section {
                 ColorPicker("Accent Color", selection: accentColorBinding)
+            }
+            
+            Section("Notch Size") {
+                Picker("Configure for", selection: $selectedApp) {
+                    ForEach(MiniApp.allCases) { app in
+                        Text(app.rawValue).tag(app)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                let currentPreset = settings.presetForApp(selectedApp)
+                let currentSize = settings.sizeForApp(selectedApp)
+                
+                Picker("Size Preset", selection: presetBinding) {
+                    ForEach(NotchSizePreset.allCases.filter { $0 != .custom }) { preset in
+                        Text(preset.rawValue).tag(preset)
+                    }
+                    // Only show Custom option if currently using custom size (read-only indicator)
+                    if currentPreset == .custom {
+                        Text("Custom").tag(NotchSizePreset.custom)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Width: \(Int(currentSize.width))pt")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(Int(SettingsManager.minNotchWidth)) - \(Int(SettingsManager.maxNotchWidth))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(
+                        value: widthBinding,
+                        in: SettingsManager.minNotchWidth...SettingsManager.maxNotchWidth,
+                        step: 10
+                    )
+                    
+                    HStack {
+                        Text("Height: \(Int(currentSize.height))pt")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(Int(SettingsManager.minNotchHeight)) - \(Int(SettingsManager.maxNotchHeight))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(
+                        value: heightBinding,
+                        in: SettingsManager.minNotchHeight...SettingsManager.maxNotchHeight,
+                        step: 10
+                    )
+                }
+                .disabled(currentPreset != .custom)
+                .opacity(currentPreset == .custom ? 1.0 : 0.5)
+                
+                HStack {
+                    Button("Reset All Apps to Default") {
+                        settings.resetAllSizesToDefault()
+                    }
+                    .foregroundColor(.orange)
+                    
+                    Spacer()
+                    
+                    Text("Drag bottom-right corner of notch to resize")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
 
             Section {
@@ -92,6 +163,38 @@ struct GeneralSettingsView: View {
         Binding(
             get: { settings.accentColor },
             set: { settings.accentColorHex = $0.hexString }
+        )
+    }
+    
+    private var presetBinding: Binding<NotchSizePreset> {
+        Binding(
+            get: { settings.presetForApp(selectedApp) },
+            set: { newPreset in
+                // Custom is a computed state (not a selectable preset)
+                // Only apply if it's an actual preset
+                guard newPreset != .custom else { return }
+                settings.applyPreset(newPreset, to: selectedApp)
+            }
+        )
+    }
+    
+    private var widthBinding: Binding<CGFloat> {
+        Binding(
+            get: { settings.sizeForApp(selectedApp).width },
+            set: { newWidth in
+                let currentSize = settings.sizeForApp(selectedApp)
+                settings.setSize(CGSize(width: newWidth, height: currentSize.height), for: selectedApp)
+            }
+        )
+    }
+    
+    private var heightBinding: Binding<CGFloat> {
+        Binding(
+            get: { settings.sizeForApp(selectedApp).height },
+            set: { newHeight in
+                let currentSize = settings.sizeForApp(selectedApp)
+                settings.setSize(CGSize(width: currentSize.width, height: newHeight), for: selectedApp)
+            }
         )
     }
 }

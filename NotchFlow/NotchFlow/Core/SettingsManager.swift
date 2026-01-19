@@ -1,8 +1,48 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Notch Size Preset
+
+enum NotchSizePreset: String, CaseIterable, Identifiable {
+    case compact = "Compact"
+    case `default` = "Default"
+    case large = "Large"
+    case custom = "Custom"
+    
+    var id: String { rawValue }
+    
+    var size: CGSize {
+        switch self {
+        case .compact:
+            return CGSize(width: 320, height: 220)
+        case .default:
+            return CGSize(width: 400, height: 280)
+        case .large:
+            return CGSize(width: 520, height: 380)
+        case .custom:
+            return CGSize(width: 400, height: 280) // Fallback, actual custom size stored separately
+        }
+    }
+    
+    static func preset(for size: CGSize) -> NotchSizePreset {
+        for preset in [NotchSizePreset.compact, .default, .large] {
+            if abs(preset.size.width - size.width) < 1 && abs(preset.size.height - size.height) < 1 {
+                return preset
+            }
+        }
+        return .custom
+    }
+}
+
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
+    
+    // MARK: - Size Constraints
+    
+    static let minNotchWidth: CGFloat = 280
+    static let maxNotchWidth: CGFloat = 600
+    static let minNotchHeight: CGFloat = 180
+    static let maxNotchHeight: CGFloat = 450
 
     // MARK: - User Defaults Keys
 
@@ -13,6 +53,7 @@ class SettingsManager: ObservableObject {
         static let aiConfigScanPaths = "aiConfigScanPaths"
         static let fogNotesDirectory = "fogNotesDirectory"
         static let accentColor = "accentColor"
+        static let appSizes = "appSizes"
     }
 
     // MARK: - Published Properties
@@ -24,6 +65,7 @@ class SettingsManager: ObservableObject {
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []
     @Published var fogNotesDirectory: String = ""
+    @Published var appSizes: [String: [String: CGFloat]] = [:]
 
     // MARK: - Computed Properties
 
@@ -34,6 +76,47 @@ class SettingsManager: ObservableObject {
 
     var accentColor: Color {
         Color(hex: accentColorHex) ?? .pink
+    }
+    
+    // MARK: - Per-App Size Methods
+    
+    func sizeForApp(_ app: MiniApp) -> CGSize {
+        if let sizeDict = appSizes[app.rawValue],
+           let width = sizeDict["width"],
+           let height = sizeDict["height"] {
+            return CGSize(width: width, height: height)
+        }
+        return NotchSizePreset.default.size
+    }
+    
+    func setSize(_ size: CGSize, for app: MiniApp) {
+        let clampedWidth = max(Self.minNotchWidth, min(Self.maxNotchWidth, size.width))
+        let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
+        appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
+        saveSettings()
+    }
+    
+    /// Updates size in memory for live UI updates during drag, without persisting to disk.
+    /// Call `setSize(_:for:)` when the drag ends to persist.
+    func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
+        let clampedWidth = max(Self.minNotchWidth, min(Self.maxNotchWidth, size.width))
+        let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
+        appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
+    }
+    
+    func presetForApp(_ app: MiniApp) -> NotchSizePreset {
+        return NotchSizePreset.preset(for: sizeForApp(app))
+    }
+    
+    func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
+        if preset != .custom {
+            setSize(preset.size, for: app)
+        }
+    }
+    
+    func resetAllSizesToDefault() {
+        appSizes = [:]
+        saveSettings()
     }
 
     // MARK: - Initialization
@@ -67,6 +150,11 @@ class SettingsManager: ObservableObject {
         } else {
             fogNotesDirectory = defaultFogNotesDirectory()
         }
+        
+        // Load per-app sizes
+        if let sizesData = defaults.dictionary(forKey: Keys.appSizes) as? [String: [String: CGFloat]] {
+            appSizes = sizesData
+        }
     }
 
     func saveSettings() {
@@ -74,6 +162,7 @@ class SettingsManager: ObservableObject {
         defaults.set(worktreeScanPaths, forKey: Keys.worktreeScanPaths)
         defaults.set(aiConfigScanPaths, forKey: Keys.aiConfigScanPaths)
         defaults.set(fogNotesDirectory, forKey: Keys.fogNotesDirectory)
+        defaults.set(appSizes, forKey: Keys.appSizes)
     }
 
     func resetToDefaults() {
@@ -83,6 +172,7 @@ class SettingsManager: ObservableObject {
         launchAtLogin = false
         defaultApp = MiniApp.fogNote.rawValue
         accentColorHex = "FF69B4"
+        appSizes = [:]
         saveSettings()
     }
 
