@@ -196,7 +196,14 @@ struct CreateWorktreeSheet: View {
         Task {
             let branches = await gitRunner.getAllBranches(in: parentRepo)
             await MainActor.run {
-                availableBranches = branches.filter { !($0 == "HEAD" || $0.hasPrefix("HEAD ->") || $0.hasPrefix("origin/HEAD")) }
+                // Filter out symbolic refs like "HEAD", "HEAD -> main", "origin/HEAD -> origin/main"
+                // Use exact matching with space after arrow to avoid filtering branches named "HEAD-feature"
+                availableBranches = branches.filter { branch in
+                    !(branch == "HEAD" ||
+                      branch.hasPrefix("HEAD -> ") ||
+                      branch == "origin/HEAD" ||
+                      branch.hasPrefix("origin/HEAD -> "))
+                }
                 if let main = availableBranches.first(where: { $0 == "main" || $0 == "master" }) {
                     selectedBranch = main
                 } else if let first = availableBranches.first {
@@ -429,6 +436,7 @@ struct PruneWorktreesButton: View {
     @State private var isPruning: Bool = false
     @State private var showResult: Bool = false
     @State private var resultMessage: String = ""
+    @State private var hideTask: Task<Void, Never>?
 
     private let gitRunner = GitCommandRunner.shared
 
@@ -455,10 +463,16 @@ struct PruneWorktreesButton: View {
                 .font(.system(size: 11))
                 .padding(8)
         }
+        .onDisappear {
+            // Cancel pending hide task when view is removed
+            hideTask?.cancel()
+        }
     }
 
     private func pruneWorktrees() {
         isPruning = true
+        // Cancel any pending hide task
+        hideTask?.cancel()
 
         Task {
             let result = await gitRunner.pruneWorktrees(in: repoPath)
@@ -476,9 +490,12 @@ struct PruneWorktreesButton: View {
 
                 showResult = true
 
-                // Auto-hide after 2 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    showResult = false
+                // Auto-hide after 3 seconds using cancellable Task
+                hideTask = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    if !Task.isCancelled {
+                        showResult = false
+                    }
                 }
             }
         }

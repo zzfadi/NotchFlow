@@ -23,7 +23,9 @@ enum GitFileStatus: String, CaseIterable {
         }
     }
 
-    var color: String {
+    /// Returns the semantic color name for this status.
+    /// Use with SwiftUI's Color initializer: Color(colorName)
+    var colorName: String {
         switch self {
         case .modified: return "orange"
         case .added: return "green"
@@ -159,17 +161,23 @@ struct Worktree: Identifiable, Equatable, Hashable {
         commitHash.map { String($0.prefix(7)) }
     }
 
-    var statusIndicator: String {
-        guard let status = status else { return "○" }
-        if status.isClean { return "●" }
-        if status.conflicted > 0 { return "⚠" }
-        return "◐"
+    /// SF Symbol name representing the current status.
+    /// Returns appropriate symbol for unknown, clean, conflicted, or dirty states.
+    var statusIndicatorSymbol: String {
+        guard let status = status else { return "circle" }
+        if status.isClean { return "checkmark.circle.fill" }
+        if status.conflicted > 0 { return "exclamationmark.triangle.fill" }
+        return "pencil.circle.fill"
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 
+    /// Equality is based solely on id for performance and to support collection operations.
+    /// The rich status fields (status, remoteTracking, etc.) are populated asynchronously
+    /// and change frequently, but the worktree identity remains the same.
+    /// This allows SwiftUI to efficiently diff collections without re-fetching status.
     static func == (lhs: Worktree, rhs: Worktree) -> Bool {
         lhs.id == rhs.id
     }

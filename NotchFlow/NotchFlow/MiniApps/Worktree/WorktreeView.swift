@@ -9,6 +9,7 @@ struct WorktreeView: View {
     @State private var viewMode: ViewMode = .list
     @State private var showingDetail: Bool = false
     @State private var showingCreateSheet: Bool = false
+    @State private var refreshRotation: Double = 0
 
     enum ViewMode: String, CaseIterable {
         case list = "List"
@@ -142,12 +143,24 @@ struct WorktreeView: View {
                     Image(systemName: scanner.isScanning ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
                         .font(.system(size: 11))
                         .foregroundColor(.gray)
-                        .rotationEffect(.degrees(scanner.isScanning ? 360 : 0))
-                        .animation(scanner.isScanning ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: scanner.isScanning)
+                        .rotationEffect(.degrees(refreshRotation))
                 }
                 .buttonStyle(.plain)
                 .disabled(scanner.isScanning)
                 .help("Refresh worktrees")
+                .onChange(of: scanner.isScanning) { _, isScanning in
+                    if isScanning {
+                        // Start continuous rotation
+                        withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {
+                            refreshRotation = 360
+                        }
+                    } else {
+                        // Stop and reset rotation
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            refreshRotation = 0
+                        }
+                    }
+                }
             }
 
             // Progress indicator

@@ -40,6 +40,9 @@ class WorktreeScanner: ObservableObject {
     func cancelScan() {
         scanTask?.cancel()
         statusTask?.cancel()
+        // Note: We set these immediately for UI responsiveness.
+        // The tasks check Task.isCancelled and will stop processing.
+        // This is intentional - we prioritize UI feedback over waiting for task completion.
         isScanning = false
         isFetchingStatus = false
     }
@@ -62,33 +65,46 @@ class WorktreeScanner: ObservableObject {
     private func fetchAllStatus() async {
         isFetchingStatus = true
 
-        for groupIndex in repositoryGroups.indices {
-            for worktreeIndex in repositoryGroups[groupIndex].worktrees.indices {
+        // Take a snapshot to avoid mutating while iterating
+        let currentGroups = repositoryGroups
+        var updatedGroups: [RepositoryGroup] = []
+
+        for group in currentGroups {
+            if Task.isCancelled { break }
+
+            var updatedWorktrees: [Worktree] = []
+            for worktree in group.worktrees {
                 if Task.isCancelled { break }
 
-                let worktree = repositoryGroups[groupIndex].worktrees[worktreeIndex]
                 let updatedWorktree = await fetchStatusData(for: worktree)
-
-                await MainActor.run {
-                    repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
-                }
+                updatedWorktrees.append(updatedWorktree)
             }
+
+            var updatedGroup = group
+            updatedGroup.worktrees = updatedWorktrees
+            updatedGroups.append(updatedGroup)
         }
 
+        // Capture the final result before crossing actor boundary
+        let finalGroups = updatedGroups
         await MainActor.run {
+            if !Task.isCancelled {
+                repositoryGroups = finalGroups
+            }
             isFetchingStatus = false
         }
     }
 
     private func fetchStatusForWorktree(_ worktree: Worktree) async {
-        guard let groupIndex = repositoryGroups.firstIndex(where: { $0.worktrees.contains(worktree) }),
-              let worktreeIndex = repositoryGroups[groupIndex].worktrees.firstIndex(of: worktree) else {
-            return
-        }
-
+        // Fetch status data first (expensive operation)
         let updatedWorktree = await fetchStatusData(for: worktree)
 
+        // Then update the UI atomically, re-checking indices since they may have changed
         await MainActor.run {
+            guard let groupIndex = repositoryGroups.firstIndex(where: { $0.worktrees.contains(worktree) }),
+                  let worktreeIndex = repositoryGroups[groupIndex].worktrees.firstIndex(of: worktree) else {
+                return
+            }
             repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
         }
     }
@@ -120,6 +136,11 @@ class WorktreeScanner: ObservableObject {
     private func performScan() async -> [RepositoryGroup] {
         var allWorktrees: [Worktree] = []
         let totalPaths = settings.worktreeScanPaths.count
+
+        // Guard against division by zero
+        guard totalPaths > 0 else {
+            return []
+        }
 
         for (index, pathString) in settings.worktreeScanPaths.enumerated() {
             if Task.isCancelled { break }

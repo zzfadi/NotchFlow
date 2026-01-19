@@ -9,6 +9,11 @@ actor GitCommandRunner {
     // MARK: - Command Execution
 
     func run(_ arguments: [String], in directory: URL) async -> Result<String, GitError> {
+        // Check for cancellation before starting
+        if Task.isCancelled {
+            return .failure(.commandFailed("Task cancelled"))
+        }
+
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         task.arguments = arguments
@@ -21,17 +26,26 @@ actor GitCommandRunner {
 
         do {
             try task.run()
-            task.waitUntilExit()
 
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            // Use withTaskCancellationHandler to terminate process if task is cancelled
+            return await withTaskCancellationHandler {
+                task.waitUntilExit()
 
-            if task.terminationStatus == 0 {
-                let output = String(data: outputData, encoding: .utf8) ?? ""
-                return .success(output.trimmingCharacters(in: .whitespacesAndNewlines))
-            } else {
-                let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                return .failure(.commandFailed(errorMessage.trimmingCharacters(in: .whitespacesAndNewlines)))
+                let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+                if task.terminationStatus == 0 {
+                    let output = String(data: outputData, encoding: .utf8) ?? ""
+                    return .success(output.trimmingCharacters(in: .whitespacesAndNewlines))
+                } else {
+                    let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+                    return .failure(.commandFailed(errorMessage.trimmingCharacters(in: .whitespacesAndNewlines)))
+                }
+            } onCancel: {
+                // Terminate the process if task is cancelled
+                if task.isRunning {
+                    task.terminate()
+                }
             }
         } catch {
             return .failure(.executionFailed(error.localizedDescription))
