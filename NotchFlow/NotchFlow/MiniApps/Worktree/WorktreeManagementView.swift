@@ -194,7 +194,8 @@ struct CreateWorktreeSheet: View {
 
     private func loadBranches() {
         Task {
-            let branches = await gitRunner.getAllBranches(in: parentRepo)
+            let branchesResult = await gitRunner.getAllBranches(in: parentRepo)
+            let branches = (try? branchesResult.get()) ?? []
             await MainActor.run {
                 // Filter out symbolic refs like "HEAD", "HEAD -> main", "origin/HEAD -> origin/main"
                 // Use exact matching with space after arrow to avoid filtering branches named "HEAD-feature"
