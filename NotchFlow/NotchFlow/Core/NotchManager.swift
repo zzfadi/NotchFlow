@@ -15,7 +15,7 @@ class NotchManager: ObservableObject {
     func initialize() {
         let navState = self.navigationState
         let settings = SettingsManager.shared
-        
+
         notch = DynamicNotch(
             hoverBehavior: [.keepVisible, .hapticFeedback],
             style: .auto
@@ -103,7 +103,7 @@ class NotchManager: ObservableObject {
         await notch?.compact(on: screen)
         isExpanded = false
     }
-    
+
     func hide() async {
         await notch?.hide()
         isExpanded = false

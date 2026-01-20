@@ -10,9 +10,9 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     case large = "Large"
     case extraLarge = "Extra Large"
     case custom = "Custom"
-    
+
     var id: String { rawValue }
-    
+
     /// Base (unclamped) size for this preset
     var baseSize: CGSize {
         switch self {
@@ -28,7 +28,7 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
             return CGSize(width: 600, height: 400) // Fallback, actual custom size stored separately
         }
     }
-    
+
     /// Screen-safe size, clamped to current display's maximum safe bounds
     var size: CGSize {
         let base = baseSize
@@ -38,14 +38,14 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
             height: min(base.height, maxSafe.height)
         )
     }
-    
+
     /// Returns true if this preset would be clamped on the current screen
     var isClamped: Bool {
         let base = baseSize
         let maxSafe = SettingsManager.screenSafeMaxSize()
         return base.width > maxSafe.width || base.height > maxSafe.height
     }
-    
+
     /// Description showing clamped size if applicable
     var displayName: String {
         if isClamped {
@@ -54,7 +54,7 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
         }
         return rawValue
     }
-    
+
     static func preset(for size: CGSize) -> NotchSizePreset {
         // Check against clamped sizes (what's actually applied)
         for preset in [NotchSizePreset.compact, .default, .large, .extraLarge] {
@@ -69,9 +69,9 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
 
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
-    
+
     // MARK: - Size Constraints
-    
+
     static let minNotchWidth: CGFloat = 280
     static let minNotchHeight: CGFloat = 180
     
@@ -147,9 +147,9 @@ class SettingsManager: ObservableObject {
     var accentColor: Color {
         Color(hex: accentColorHex) ?? .pink
     }
-    
+
     // MARK: - Per-App Size Methods
-    
+
     func sizeForApp(_ app: MiniApp) -> CGSize {
         if let sizeDict = appSizes[app.rawValue],
            let width = sizeDict["width"],
@@ -158,13 +158,13 @@ class SettingsManager: ObservableObject {
         }
         return NotchSizePreset.default.size
     }
-    
+
     func setSize(_ size: CGSize, for app: MiniApp) {
         let clamped = Self.clampedSize(size)
         appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
         saveSettings()
     }
-    
+
     /// Updates size in memory for live UI updates during drag, without persisting to disk.
     /// Call `setSize(_:for:)` when the drag ends to persist.
     func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
@@ -190,17 +190,17 @@ class SettingsManager: ObservableObject {
             setSize(clamped, for: app)
         }
     }
-    
+
     func presetForApp(_ app: MiniApp) -> NotchSizePreset {
         return NotchSizePreset.preset(for: sizeForApp(app))
     }
-    
+
     func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
         if preset != .custom {
             setSize(preset.size, for: app)
         }
     }
-    
+
     func resetAllSizesToDefault() {
         appSizes = [:]
         saveSettings()
@@ -237,7 +237,7 @@ class SettingsManager: ObservableObject {
         } else {
             fogNotesDirectory = defaultFogNotesDirectory()
         }
-        
+
         // Load per-app sizes
         if let sizesData = defaults.dictionary(forKey: Keys.appSizes) as? [String: [String: CGFloat]] {
             appSizes = sizesData
@@ -320,14 +320,14 @@ extension Color {
         guard let srgbColor = nsColor.usingColorSpace(.sRGB) else {
             return "FF69B4" // Default pink if color space conversion fails
         }
-        
+
         // Extract RGB components using NSColor's component accessors for reliability
         var red: CGFloat = 0
         var green: CGFloat = 0
         var blue: CGFloat = 0
         var alpha: CGFloat = 0
         srgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        
+
         let r = Int(max(0, min(255, red * 255)))
         let g = Int(max(0, min(255, green * 255)))
         let b = Int(max(0, min(255, blue * 255)))

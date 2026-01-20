@@ -50,7 +50,7 @@ struct MainNotchView: View {
             // Content area
             ExpandedView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
+
             // Bottom bar - swipe up to close, drag to resize
             NotchBottomBar(currentApp: navigationState.activeApp)
         }

@@ -1,5 +1,8 @@
 # NotchFlow
 
+[![CI](https://github.com/zzfadi/NotchFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/zzfadi/NotchFlow/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A macOS notch app with three integrated developer-focused mini-apps.
 
 See [NotchFlow/README.md](NotchFlow/README.md) for full documentation.
@@ -28,6 +31,10 @@ swift build
 - macOS 14.0+ (Sonoma)
 - Xcode 15.0+ or Swift 5.9+
 
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+
 ## License
 
-MIT
+MIT - see [LICENSE](LICENSE) for details.

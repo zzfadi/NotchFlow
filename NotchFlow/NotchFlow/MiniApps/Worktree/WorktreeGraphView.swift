@@ -65,7 +65,7 @@ struct WorktreeGraphView: View {
             let mainY: CGFloat = 30
 
             // Draw lines from main to each linked worktree
-            for (index, _) in linkedWorktrees.enumerated() {
+            for index in linkedWorktrees.indices {
                 let angle = calculateAngle(index: index, total: linkedWorktrees.count)
                 let radius = min(width / 2 - 40, 100.0)
                 let targetX = mainX + cos(angle) * radius
