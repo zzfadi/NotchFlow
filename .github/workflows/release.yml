@@ -99,16 +99,15 @@ jobs:
           mkdir -p build/dmg
           cp -R "build/export/${{ env.PROJECT_NAME }}.app" build/dmg/
 
+          # Note: create-dmg from npm takes source first, then dmg path
           create-dmg \
-            --volname "${{ env.PROJECT_NAME }}" \
-            --window-size 540 380 \
-            --icon-size 128 \
-            --icon "${{ env.PROJECT_NAME }}.app" 120 190 \
-            --app-drop-link 420 190 \
-            --background "${{ github.workspace }}/assets/dmg/background.png" \
-            --no-internet-enable \
-            "build/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.VERSION }}.dmg" \
-            build/dmg/
+            "build/dmg/${{ env.PROJECT_NAME }}.app" \
+            build/ \
+            --overwrite \
+            --dmg-title="${{ env.PROJECT_NAME }}" || true
+          
+          # Rename the generated DMG to include version
+          mv build/*.dmg "build/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.VERSION }}.dmg"
 
       - name: Notarize DMG
         env:
