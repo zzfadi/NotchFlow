@@ -13,6 +13,8 @@ disabled_rules:
   - large_tuple
   - trailing_whitespace
   - implicit_optional_initialization
+  - void_return
+  - line_length
 
 opt_in_rules:
   - empty_count
