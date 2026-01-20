@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AppKit
 
 // MARK: - Notch Size Preset
 
@@ -12,7 +13,8 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var size: CGSize {
+    /// Base (unclamped) size for this preset
+    var baseSize: CGSize {
         switch self {
         case .compact:
             return CGSize(width: 400, height: 280)
@@ -27,9 +29,37 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Screen-safe size, clamped to current display's maximum safe bounds
+    var size: CGSize {
+        let base = baseSize
+        let maxSafe = SettingsManager.screenSafeMaxSize()
+        return CGSize(
+            width: min(base.width, maxSafe.width),
+            height: min(base.height, maxSafe.height)
+        )
+    }
+
+    /// Returns true if this preset would be clamped on the current screen
+    var isClamped: Bool {
+        let base = baseSize
+        let maxSafe = SettingsManager.screenSafeMaxSize()
+        return base.width > maxSafe.width || base.height > maxSafe.height
+    }
+
+    /// Description showing clamped size if applicable
+    var displayName: String {
+        if isClamped {
+            let clamped = size
+            return "\(rawValue) (max \(Int(clamped.width))×\(Int(clamped.height)))"
+        }
+        return rawValue
+    }
+
     static func preset(for size: CGSize) -> NotchSizePreset {
+        // Check against clamped sizes (what's actually applied)
         for preset in [NotchSizePreset.compact, .default, .large, .extraLarge] {
-            if abs(preset.size.width - size.width) < 1 && abs(preset.size.height - size.height) < 1 {
+            let presetSize = preset.size
+            if abs(presetSize.width - size.width) < 1 && abs(presetSize.height - size.height) < 1 {
                 return preset
             }
         }
@@ -43,9 +73,44 @@ class SettingsManager: ObservableObject {
     // MARK: - Size Constraints
 
     static let minNotchWidth: CGFloat = 280
-    static let maxNotchWidth: CGFloat = 1000
     static let minNotchHeight: CGFloat = 180
-    static let maxNotchHeight: CGFloat = 700
+    
+    /// Absolute maximum values (for displays that can support them)
+    static let absoluteMaxNotchWidth: CGFloat = 1000
+    static let absoluteMaxNotchHeight: CGFloat = 700
+    
+    /// Padding to keep content safely within DynamicNotchKit's window bounds
+    private static let windowPaddingWidth: CGFloat = 40
+    private static let windowPaddingHeight: CGFloat = 60
+    
+    /// Returns the maximum safe size based on current screen dimensions.
+    /// DynamicNotchKit creates windows at 85% of screen size, so we must stay within those bounds.
+    static func screenSafeMaxSize(for screen: NSScreen? = NSScreen.main) -> CGSize {
+        guard let screen = screen else {
+            print("[SettingsManager] Warning: No screen available, using fallback size 600x400")
+            return CGSize(width: 600, height: 400)
+        }
+
+        // DynamicNotchKit uses screen.frame.width * 0.85 and screen.frame.height * 0.85
+        let windowFactor: CGFloat = 0.85
+        let maxWidth = min(absoluteMaxNotchWidth, (screen.frame.width * windowFactor) - windowPaddingWidth)
+        let maxHeight = min(absoluteMaxNotchHeight, (screen.frame.height * windowFactor) - windowPaddingHeight)
+
+        return CGSize(
+            width: max(minNotchWidth, maxWidth),
+            height: max(minNotchHeight, maxHeight)
+        )
+    }
+    
+    /// Dynamic max width based on current screen
+    static var maxNotchWidth: CGFloat {
+        screenSafeMaxSize().width
+    }
+    
+    /// Dynamic max height based on current screen
+    static var maxNotchHeight: CGFloat {
+        screenSafeMaxSize().height
+    }
 
     // MARK: - User Defaults Keys
 
@@ -95,18 +160,35 @@ class SettingsManager: ObservableObject {
     }
 
     func setSize(_ size: CGSize, for app: MiniApp) {
-        let clampedWidth = max(Self.minNotchWidth, min(Self.maxNotchWidth, size.width))
-        let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
-        appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
+        let clamped = Self.clampedSize(size)
+        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
         saveSettings()
     }
 
     /// Updates size in memory for live UI updates during drag, without persisting to disk.
     /// Call `setSize(_:for:)` when the drag ends to persist.
     func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
-        let clampedWidth = max(Self.minNotchWidth, min(Self.maxNotchWidth, size.width))
-        let clampedHeight = max(Self.minNotchHeight, min(Self.maxNotchHeight, size.height))
-        appSizes[app.rawValue] = ["width": clampedWidth, "height": clampedHeight]
+        let clamped = Self.clampedSize(size)
+        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
+    }
+    
+    /// Clamps a size to the current screen's safe bounds
+    static func clampedSize(_ size: CGSize) -> CGSize {
+        let maxSafe = screenSafeMaxSize()
+        return CGSize(
+            width: max(minNotchWidth, min(maxSafe.width, size.width)),
+            height: max(minNotchHeight, min(maxSafe.height, size.height))
+        )
+    }
+    
+    /// Validates and clamps the current size for an app (useful after screen changes)
+    func validateSizeForCurrentScreen(_ app: MiniApp) {
+        let currentSize = sizeForApp(app)
+        let clamped = Self.clampedSize(currentSize)
+        if currentSize != clamped {
+            print("[SettingsManager] Clamping \(app.rawValue) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
+            setSize(clamped, for: app)
+        }
     }
 
     func presetForApp(_ app: MiniApp) -> NotchSizePreset {

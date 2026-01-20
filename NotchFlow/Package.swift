@@ -12,7 +12,8 @@ let package = Package(
         .executable(name: "NotchFlow", targets: ["NotchFlow"])
     ],
     dependencies: [
-        .package(url: "https://github.com/MrKai77/DynamicNotchKit", from: "1.0.0")
+        // Use local fork to support larger window sizes
+        .package(path: "Packages/DynamicNotchKit")
     ],
     targets: [
         .executableTarget(
