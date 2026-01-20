@@ -281,7 +281,7 @@
 			);
 			mainGroup = A1100000000;
 			packageReferences = (
-				A1500000000 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */,
+				A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */,
 			);
 			productRefGroup = A1100002000 /* Products */;
 			projectDirPath = "";
@@ -541,21 +541,17 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		A1500000000 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/MrKai77/DynamicNotchKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DynamicNotchKit;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A1000020000 /* DynamicNotchKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1500000000 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */;
+			package = A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */;
 			productName = DynamicNotchKit;
 		};
 /* End XCSwiftPackageProductDependency section */
