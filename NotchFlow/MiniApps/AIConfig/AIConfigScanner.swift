@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class AIConfigScanner: ObservableObject {
     @Published var toolGroups: [AIToolGroup] = []
     @Published var allItems: [AIConfigItem] = []
@@ -16,7 +17,7 @@ class AIConfigScanner: ObservableObject {
     func scan() {
         scanTask?.cancel()
 
-        scanTask = Task { @MainActor in
+        scanTask = Task {
             isScanning = true
             errorMessage = nil
 

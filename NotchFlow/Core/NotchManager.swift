@@ -18,7 +18,7 @@ class NotchManager: ObservableObject {
 
         notch = DynamicNotch(
             hoverBehavior: [.keepVisible, .hapticFeedback],
-            style: .auto
+            style: .notch  // Always show notch style, even on external monitors without hardware notch
         ) {
             AnyView(
                 MainNotchView()

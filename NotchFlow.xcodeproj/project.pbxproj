@@ -52,6 +52,7 @@
 
 		/* Frameworks */
 		A1000020001 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1000020000 /* DynamicNotchKit */; };
+		A1000020003 /* Subprocess in Frameworks */ = {isa = PBXBuildFile; productRef = A1000020002 /* Subprocess */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -109,6 +110,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000020001 /* DynamicNotchKit in Frameworks */,
+				A1000020003 /* Subprocess in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +253,7 @@
 			name = NotchFlow;
 			packageProductDependencies = (
 				A1000020000 /* DynamicNotchKit */,
+				A1000020002 /* Subprocess */,
 			);
 			productName = NotchFlow;
 			productReference = A1000000000 /* NotchFlow.app */;
@@ -282,6 +285,7 @@
 			mainGroup = A1100000000;
 			packageReferences = (
 				A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */,
+				A1500000001 /* XCRemoteSwiftPackageReference "swift-subprocess" */,
 			);
 			productRefGroup = A1100002000 /* Products */;
 			projectDirPath = "";
@@ -402,6 +406,7 @@
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
 		};
@@ -457,6 +462,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Release;
 		};
@@ -485,7 +491,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.notchflow.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -514,7 +520,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.notchflow.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -548,11 +554,27 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		A1500000001 /* XCRemoteSwiftPackageReference "swift-subprocess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-subprocess.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A1000020000 /* DynamicNotchKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */;
 			productName = DynamicNotchKit;
+		};
+		A1000020002 /* Subprocess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1500000001 /* XCRemoteSwiftPackageReference "swift-subprocess" */;
+			productName = Subprocess;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
