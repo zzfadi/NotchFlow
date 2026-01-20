@@ -88,10 +88,26 @@ struct GeneralSettingsView: View {
                 
                 let currentPreset = settings.presetForApp(selectedApp)
                 let currentSize = settings.sizeForApp(selectedApp)
+                let maxSafe = SettingsManager.screenSafeMaxSize()
+                
+                // Show screen bounds info
+                HStack {
+                    Image(systemName: "display")
+                        .foregroundColor(.secondary)
+                    Text("Screen max: \(Int(maxSafe.width))×\(Int(maxSafe.height))pt")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    if NotchSizePreset.large.isClamped || NotchSizePreset.extraLarge.isClamped {
+                        Label("Some presets clamped", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                }
                 
                 Picker("Size Preset", selection: presetBinding) {
                     ForEach(NotchSizePreset.allCases.filter { $0 != .custom }) { preset in
-                        Text(preset.rawValue).tag(preset)
+                        Text(preset.displayName).tag(preset)
                     }
                     // Only show Custom option if currently using custom size (read-only indicator)
                     if currentPreset == .custom {
@@ -106,13 +122,13 @@ struct GeneralSettingsView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Spacer()
-                        Text("\(Int(SettingsManager.minNotchWidth)) - \(Int(SettingsManager.maxNotchWidth))")
+                        Text("\(Int(SettingsManager.minNotchWidth)) - \(Int(maxSafe.width))")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     Slider(
                         value: widthBinding,
-                        in: SettingsManager.minNotchWidth...SettingsManager.maxNotchWidth,
+                        in: SettingsManager.minNotchWidth...maxSafe.width,
                         step: 10
                     )
                     
@@ -121,13 +137,13 @@ struct GeneralSettingsView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Spacer()
-                        Text("\(Int(SettingsManager.minNotchHeight)) - \(Int(SettingsManager.maxNotchHeight))")
+                        Text("\(Int(SettingsManager.minNotchHeight)) - \(Int(maxSafe.height))")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     Slider(
                         value: heightBinding,
-                        in: SettingsManager.minNotchHeight...SettingsManager.maxNotchHeight,
+                        in: SettingsManager.minNotchHeight...maxSafe.height,
                         step: 10
                     )
                 }
