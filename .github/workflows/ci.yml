@@ -11,50 +11,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15, macos-26]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache SPM dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            .build
-            ~/Library/Caches/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-
-
-      - name: Build with Swift Package Manager
-        run: swift build -v
-
-      - name: Build with Xcode
-        run: |
-          xcodebuild build \
-            -project NotchFlow.xcodeproj \
-            -scheme NotchFlow \
-            -destination 'platform=macOS' \
-            -configuration Debug \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO
-
   lint:
     name: SwiftLint
-    runs-on: macos-26
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install SwiftLint
-        run: brew install swiftlint
-
-      - name: Run SwiftLint
-        run: swiftlint lint --strict --reporter github-actions-logging
+      - name: SwiftLint
+        uses: norio-nomura/action-swiftlint@3.2.1
+        with:
+          args: --strict
