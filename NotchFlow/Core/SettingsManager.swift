@@ -199,7 +199,11 @@ class SettingsManager: ObservableObject {
 
     func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
         if preset != .custom {
-            setSize(preset.size, for: app)
+            // Defer the state change to the next run loop tick to avoid publishing during view updates
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.setSize(preset.size, for: app)
+            }
         }
     }
 
