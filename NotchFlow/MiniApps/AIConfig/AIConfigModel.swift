@@ -107,12 +107,13 @@ struct ConfigMetadata: Equatable, Hashable {
 }
 
 // MARK: - AI Config File Type
-// Based on official documentation as of 2026:
+// Based on official documentation as of January 2026:
 // - Claude: CLAUDE.md, .claude/, settings.json, skills
 // - Cursor: .cursorrules (legacy), .cursor/*.mdc (modern), .cursor/mcp.json
 // - Copilot: .github/copilot-instructions.md, .github/prompts/*.prompt.md
 // - VS Code: .vscode/mcp.json
 // - Cross-platform: AGENTS.md, mcp.json
+// Note: This is a macOS-only app, so paths use macOS conventions.
 
 enum AIConfigFileType: String, CaseIterable, Identifiable {
     // ═══════════════════════════════════════════════════════════════════════
@@ -281,7 +282,7 @@ enum AIConfigFileType: String, CaseIterable, Identifiable {
         case .vscodeUserMcp: return [] // Global location only
         case .cursorMcpJson: return [".cursor/mcp.json"]
         case .cursorUserMcp: return [] // Global location only
-        case .mcpJson: return [".mcp.json", "mcp.json"]
+        case .mcpJson: return [".mcp.json"]  // Claude Code project MCP config
         case .claudeHooks: return [".claude/settings.json"]
         case .claudeDir: return [".claude"]
         case .cursorDir: return [".cursor"]
@@ -343,17 +344,8 @@ struct GlobalConfigLocations {
         home.appendingPathComponent(".cursor/mcp.json")
     }
 
-    /// Claude Code user settings
-    static var claudeUserSettings: URL {
-        home.appendingPathComponent(".claude/settings.json")
-    }
-
-    /// Claude Code user CLAUDE.md
-    static var claudeUserRules: URL {
-        home.appendingPathComponent(".claude/CLAUDE.md")
-    }
-
     /// All global config locations to scan
+    /// Note: ~/.claude/settings.json and ~/.claude/CLAUDE.md are handled via project scanning
     static var all: [(URL, AIConfigFileType)] {
         [
             (claudeDesktopMcp, .claudeDesktopMcp),
@@ -479,10 +471,15 @@ struct AIConfigCategoryGroup: Identifiable {
         Dictionary(grouping: items, by: { $0.provider })
     }
 
-    /// Providers present in this category, sorted by item count
+    /// Providers present in this category, sorted by item count (descending), then by name for consistency
     var providers: [AIProvider] {
         itemsByProvider.keys.sorted { provider1, provider2 in
-            (itemsByProvider[provider1]?.count ?? 0) > (itemsByProvider[provider2]?.count ?? 0)
+            let count1 = itemsByProvider[provider1]?.count ?? 0
+            let count2 = itemsByProvider[provider2]?.count ?? 0
+            if count1 != count2 {
+                return count1 > count2
+            }
+            return provider1.rawValue < provider2.rawValue
         }
     }
 }

@@ -134,7 +134,7 @@ struct AIConfigView: View {
                             icon: group.icon,
                             isSelected: selectedCategoryFilter == group.category,
                             count: group.items.count,
-                            color: Color(hex: group.color)
+                            color: Color(hex: group.color) ?? .gray
                         ) {
                             if selectedCategoryFilter == group.category {
                                 selectedCategoryFilter = nil
@@ -247,7 +247,7 @@ struct AIConfigView: View {
             HStack {
                 Image(systemName: item.category.icon)
                     .font(.system(size: 10))
-                    .foregroundColor(Color(hex: item.category.color))
+                    .foregroundColor(Color(hex: item.category.color) ?? .gray)
 
                 Text(item.displayName)
                     .font(.system(size: 11, weight: .medium))
@@ -424,7 +424,7 @@ struct AIConfigRowView: View {
                 // Category icon (primary)
                 Image(systemName: item.category.icon)
                     .font(.system(size: 12))
-                    .foregroundColor(Color(hex: item.category.color))
+                    .foregroundColor(Color(hex: item.category.color) ?? .gray)
                     .frame(width: 20)
 
                 // Info
@@ -464,20 +464,11 @@ struct AIConfigRowView: View {
                         }
                     }
 
-                    // Metadata name (for skills) or project name
-                    if let metadata = item.metadata, let name = metadata.name, !name.isEmpty,
-                       item.displayName != name {
-                        // Show project if display name is the skill name
-                        Text(item.projectName)
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                    } else {
-                        Text(item.projectName)
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                    }
+                    // Project name (or path for global configs)
+                    Text(item.projectName)
+                        .font(.system(size: 10))
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
                 }
 
                 Spacer()

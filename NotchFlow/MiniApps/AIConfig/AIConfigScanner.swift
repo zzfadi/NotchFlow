@@ -78,16 +78,14 @@ class AIConfigScanner: ObservableObject {
         let fileManager = FileManager.default
 
         // Scan all known global config locations
-        for (path, fileType) in GlobalConfigLocations.all {
-            if fileManager.fileExists(atPath: path.path) {
-                if let item = createConfigItem(
-                    at: path,
-                    fileType: fileType,
-                    projectPath: path.deletingLastPathComponent(),
-                    isGlobal: true
-                ) {
-                    items.append(item)
-                }
+        for (path, fileType) in GlobalConfigLocations.all where fileManager.fileExists(atPath: path.path) {
+            if let item = createConfigItem(
+                at: path,
+                fileType: fileType,
+                projectPath: path.deletingLastPathComponent(),
+                isGlobal: true
+            ) {
+                items.append(item)
             }
         }
 
@@ -222,7 +220,7 @@ class AIConfigScanner: ObservableObject {
                 includingPropertiesForKeys: nil,
                 options: []
             ) {
-                for file in promptFiles where file.pathExtension == "md" && file.lastPathComponent.hasSuffix(".prompt.md") {
+                for file in promptFiles where file.lastPathComponent.hasSuffix(".prompt.md") {
                     if let item = createConfigItem(at: file, fileType: .promptMd, projectPath: directory) {
                         items.append(item)
                     }
@@ -285,6 +283,13 @@ class AIConfigScanner: ObservableObject {
 
     /// Extract YAML frontmatter metadata from a file (for SKILL.md, agent.yaml, etc.)
     private func extractYAMLFrontmatter(from path: URL) -> ConfigMetadata? {
+        // Ensure the path points to a regular file before attempting to read
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            return nil
+        }
+
         guard let content = try? String(contentsOf: path, encoding: .utf8) else {
             return nil
         }
@@ -299,19 +304,20 @@ class AIConfigScanner: ObservableObject {
         var version: String?
 
         for line in lines {
-            if line == "---" {
+            let trimmedLine = line.trimmingCharacters(in: .whitespaces)
+            if trimmedLine == "---" {
                 if inFrontmatter { break }
                 inFrontmatter = true
                 continue
             }
 
             if inFrontmatter {
-                if line.hasPrefix("name:") {
-                    name = extractYAMLValue(from: line, key: "name")
-                } else if line.hasPrefix("description:") {
-                    description = extractYAMLValue(from: line, key: "description")
-                } else if line.hasPrefix("version:") {
-                    version = extractYAMLValue(from: line, key: "version")
+                if trimmedLine.hasPrefix("name:") {
+                    name = extractYAMLValue(from: trimmedLine, key: "name")
+                } else if trimmedLine.hasPrefix("description:") {
+                    description = extractYAMLValue(from: trimmedLine, key: "description")
+                } else if trimmedLine.hasPrefix("version:") {
+                    version = extractYAMLValue(from: trimmedLine, key: "version")
                 }
             }
         }
