@@ -106,7 +106,7 @@ jobs:
             --icon-size 128 \
             --icon "${{ env.PROJECT_NAME }}.app" 120 190 \
             --app-drop-link 420 190 \
-            --background "assets/dmg/background.png" \
+            --background "${{ github.workspace }}/assets/dmg/background.png" \
             --no-internet-enable \
             "build/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.VERSION }}.dmg" \
             build/dmg/

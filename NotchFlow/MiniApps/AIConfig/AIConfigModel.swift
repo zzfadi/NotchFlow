@@ -38,7 +38,6 @@ enum AIConfigFileType: String, CaseIterable, Identifiable {
     case agentsMd = "AGENTS.md"
     case claudeMd = "CLAUDE.md"
     case claudeDir = ".claude"
-    case copilotInstructions = "copilot-instructions.md"
     case copilotPrompts = ".github/prompts"
     case cursorDir = ".cursor"
     case cursorRules = ".cursorrules"
@@ -53,7 +52,6 @@ enum AIConfigFileType: String, CaseIterable, Identifiable {
         case .agentsMd: return "AGENTS.md"
         case .claudeMd: return "CLAUDE.md"
         case .claudeDir: return ".claude directory"
-        case .copilotInstructions: return "Copilot Instructions"
         case .copilotPrompts: return "Copilot Prompts"
         case .cursorDir: return ".cursor directory"
         case .cursorRules: return ".cursorrules"
@@ -67,7 +65,7 @@ enum AIConfigFileType: String, CaseIterable, Identifiable {
         switch self {
         case .agentsMd: return .generic
         case .claudeMd, .claudeDir: return .claude
-        case .copilotInstructions, .copilotPrompts: return .copilot
+        case .copilotPrompts: return .copilot
         case .cursorDir, .cursorRules: return .cursor
         case .mcpJson, .mcpDir: return .mcp
         case .promptsDir: return .generic
@@ -79,7 +77,6 @@ enum AIConfigFileType: String, CaseIterable, Identifiable {
         case .agentsMd: return ["AGENTS.md"]
         case .claudeMd: return ["CLAUDE.md"]
         case .claudeDir: return [".claude"]
-        case .copilotInstructions: return [".github/copilot-instructions.md"]
         case .copilotPrompts: return [".github/prompts"]
         case .cursorDir: return [".cursor"]
         case .cursorRules: return [".cursorrules"]
