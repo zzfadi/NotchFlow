@@ -84,17 +84,18 @@ class SettingsManager: ObservableObject {
     private static let windowPaddingHeight: CGFloat = 60
     
     /// Returns the maximum safe size based on current screen dimensions.
-    /// DynamicNotchKit creates windows at 50% of screen size, so we must stay within those bounds.
+    /// DynamicNotchKit creates windows at 85% of screen size, so we must stay within those bounds.
     static func screenSafeMaxSize(for screen: NSScreen? = NSScreen.main) -> CGSize {
         guard let screen = screen else {
-            // Fallback to conservative defaults if no screen
+            print("[SettingsManager] Warning: No screen available, using fallback size 600x400")
             return CGSize(width: 600, height: 400)
         }
-        
-        // DynamicNotchKit uses screen.frame.width/2 and screen.frame.height/2
-        let maxWidth = min(absoluteMaxNotchWidth, (screen.frame.width / 2) - windowPaddingWidth)
-        let maxHeight = min(absoluteMaxNotchHeight, (screen.frame.height / 2) - windowPaddingHeight)
-        
+
+        // DynamicNotchKit uses screen.frame.width * 0.85 and screen.frame.height * 0.85
+        let windowFactor: CGFloat = 0.85
+        let maxWidth = min(absoluteMaxNotchWidth, (screen.frame.width * windowFactor) - windowPaddingWidth)
+        let maxHeight = min(absoluteMaxNotchHeight, (screen.frame.height * windowFactor) - windowPaddingHeight)
+
         return CGSize(
             width: max(minNotchWidth, maxWidth),
             height: max(minNotchHeight, maxHeight)
@@ -184,7 +185,8 @@ class SettingsManager: ObservableObject {
     func validateSizeForCurrentScreen(_ app: MiniApp) {
         let currentSize = sizeForApp(app)
         let clamped = Self.clampedSize(currentSize)
-        if currentSize.width != clamped.width || currentSize.height != clamped.height {
+        if currentSize != clamped {
+            print("[SettingsManager] Clamping \(app.rawValue) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
             setSize(clamped, for: app)
         }
     }

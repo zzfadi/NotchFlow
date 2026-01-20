@@ -107,12 +107,7 @@ struct GeneralSettingsView: View {
                 
                 Picker("Size Preset", selection: presetBinding) {
                     ForEach(NotchSizePreset.allCases.filter { $0 != .custom }) { preset in
-                        HStack {
-                            Text(preset.displayName)
-                            if preset.isClamped {
-                                Image(systemName: "arrow.down.right.and.arrow.up.left")
-                            }
-                        }.tag(preset)
+                        Text(preset.displayName).tag(preset)
                     }
                     // Only show Custom option if currently using custom size (read-only indicator)
                     if currentPreset == .custom {

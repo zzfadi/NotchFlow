@@ -158,11 +158,15 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
 // MARK: - Public
 
 extension DynamicNotch {
-    public func expand(on screen: NSScreen = NSScreen.screens[0]) async {
+    public func expand(on screen: NSScreen? = NSScreen.main) async {
+        guard let screen = screen else {
+            print("[DynamicNotch] Warning: No screen available for expand")
+            return
+        }
         await _expand(on: screen, skipHide: false)
     }
 
-    func _expand(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
+    func _expand(on screen: NSScreen, skipHide: Bool) async {
         guard state != .expanded else { return }
 
         closePanelTask?.cancel()
@@ -197,11 +201,15 @@ extension DynamicNotch {
         try? await Task.sleep(for: .seconds(0.4))
     }
 
-    public func compact(on screen: NSScreen = NSScreen.screens[0]) async {
+    public func compact(on screen: NSScreen? = NSScreen.main) async {
+        guard let screen = screen else {
+            print("[DynamicNotch] Warning: No screen available for compact")
+            return
+        }
         await _compact(on: screen, skipHide: false)
     }
 
-    func _compact(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
+    func _compact(on screen: NSScreen, skipHide: Bool) async {
         guard state != .compact else { return }
 
         if effectiveStyle(for: screen).isFloating {

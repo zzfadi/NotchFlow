@@ -102,8 +102,12 @@ public final class DynamicNotchInfo: ObservableObject, DynamicNotchControllable 
     }
 
     public func expand(
-        on screen: NSScreen = NSScreen.screens[0]
+        on screen: NSScreen? = NSScreen.main
     ) async {
+        guard let screen = screen else {
+            print("[DynamicNotchInfo] Warning: No screen available for expand")
+            return
+        }
         await internalDynamicNotch._expand(
             on: screen,
             skipHide: shouldSkipHideWhenConverting
@@ -111,8 +115,12 @@ public final class DynamicNotchInfo: ObservableObject, DynamicNotchControllable 
     }
 
     public func compact(
-        on screen: NSScreen = NSScreen.screens[0]
+        on screen: NSScreen? = NSScreen.main
     ) async {
+        guard let screen = screen else {
+            print("[DynamicNotchInfo] Warning: No screen available for compact")
+            return
+        }
         await internalDynamicNotch._compact(
             on: screen,
             skipHide: shouldSkipHideWhenConverting
