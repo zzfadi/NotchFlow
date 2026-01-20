@@ -37,6 +37,12 @@ class NotchManager: ObservableObject {
             AnyView(EmptyView())
         }
         
+        if notch == nil {
+            print("[NotchManager] Error: Failed to initialize DynamicNotch")
+        } else {
+            print("[NotchManager] Successfully initialized notch")
+        }
+        
         setupClickAwayMonitor()
     }
     
@@ -92,20 +98,38 @@ class NotchManager: ObservableObject {
     }
 
     func expand() async {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
-        await notch?.expand(on: screen)
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            print("[NotchManager] Error: No screen available for expansion")
+            return
+        }
+        guard let notch = notch else {
+            print("[NotchManager] Error: Notch not initialized")
+            return
+        }
+        await notch.expand(on: screen)
         isExpanded = true
     }
 
     func collapse() async {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            print("[NotchManager] Error: No screen available for collapse")
+            return
+        }
+        guard let notch = notch else {
+            print("[NotchManager] Error: Notch not initialized")
+            return
+        }
         // Go to compact mode instead of fully hiding - this keeps a clickable icon
-        await notch?.compact(on: screen)
+        await notch.compact(on: screen)
         isExpanded = false
     }
 
     func hide() async {
-        await notch?.hide()
+        guard let notch = notch else {
+            print("[NotchManager] Error: Notch not initialized for hide")
+            return
+        }
+        await notch.hide()
         isExpanded = false
     }
 
