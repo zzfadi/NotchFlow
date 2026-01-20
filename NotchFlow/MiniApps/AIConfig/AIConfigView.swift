@@ -5,15 +5,21 @@ struct AIConfigView: View {
     @StateObject private var scanner = AIConfigScanner()
     @State private var selectedItem: AIConfigItem?
     @State private var searchText: String = ""
-    @State private var selectedToolFilter: AIToolType?
+    @State private var selectedCategoryFilter: AIConfigCategory?
+    @State private var selectedProviderFilter: AIProvider?
     @State private var showPreview: Bool = false
 
     var filteredItems: [AIConfigItem] {
         var items = scanner.allItems
 
-        // Filter by tool type
-        if let toolFilter = selectedToolFilter {
-            items = items.filter { $0.toolType == toolFilter }
+        // Filter by category (primary)
+        if let categoryFilter = selectedCategoryFilter {
+            items = items.filter { $0.category == categoryFilter }
+        }
+
+        // Filter by provider (secondary, AND logic)
+        if let providerFilter = selectedProviderFilter {
+            items = items.filter { $0.provider == providerFilter }
         }
 
         // Filter by search text
@@ -26,6 +32,15 @@ struct AIConfigView: View {
         }
 
         return items
+    }
+
+    /// Get providers available for the current category filter
+    var availableProviders: [AIProvider] {
+        guard let category = selectedCategoryFilter,
+              let group = scanner.categoryGroups.first(where: { $0.category == category }) else {
+            return []
+        }
+        return group.providers
     }
 
     var body: some View {
@@ -99,31 +114,67 @@ struct AIConfigView: View {
                 .help("Refresh")
             }
 
-            // Tool filters
+            // Category filters (primary)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    // "All" filter
                     FilterChip(
                         title: "All",
-                        isSelected: selectedToolFilter == nil,
+                        isSelected: selectedCategoryFilter == nil,
                         count: scanner.allItems.count
                     ) {
-                        selectedToolFilter = nil
+                        selectedCategoryFilter = nil
+                        selectedProviderFilter = nil
                     }
 
-                    ForEach(scanner.toolGroups) { group in
+                    // Category filters
+                    ForEach(scanner.categoryGroups) { group in
                         FilterChip(
                             title: group.name,
-                            isSelected: selectedToolFilter == group.toolType,
+                            icon: group.icon,
+                            isSelected: selectedCategoryFilter == group.category,
                             count: group.items.count,
-                            color: Color(hex: group.toolType.color)
+                            color: Color(hex: group.color) ?? .gray
                         ) {
-                            selectedToolFilter = selectedToolFilter == group.toolType ? nil : group.toolType
+                            if selectedCategoryFilter == group.category {
+                                selectedCategoryFilter = nil
+                                selectedProviderFilter = nil
+                            } else {
+                                selectedCategoryFilter = group.category
+                                selectedProviderFilter = nil
+                            }
+                        }
+                    }
+
+                    // Provider sub-filters (when category selected)
+                    if selectedCategoryFilter != nil && availableProviders.count > 1 {
+                        Divider()
+                            .frame(height: 16)
+                            .padding(.horizontal, 4)
+
+                        ForEach(availableProviders, id: \.self) { provider in
+                            let count = filteredItemsForProvider(provider)
+                            ProviderChip(
+                                provider: provider,
+                                isSelected: selectedProviderFilter == provider,
+                                count: count
+                            ) {
+                                selectedProviderFilter = selectedProviderFilter == provider ? nil : provider
+                            }
                         }
                     }
                 }
             }
         }
         .padding(8)
+    }
+
+    private func filteredItemsForProvider(_ provider: AIProvider) -> Int {
+        guard let category = selectedCategoryFilter,
+              let group = scanner.categoryGroups.first(where: { $0.category == category }) else {
+            return 0
+        }
+        return group.itemsByProvider[provider]?.count ?? 0
     }
 
     // MARK: - Scanning View
@@ -194,13 +245,23 @@ struct AIConfigView: View {
         VStack(spacing: 0) {
             // Preview header
             HStack {
-                Image(systemName: item.fileType.toolType.icon)
+                Image(systemName: item.category.icon)
                     .font(.system(size: 10))
-                    .foregroundColor(Color(hex: item.fileType.toolType.color))
+                    .foregroundColor(Color(hex: item.category.color) ?? .gray)
 
                 Text(item.displayName)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white)
+
+                if item.provider != .generic {
+                    Text(item.provider.compactName)
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(3)
+                }
 
                 Spacer()
 
@@ -216,6 +277,23 @@ struct AIConfigView: View {
             .background(Color.black.opacity(0.3))
 
             Divider()
+
+            // Metadata display for skills
+            if let metadata = item.metadata {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let description = metadata.description {
+                        Text(description)
+                            .font(.system(size: 10))
+                            .foregroundColor(.cyan.opacity(0.8))
+                            .lineLimit(2)
+                    }
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.cyan.opacity(0.05))
+
+                Divider()
+            }
 
             // Preview content
             if let content = scanner.previewContent(for: item) {
@@ -247,6 +325,7 @@ struct AIConfigView: View {
 
 struct FilterChip: View {
     let title: String
+    var icon: String? = nil
     let isSelected: Bool
     let count: Int
     var color: Color? = nil
@@ -255,6 +334,11 @@ struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 9))
+                }
+
                 Text(title)
                     .font(.system(size: 10, weight: .medium))
 
@@ -281,6 +365,50 @@ struct FilterChip: View {
     }
 }
 
+// MARK: - Provider Chip (Secondary Filter)
+
+struct ProviderChip: View {
+    let provider: AIProvider
+    let isSelected: Bool
+    let count: Int
+    let action: () -> Void
+
+    private var providerColor: Color {
+        Color(hex: provider.color) ?? .gray
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 3) {
+                Image(systemName: provider.icon)
+                    .font(.system(size: 8))
+
+                Text(provider.compactName)
+                    .font(.system(size: 9))
+
+                Text("\(count)")
+                    .font(.system(size: 8))
+                    .padding(.horizontal, 3)
+                    .padding(.vertical, 1)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(2)
+            }
+            .foregroundColor(isSelected ? providerColor : Color.gray)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isSelected ? providerColor.opacity(0.15) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(isSelected ? providerColor.opacity(0.3) : Color.white.opacity(0.1), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - AI Config Row View
 
 struct AIConfigRowView: View {
@@ -293,10 +421,10 @@ struct AIConfigRowView: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 8) {
-                // Tool icon
-                Image(systemName: item.toolType.icon)
+                // Category icon (primary)
+                Image(systemName: item.category.icon)
                     .font(.system(size: 12))
-                    .foregroundColor(Color(hex: item.toolType.color))
+                    .foregroundColor(Color(hex: item.category.color) ?? .gray)
                     .frame(width: 20)
 
                 // Info
@@ -307,6 +435,28 @@ struct AIConfigRowView: View {
                             .foregroundColor(.white)
                             .lineLimit(1)
 
+                        // Global badge
+                        if item.isGlobal {
+                            Text("Global")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(.cyan)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(Color.cyan.opacity(0.15))
+                                .cornerRadius(3)
+                        }
+
+                        // Provider badge (secondary)
+                        if item.provider != .generic {
+                            Text(item.provider.compactName)
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(3)
+                        }
+
                         if item.isDirectory {
                             Image(systemName: "folder.fill")
                                 .font(.system(size: 8))
@@ -314,6 +464,7 @@ struct AIConfigRowView: View {
                         }
                     }
 
+                    // Project name (or path for global configs)
                     Text(item.projectName)
                         .font(.system(size: 10))
                         .foregroundColor(.gray)
