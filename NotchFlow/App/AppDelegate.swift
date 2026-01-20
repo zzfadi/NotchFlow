@@ -123,8 +123,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.orderFrontRegardless()
             window.makeKey()
             // Reset level after a brief delay so it behaves normally once focused
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                window.level = .normal
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
+                window?.level = .normal
             }
             return
         }
@@ -167,8 +167,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKey()
 
         // Reset level after a brief delay so it behaves normally once focused
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            window.level = .normal
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
+            window?.level = .normal
         }
 
         settingsWindow = window

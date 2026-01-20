@@ -12,7 +12,7 @@ struct FogNoteSettingsSection: View {
                     icon: "note.text",
                     title: "Fog Note",
                     subtitle: "Quick capture and note storage",
-                    accentColor: .pink
+                    accentColor: settings.accentColor
                 )
 
                 // Storage location
@@ -71,12 +71,14 @@ struct FogNoteSettingsSection: View {
             let contents = try FileManager.default.contentsOfDirectory(atPath: path)
             return contents.filter { $0.hasSuffix(".md") }.count
         } catch {
+            print("[FogNoteSettings] Error reading notes directory: \(error.localizedDescription)")
             return nil
         }
     }
 
     // MARK: - Actions
 
+    @MainActor
     private func browseForDirectory() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
@@ -90,7 +92,10 @@ struct FogNoteSettingsSection: View {
     }
 
     private func openInFinder() {
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: settings.fogNotesDirectory)
+        let success = NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: settings.fogNotesDirectory)
+        if !success {
+            print("[FogNoteSettings] Failed to open directory in Finder: \(settings.fogNotesDirectory)")
+        }
     }
 }
 

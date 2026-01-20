@@ -27,7 +27,6 @@ struct AIConfigSettingsSection: View {
 
                         PathListEditor(
                             paths: $settings.aiConfigScanPaths,
-                            title: "Scan Directories",
                             onSave: { settings.saveSettings() }
                         )
                     }

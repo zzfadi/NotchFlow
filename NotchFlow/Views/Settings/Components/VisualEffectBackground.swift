@@ -46,7 +46,7 @@ extension View {
         self.background(VisualEffectBackground(material: .contentBackground))
     }
 
-    /// Applies an ultra thin material background
+    /// Applies a HUD window material background (translucent dark appearance)
     func ultraThinBackground() -> some View {
         self.background(VisualEffectBackground(material: .hudWindow))
     }

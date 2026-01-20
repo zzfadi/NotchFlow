@@ -4,7 +4,6 @@ import AppKit
 /// A reusable component for editing a list of directory paths
 struct PathListEditor: View {
     @Binding var paths: [String]
-    let title: String
     let onSave: () -> Void
 
     @State private var newPath: String = ""
@@ -71,12 +70,32 @@ struct PathListEditor: View {
 
     private func addPath(_ path: String) {
         let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !paths.contains(trimmed) else { return }
-        paths.append(trimmed)
+        guard !trimmed.isEmpty else { return }
+
+        // Standardize path for consistent comparison
+        let standardized = (trimmed as NSString).standardizingPath
+
+        // Check for duplicates using standardized paths
+        let existingStandardized = paths.map { ($0 as NSString).standardizingPath }
+        guard !existingStandardized.contains(standardized) else {
+            print("[PathListEditor] Path already exists: \(standardized)")
+            return
+        }
+
+        // Validate path exists and is a directory
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: standardized, isDirectory: &isDirectory),
+              isDirectory.boolValue else {
+            print("[PathListEditor] Invalid path (not a directory or doesn't exist): \(standardized)")
+            return
+        }
+
+        paths.append(standardized)
         onSave()
         newPath = ""
     }
 
+    @MainActor
     private func browseForDirectory(completion: @escaping (String?) -> Void) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
@@ -140,7 +159,6 @@ private struct PathRow: View {
             "/Users/developer/Projects",
             "/Users/developer/GitHub"
         ]),
-        title: "Scan Directories",
         onSave: {}
     )
     .padding()

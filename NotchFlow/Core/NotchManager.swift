@@ -125,7 +125,11 @@ class NotchManager: ObservableObject {
     }
 
     func hide() async {
-        await notch?.hide()
+        guard let notch = notch else {
+            print("[NotchManager] Error: Notch not initialized for hide")
+            return
+        }
+        await notch.hide()
         isExpanded = false
     }
 

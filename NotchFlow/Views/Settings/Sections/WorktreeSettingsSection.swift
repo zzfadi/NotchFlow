@@ -27,7 +27,6 @@ struct WorktreeSettingsSection: View {
 
                         PathListEditor(
                             paths: $settings.worktreeScanPaths,
-                            title: "Scan Directories",
                             onSave: { settings.saveSettings() }
                         )
                     }

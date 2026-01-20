@@ -131,6 +131,8 @@ private struct LinkButton: View {
         Button {
             if let url = URL(string: url) {
                 NSWorkspace.shared.open(url)
+            } else {
+                assertionFailure("[AboutSettings] Invalid URL string: \(url)")
             }
         } label: {
             HStack(spacing: 12) {
