@@ -114,20 +114,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showPreferences() {
-        // If we already have a settings window, just show it
+        // Activate app FIRST - critical for menu bar apps
+        NSApp.activate(ignoringOtherApps: true)
+
+        // If we already have a settings window, just bring it forward
         if let window = settingsWindow, window.isVisible {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            window.level = .floating
+            window.orderFrontRegardless()
+            window.makeKey()
+            // Reset level after a brief delay so it behaves normally once focused
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                window.level = .normal
+            }
             return
         }
 
-        // Create a new settings window
-        let settingsView = SettingsView()
+        // Create a new settings window with modern styling
+        let settingsView = ModernSettingsView()
         let hostingController = NSHostingController(rootView: settingsView)
 
+        // Configure hosting view for proper resize behavior
+        hostingController.view.autoresizingMask = [
+            NSView.AutoresizingMask.width,
+            NSView.AutoresizingMask.height
+        ]
+
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 500),
-            styleMask: [.titled, .closable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 540),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -135,10 +149,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentViewController = hostingController
         window.center()
         window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
+        window.minSize = NSSize(width: 580, height: 400)
+
+        // Modern System Settings appearance
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.toolbarStyle = .unified
+
+        // Empty toolbar for proper titlebar height
+        let toolbar = NSToolbar(identifier: "SettingsToolbar")
+        toolbar.showsBaselineSeparator = false
+        window.toolbar = toolbar
+
+        // Bring to front reliably
+        window.level = .floating
+        window.orderFrontRegardless()
+        window.makeKey()
+
+        // Reset level after a brief delay so it behaves normally once focused
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            window.level = .normal
+        }
 
         settingsWindow = window
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc func quitApp() {

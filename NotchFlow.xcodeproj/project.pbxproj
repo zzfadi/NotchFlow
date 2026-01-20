@@ -22,6 +22,24 @@
 		A1000008001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000 /* SettingsView.swift */; };
 		A100001F001 /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001F000 /* ResizeHandle.swift */; };
 
+		/* Settings */
+		A1000021001 /* ModernSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021000 /* ModernSettingsView.swift */; };
+		A1000022001 /* SettingsSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000022000 /* SettingsSidebar.swift */; };
+		A1000023001 /* SettingsDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000023000 /* SettingsDetailView.swift */; };
+
+		/* Settings/Components */
+		A1000024001 /* VisualEffectBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000024000 /* VisualEffectBackground.swift */; };
+		A1000025001 /* SettingsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000025000 /* SettingsHeader.swift */; };
+		A1000026001 /* PathListEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000026000 /* PathListEditor.swift */; };
+
+		/* Settings/Sections */
+		A1000027001 /* GeneralSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027000 /* GeneralSettingsSection.swift */; };
+		A1000028001 /* AppearanceSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000028000 /* AppearanceSettingsSection.swift */; };
+		A1000029001 /* AboutSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000029000 /* AboutSettingsSection.swift */; };
+		A100002A001 /* WorktreeSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002A000 /* WorktreeSettingsSection.swift */; };
+		A100002B001 /* AIConfigSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002B000 /* AIConfigSettingsSection.swift */; };
+		A100002C001 /* FogNoteSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002C000 /* FogNoteSettingsSection.swift */; };
+
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
 		A100000A001 /* NoteStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A000 /* NoteStorage.swift */; };
@@ -72,6 +90,24 @@
 		A1000007000 /* ExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandedView.swift; sourceTree = "<group>"; };
 		A1000008000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A100001F000 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
+
+		/* Settings */
+		A1000021000 /* ModernSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernSettingsView.swift; sourceTree = "<group>"; };
+		A1000022000 /* SettingsSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSidebar.swift; sourceTree = "<group>"; };
+		A1000023000 /* SettingsDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDetailView.swift; sourceTree = "<group>"; };
+
+		/* Settings/Components */
+		A1000024000 /* VisualEffectBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectBackground.swift; sourceTree = "<group>"; };
+		A1000025000 /* SettingsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsHeader.swift; sourceTree = "<group>"; };
+		A1000026000 /* PathListEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathListEditor.swift; sourceTree = "<group>"; };
+
+		/* Settings/Sections */
+		A1000027000 /* GeneralSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsSection.swift; sourceTree = "<group>"; };
+		A1000028000 /* AppearanceSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsSection.swift; sourceTree = "<group>"; };
+		A1000029000 /* AboutSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutSettingsSection.swift; sourceTree = "<group>"; };
+		A100002A000 /* WorktreeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeSettingsSection.swift; sourceTree = "<group>"; };
+		A100002B000 /* AIConfigSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigSettingsSection.swift; sourceTree = "<group>"; };
+		A100002C000 /* FogNoteSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FogNoteSettingsSection.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -171,8 +207,44 @@
 				A1000007000 /* ExpandedView.swift */,
 				A1000008000 /* SettingsView.swift */,
 				A100001F000 /* ResizeHandle.swift */,
+				A110000B000 /* Settings */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A110000B000 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A1000021000 /* ModernSettingsView.swift */,
+				A1000022000 /* SettingsSidebar.swift */,
+				A1000023000 /* SettingsDetailView.swift */,
+				A110000C000 /* Components */,
+				A110000D000 /* Sections */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A110000C000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1000024000 /* VisualEffectBackground.swift */,
+				A1000025000 /* SettingsHeader.swift */,
+				A1000026000 /* PathListEditor.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A110000D000 /* Sections */ = {
+			isa = PBXGroup;
+			children = (
+				A1000027000 /* GeneralSettingsSection.swift */,
+				A1000028000 /* AppearanceSettingsSection.swift */,
+				A1000029000 /* AboutSettingsSection.swift */,
+				A100002A000 /* WorktreeSettingsSection.swift */,
+				A100002B000 /* AIConfigSettingsSection.swift */,
+				A100002C000 /* FogNoteSettingsSection.swift */,
+			);
+			path = Sections;
 			sourceTree = "<group>";
 		};
 		A1100006000 /* MiniApps */ = {
@@ -321,6 +393,18 @@
 				A1000007001 /* ExpandedView.swift in Sources */,
 				A1000008001 /* SettingsView.swift in Sources */,
 				A100001F001 /* ResizeHandle.swift in Sources */,
+				A1000021001 /* ModernSettingsView.swift in Sources */,
+				A1000022001 /* SettingsSidebar.swift in Sources */,
+				A1000023001 /* SettingsDetailView.swift in Sources */,
+				A1000024001 /* VisualEffectBackground.swift in Sources */,
+				A1000025001 /* SettingsHeader.swift in Sources */,
+				A1000026001 /* PathListEditor.swift in Sources */,
+				A1000027001 /* GeneralSettingsSection.swift in Sources */,
+				A1000028001 /* AppearanceSettingsSection.swift in Sources */,
+				A1000029001 /* AboutSettingsSection.swift in Sources */,
+				A100002A001 /* WorktreeSettingsSection.swift in Sources */,
+				A100002B001 /* AIConfigSettingsSection.swift in Sources */,
+				A100002C001 /* FogNoteSettingsSection.swift in Sources */,
 				A1000009001 /* NoteModel.swift in Sources */,
 				A100000A001 /* NoteStorage.swift in Sources */,
 				A100000B001 /* FogNoteView.swift in Sources */,
