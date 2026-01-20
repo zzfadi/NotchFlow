@@ -91,6 +91,7 @@ Access Settings from the menu bar icon to configure:
 ## Dependencies
 
 - [DynamicNotchKit](Packages/DynamicNotchKit) - Customized fork included in repo (MIT License)
+  - Fork includes window sizing improvements (85% screen utilization vs original 50%) and safer screen detection
 
 ## Contributing
 
