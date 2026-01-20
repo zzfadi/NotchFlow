@@ -9,6 +9,7 @@ struct WorktreeView: View {
     @State private var viewMode: ViewMode = .list
     @State private var showingDetail: Bool = false
     @State private var showingCreateSheet: Bool = false
+    @State private var showingCleanupView: Bool = false
     @State private var refreshRotation: Double = 0
 
     enum ViewMode: String, CaseIterable {
@@ -73,6 +74,16 @@ struct WorktreeView: View {
                 scanner.scan()
             }
         }
+        .sheet(isPresented: $showingCleanupView) {
+            CleanupCandidatesView(
+                repositoryGroups: scanner.repositoryGroups,
+                onDismiss: { showingCleanupView = false },
+                onCleanupComplete: {
+                    showingCleanupView = false
+                    scanner.scan()
+                }
+            )
+        }
     }
 
     // MARK: - Header
@@ -135,6 +146,18 @@ struct WorktreeView: View {
                 .padding(.vertical, 4)
                 .background(Color.white.opacity(0.05))
                 .cornerRadius(6)
+
+                // Cleanup button
+                Button(action: {
+                    showingCleanupView = true
+                }) {
+                    Image(systemName: "leaf.arrow.triangle.circlepath")
+                        .font(.system(size: 11))
+                        .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
+                .disabled(scanner.repositoryGroups.isEmpty || scanner.isScanning)
+                .help("Clean up merged worktrees")
 
                 // Refresh button
                 Button(action: {

@@ -7,6 +7,7 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     case compact = "Compact"
     case `default` = "Default"
     case large = "Large"
+    case extraLarge = "Extra Large"
     case custom = "Custom"
 
     var id: String { rawValue }
@@ -14,18 +15,20 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     var size: CGSize {
         switch self {
         case .compact:
-            return CGSize(width: 320, height: 220)
-        case .default:
             return CGSize(width: 400, height: 280)
+        case .default:
+            return CGSize(width: 600, height: 400)
         case .large:
-            return CGSize(width: 520, height: 380)
+            return CGSize(width: 800, height: 550)
+        case .extraLarge:
+            return CGSize(width: 1000, height: 700)
         case .custom:
-            return CGSize(width: 400, height: 280) // Fallback, actual custom size stored separately
+            return CGSize(width: 600, height: 400) // Fallback, actual custom size stored separately
         }
     }
 
     static func preset(for size: CGSize) -> NotchSizePreset {
-        for preset in [NotchSizePreset.compact, .default, .large] {
+        for preset in [NotchSizePreset.compact, .default, .large, .extraLarge] {
             if abs(preset.size.width - size.width) < 1 && abs(preset.size.height - size.height) < 1 {
                 return preset
             }
@@ -40,9 +43,9 @@ class SettingsManager: ObservableObject {
     // MARK: - Size Constraints
 
     static let minNotchWidth: CGFloat = 280
-    static let maxNotchWidth: CGFloat = 600
+    static let maxNotchWidth: CGFloat = 1000
     static let minNotchHeight: CGFloat = 180
-    static let maxNotchHeight: CGFloat = 450
+    static let maxNotchHeight: CGFloat = 700
 
     // MARK: - User Defaults Keys
 
@@ -54,6 +57,7 @@ class SettingsManager: ObservableObject {
         static let fogNotesDirectory = "fogNotesDirectory"
         static let accentColor = "accentColor"
         static let appSizes = "appSizes"
+        static let isPinned = "isPinned"
     }
 
     // MARK: - Published Properties
@@ -61,6 +65,7 @@ class SettingsManager: ObservableObject {
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false
     @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
     @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
+    @AppStorage("isPinned") var isPinned: Bool = false
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []

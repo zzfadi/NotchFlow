@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MainNotchView: View {
     @EnvironmentObject var navigationState: NavigationState
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     private var currentSize: CGSize {
         settings.sizeForApp(navigationState.activeApp)
@@ -12,6 +12,9 @@ struct MainNotchView: View {
         VStack(spacing: 0) {
             // Tab bar with mini-app icons
             HStack(spacing: 12) {
+                // Pin toggle button
+                PinButton()
+                
                 // Left side - Worktree button
                 TabButton(
                     app: .worktree,
@@ -59,12 +62,33 @@ struct MainNotchView: View {
     }
 }
 
+struct PinButton: View {
+    @ObservedObject private var settings = SettingsManager.shared
+    
+    var body: some View {
+        Button {
+            settings.isPinned.toggle()
+        } label: {
+            Image(systemName: settings.isPinned ? "pin.fill" : "pin.slash")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(settings.isPinned ? settings.accentColor : .gray)
+                .padding(6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(settings.isPinned ? settings.accentColor.opacity(0.2) : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+        .help(settings.isPinned ? "Unpin (clicking away will close)" : "Pin open (prevents closing when clicking away)")
+    }
+}
+
 struct TabButton: View {
     let app: MiniApp
     let isActive: Bool
     let action: () -> Void
 
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     var body: some View {
         Button(action: action) {

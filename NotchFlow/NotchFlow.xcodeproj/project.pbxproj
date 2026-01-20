@@ -20,6 +20,7 @@
 		A1000006001 /* MainNotchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000 /* MainNotchView.swift */; };
 		A1000007001 /* ExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007000 /* ExpandedView.swift */; };
 		A1000008001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000 /* SettingsView.swift */; };
+		A100001F001 /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001F000 /* ResizeHandle.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -35,6 +36,11 @@
 		A1000017001 /* WorktreeGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017000 /* WorktreeGraphView.swift */; };
 		A1000018001 /* WorktreeManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000018000 /* WorktreeManagementView.swift */; };
 		A1000019001 /* WorktreeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000019000 /* WorktreeActions.swift */; };
+		A100001A001 /* CleanupScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A000 /* CleanupScanner.swift */; };
+		A100001B001 /* CleanupCandidatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001B000 /* CleanupCandidatesView.swift */; };
+		A100001C001 /* CleanupCandidateRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001C000 /* CleanupCandidateRow.swift */; };
+		A100001D001 /* CleanupConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001D000 /* CleanupConfirmationSheet.swift */; };
+		A100001E001 /* CleanupResultsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001E000 /* CleanupResultsSheet.swift */; };
 
 		/* AIConfig */
 		A100000F001 /* AIConfigModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000F000 /* AIConfigModel.swift */; };
@@ -64,6 +70,7 @@
 		A1000006000 /* MainNotchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNotchView.swift; sourceTree = "<group>"; };
 		A1000007000 /* ExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandedView.swift; sourceTree = "<group>"; };
 		A1000008000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A100001F000 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -79,6 +86,11 @@
 		A1000017000 /* WorktreeGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeGraphView.swift; sourceTree = "<group>"; };
 		A1000018000 /* WorktreeManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeManagementView.swift; sourceTree = "<group>"; };
 		A1000019000 /* WorktreeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeActions.swift; sourceTree = "<group>"; };
+		A100001A000 /* CleanupScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupScanner.swift; sourceTree = "<group>"; };
+		A100001B000 /* CleanupCandidatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupCandidatesView.swift; sourceTree = "<group>"; };
+		A100001C000 /* CleanupCandidateRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupCandidateRow.swift; sourceTree = "<group>"; };
+		A100001D000 /* CleanupConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupConfirmationSheet.swift; sourceTree = "<group>"; };
+		A100001E000 /* CleanupResultsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupResultsSheet.swift; sourceTree = "<group>"; };
 
 		/* AIConfig */
 		A100000F000 /* AIConfigModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigModel.swift; sourceTree = "<group>"; };
@@ -156,6 +168,7 @@
 				A1000006000 /* MainNotchView.swift */,
 				A1000007000 /* ExpandedView.swift */,
 				A1000008000 /* SettingsView.swift */,
+				A100001F000 /* ResizeHandle.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -201,6 +214,11 @@
 				A1000017000 /* WorktreeGraphView.swift */,
 				A1000018000 /* WorktreeManagementView.swift */,
 				A1000019000 /* WorktreeActions.swift */,
+				A100001A000 /* CleanupScanner.swift */,
+				A100001B000 /* CleanupCandidatesView.swift */,
+				A100001C000 /* CleanupCandidateRow.swift */,
+				A100001D000 /* CleanupConfirmationSheet.swift */,
+				A100001E000 /* CleanupResultsSheet.swift */,
 			);
 			path = Worktree;
 			sourceTree = "<group>";
@@ -298,6 +316,7 @@
 				A1000006001 /* MainNotchView.swift in Sources */,
 				A1000007001 /* ExpandedView.swift in Sources */,
 				A1000008001 /* SettingsView.swift in Sources */,
+				A100001F001 /* ResizeHandle.swift in Sources */,
 				A1000009001 /* NoteModel.swift in Sources */,
 				A100000A001 /* NoteStorage.swift in Sources */,
 				A100000B001 /* FogNoteView.swift in Sources */,
@@ -309,6 +328,11 @@
 				A1000017001 /* WorktreeGraphView.swift in Sources */,
 				A1000018001 /* WorktreeManagementView.swift in Sources */,
 				A1000019001 /* WorktreeActions.swift in Sources */,
+				A100001A001 /* CleanupScanner.swift in Sources */,
+				A100001B001 /* CleanupCandidatesView.swift in Sources */,
+				A100001C001 /* CleanupCandidateRow.swift in Sources */,
+				A100001D001 /* CleanupConfirmationSheet.swift in Sources */,
+				A100001E001 /* CleanupResultsSheet.swift in Sources */,
 				A100000F001 /* AIConfigModel.swift in Sources */,
 				A1000010001 /* AIConfigScanner.swift in Sources */,
 				A1000011001 /* AIConfigView.swift in Sources */,

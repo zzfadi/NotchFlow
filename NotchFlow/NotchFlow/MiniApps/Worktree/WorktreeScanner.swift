@@ -110,10 +110,15 @@ class WorktreeScanner: ObservableObject {
     }
 
     private func fetchStatusData(for worktree: Worktree) async -> Worktree {
-        async let status = gitRunner.getStatus(for: worktree.path)
+        async let statusResult = gitRunner.getStatus(for: worktree.path)
         async let remoteTracking = worktree.isDetached ? nil : gitRunner.getRemoteTracking(for: worktree.path, branch: worktree.branch)
-        async let stashCount = gitRunner.getStashCount(in: worktree.path)
-        async let recentCommits = gitRunner.getRecentCommits(in: worktree.path, count: 3)
+        async let stashCountResult = gitRunner.getStashCount(in: worktree.path)
+        async let recentCommitsResult = gitRunner.getRecentCommits(in: worktree.path, count: 3)
+
+        // Extract values from Result types, using nil/default on failure
+        let status = try? await statusResult.get()
+        let stashCount = try? await stashCountResult.get()
+        let recentCommits = try? await recentCommitsResult.get()
 
         return Worktree(
             id: worktree.id,
@@ -124,10 +129,10 @@ class WorktreeScanner: ObservableObject {
             isMainWorktree: worktree.isMainWorktree,
             commitHash: worktree.commitHash,
             isDetached: worktree.isDetached,
-            status: await status,
+            status: status,
             remoteTracking: await remoteTracking,
-            recentCommits: await recentCommits,
-            stashCount: await stashCount
+            recentCommits: recentCommits,
+            stashCount: stashCount
         )
     }
 

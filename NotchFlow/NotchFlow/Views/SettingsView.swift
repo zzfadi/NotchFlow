@@ -18,7 +18,7 @@ func browseForFolder(completion: @escaping (String?) -> Void) {
 }
 
 struct SettingsView: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: String, CaseIterable {
@@ -59,7 +59,7 @@ struct SettingsView: View {
 }
 
 struct GeneralSettingsView: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
     @State private var selectedApp: MiniApp = .fogNote
 
     var body: some View {
@@ -200,7 +200,7 @@ struct GeneralSettingsView: View {
 }
 
 struct WorktreeSettingsView: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
     @State private var newPath: String = ""
 
     var body: some View {
@@ -257,7 +257,7 @@ struct WorktreeSettingsView: View {
 }
 
 struct AIConfigSettingsView: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
     @State private var newPath: String = ""
 
     var body: some View {
@@ -314,7 +314,7 @@ struct AIConfigSettingsView: View {
 }
 
 struct FogNoteSettingsView: View {
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     var body: some View {
         Form {

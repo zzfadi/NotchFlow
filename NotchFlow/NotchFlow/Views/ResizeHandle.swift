@@ -63,7 +63,7 @@ struct NotchCloseBar: View {
 /// Corner resize handle - drag to resize
 struct NotchResizeHandle: View {
     let currentApp: MiniApp
-    @StateObject private var settings = SettingsManager.shared
+    @ObservedObject private var settings = SettingsManager.shared
 
     @State private var isDragging = false
     @State private var isHovering = false

@@ -69,7 +69,7 @@ open NotchFlow/NotchFlow.xcodeproj  # then ⌘R
 ### UI Patterns
 - Dark theme: Background `Color.black.opacity(0.9)`, text uses system colors
 - Accent color stored as hex string in `@AppStorage`, converted via `Color(hex:)`
-- Resizable notch: Per-app size stored in `SettingsManager.appSizes`, with presets (Compact 320x220, Default 400x280, Large 520x380) and custom sizing via drag handle. Size bounds: 280-600pt width, 180-450pt height
+- Resizable notch: Per-app size stored in `SettingsManager.appSizes`, with presets (Compact 400x280, Default 600x400, Large 800x550, Extra Large 1000x700) and custom sizing via drag handle. Size bounds: 280-1000pt width, 180-700pt height
 
 ## File Discovery (AIConfig Scanner)
 
