@@ -57,13 +57,12 @@ Please be respectful, inclusive, and constructive in all interactions when contr
 
 **Option 1: Xcode**
 ```bash
-open NotchFlow/NotchFlow.xcodeproj
+open NotchFlow.xcodeproj
 # Build with Cmd+B, Run with Cmd+R
 ```
 
 **Option 2: Swift Package Manager**
 ```bash
-cd NotchFlow
 swift build
 swift run
 ```

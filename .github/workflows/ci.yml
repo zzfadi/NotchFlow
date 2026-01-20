@@ -27,21 +27,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            NotchFlow/.build
+            .build
             ~/Library/Caches/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('NotchFlow/Package.resolved') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Build with Swift Package Manager
-        run: |
-          cd NotchFlow
-          swift build -v
+        run: swift build -v
 
       - name: Build with Xcode
         run: |
           xcodebuild build \
-            -project NotchFlow/NotchFlow.xcodeproj \
+            -project NotchFlow.xcodeproj \
             -scheme NotchFlow \
             -destination 'platform=macOS' \
             -configuration Debug \
@@ -60,4 +58,3 @@ jobs:
 
       - name: Run SwiftLint
         run: swiftlint lint --strict --reporter github-actions-logging
-        working-directory: NotchFlow
