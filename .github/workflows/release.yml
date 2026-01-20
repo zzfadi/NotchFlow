@@ -92,17 +92,24 @@ jobs:
           codesign --verify --deep --strict "build/export/${{ env.PROJECT_NAME }}.app"
           codesign -dv --verbose=4 "build/export/${{ env.PROJECT_NAME }}.app"
 
+      - name: Install create-dmg
+        run: npm install -g create-dmg
+
       - name: Create DMG
         run: |
           mkdir -p build/dmg
           cp -R "build/export/${{ env.PROJECT_NAME }}.app" build/dmg/
-          ln -s /Applications build/dmg/Applications
 
-          hdiutil create -volname "${{ env.PROJECT_NAME }}" \
-            -srcfolder build/dmg \
-            -ov \
-            -format UDZO \
-            "build/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.VERSION }}.dmg"
+          create-dmg \
+            --volname "${{ env.PROJECT_NAME }}" \
+            --window-size 540 380 \
+            --icon-size 128 \
+            --icon "${{ env.PROJECT_NAME }}.app" 120 190 \
+            --app-drop-link 420 190 \
+            --background "${{ github.workspace }}/assets/dmg/background.png" \
+            --no-internet-enable \
+            "build/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.VERSION }}.dmg" \
+            build/dmg/
 
       - name: Notarize DMG
         env:
@@ -137,17 +144,8 @@ jobs:
           body: |
             ## NotchFlow v${{ steps.version.outputs.VERSION }}
 
-            ### Installation
-
-            **Via Homebrew (recommended):**
-            ```bash
-            brew install --cask notchflow
-            ```
-
-            **Manual:**
-            1. Download the DMG from this release
-            2. Open the DMG and drag NotchFlow to Applications
-            3. Launch from Applications
+            ### Download
+            Download the DMG below, open it, and drag NotchFlow to Applications.
 
             ### Checksums
             ```
