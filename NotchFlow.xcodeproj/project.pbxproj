@@ -65,6 +65,22 @@
 		A1000010001 /* AIConfigScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010000 /* AIConfigScanner.swift */; };
 		A1000011001 /* AIConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011000 /* AIConfigView.swift */; };
 
+		/* RalphWiggum - Models */
+		A100002D001 /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002D000 /* Achievement.swift */; };
+		A100002E001 /* LoopIteration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002E000 /* LoopIteration.swift */; };
+		A100002F001 /* PromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002F000 /* PromptTemplate.swift */; };
+		A1000038001 /* RalphLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000038000 /* RalphLoop.swift */; };
+		A1000039001 /* RalphState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000039000 /* RalphState.swift */; };
+
+		/* RalphWiggum - Services */
+		A100003A001 /* LoopExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003A000 /* LoopExecutor.swift */; };
+		A100003B001 /* LoopManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003B000 /* LoopManager.swift */; };
+		A100003E001 /* DemoProjectSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003E000 /* DemoProjectSetup.swift */; };
+
+		/* RalphWiggum - Views */
+		A100003C001 /* RalphWiggumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003C000 /* RalphWiggumView.swift */; };
+		A100003D001 /* RalphCharacterDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003D000 /* RalphCharacterDrawing.swift */; };
+
 		/* Resources */
 		A1000012001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000012000 /* Assets.xcassets */; };
 
@@ -133,6 +149,22 @@
 		A100000F000 /* AIConfigModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigModel.swift; sourceTree = "<group>"; };
 		A1000010000 /* AIConfigScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigScanner.swift; sourceTree = "<group>"; };
 		A1000011000 /* AIConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigView.swift; sourceTree = "<group>"; };
+
+		/* RalphWiggum - Models */
+		A100002D000 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
+		A100002E000 /* LoopIteration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopIteration.swift; sourceTree = "<group>"; };
+		A100002F000 /* PromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplate.swift; sourceTree = "<group>"; };
+		A1000038000 /* RalphLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RalphLoop.swift; sourceTree = "<group>"; };
+		A1000039000 /* RalphState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RalphState.swift; sourceTree = "<group>"; };
+
+		/* RalphWiggum - Services */
+		A100003A000 /* LoopExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopExecutor.swift; sourceTree = "<group>"; };
+		A100003B000 /* LoopManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopManager.swift; sourceTree = "<group>"; };
+		A100003E000 /* DemoProjectSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoProjectSetup.swift; sourceTree = "<group>"; };
+
+		/* RalphWiggum - Views */
+		A100003C000 /* RalphWiggumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RalphWiggumView.swift; sourceTree = "<group>"; };
+		A100003D000 /* RalphCharacterDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RalphCharacterDrawing.swift; sourceTree = "<group>"; };
 
 		/* Resources */
 		A1000012000 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -253,6 +285,7 @@
 				A1100008000 /* FogNote */,
 				A1100009000 /* Worktree */,
 				A110000A000 /* AIConfig */,
+				A110000E000 /* RalphWiggum */,
 			);
 			path = MiniApps;
 			sourceTree = "<group>";
@@ -305,6 +338,47 @@
 				A1000011000 /* AIConfigView.swift */,
 			);
 			path = AIConfig;
+			sourceTree = "<group>";
+		};
+		A110000E000 /* RalphWiggum */ = {
+			isa = PBXGroup;
+			children = (
+				A110000F000 /* Models */,
+				A1100010000 /* Services */,
+				A1100011000 /* Views */,
+			);
+			path = RalphWiggum;
+			sourceTree = "<group>";
+		};
+		A110000F000 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A100002D000 /* Achievement.swift */,
+				A100002E000 /* LoopIteration.swift */,
+				A100002F000 /* PromptTemplate.swift */,
+				A1000038000 /* RalphLoop.swift */,
+				A1000039000 /* RalphState.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A1100010000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A100003A000 /* LoopExecutor.swift */,
+				A100003B000 /* LoopManager.swift */,
+				A100003E000 /* DemoProjectSetup.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A1100011000 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A100003C000 /* RalphWiggumView.swift */,
+				A100003D000 /* RalphCharacterDrawing.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -424,6 +498,16 @@
 				A100000F001 /* AIConfigModel.swift in Sources */,
 				A1000010001 /* AIConfigScanner.swift in Sources */,
 				A1000011001 /* AIConfigView.swift in Sources */,
+				A100002D001 /* Achievement.swift in Sources */,
+				A100002E001 /* LoopIteration.swift in Sources */,
+				A100002F001 /* PromptTemplate.swift in Sources */,
+				A1000038001 /* RalphLoop.swift in Sources */,
+				A1000039001 /* RalphState.swift in Sources */,
+				A100003A001 /* LoopExecutor.swift in Sources */,
+				A100003B001 /* LoopManager.swift in Sources */,
+				A100003E001 /* DemoProjectSetup.swift in Sources */,
+				A100003C001 /* RalphWiggumView.swift in Sources */,
+				A100003D001 /* RalphCharacterDrawing.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

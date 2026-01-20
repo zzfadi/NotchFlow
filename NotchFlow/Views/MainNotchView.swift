@@ -26,7 +26,7 @@ struct MainNotchView: View {
 
                 Spacer()
 
-                // Right side - AI Config and Fog Note buttons
+                // Right side - AI Config, Fog Note, and Ralph buttons
                 TabButton(
                     app: .aiConfig,
                     isActive: navigationState.activeApp == .aiConfig
@@ -39,6 +39,13 @@ struct MainNotchView: View {
                     isActive: navigationState.activeApp == .fogNote
                 ) {
                     navigationState.switchTo(.fogNote)
+                }
+
+                TabButton(
+                    app: .ralphWiggum,
+                    isActive: navigationState.activeApp == .ralphWiggum
+                ) {
+                    navigationState.switchTo(.ralphWiggum)
                 }
             }
             .padding(.horizontal, 16)
@@ -97,18 +104,31 @@ struct TabButton: View {
 
     @ObservedObject private var settings = SettingsManager.shared
 
+    private var iconColor: Color {
+        isActive ? settings.accentColor : .gray
+    }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: app.icon)
-                    .font(.system(size: 14, weight: .medium))
+                // Use custom icon if available, otherwise use SF Symbol
+                if let customIcon = app.customIcon {
+                    Image(customIcon, bundle: .module)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
+                } else {
+                    Image(systemName: app.icon)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(iconColor)
+                }
 
                 if isActive {
                     Text(app.rawValue)
                         .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(iconColor)
                 }
             }
-            .foregroundColor(isActive ? settings.accentColor : .gray)
             .padding(.horizontal, isActive ? 12 : 8)
             .padding(.vertical, 6)
             .background(

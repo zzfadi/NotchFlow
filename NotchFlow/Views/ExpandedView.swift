@@ -12,6 +12,8 @@ struct ExpandedView: View {
                 AIConfigView()
             case .fogNote:
                 FogNoteView()
+            case .ralphWiggum:
+                RalphWiggumView()
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.98)))

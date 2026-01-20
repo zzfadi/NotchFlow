@@ -13,6 +13,7 @@ enum MiniApp: String, CaseIterable, Identifiable {
     case worktree = "Worktree"
     case aiConfig = "AI Config"
     case fogNote = "Fog Note"
+    case ralphWiggum = "Ralph"
 
     var id: String { rawValue }
 
@@ -24,6 +25,18 @@ enum MiniApp: String, CaseIterable, Identifiable {
             return "brain"
         case .fogNote:
             return "note.text"
+        case .ralphWiggum:
+            return "repeat.circle"  // Fallback SF Symbol
+        }
+    }
+
+    /// Custom image name for apps that use custom icons (nil = use SF Symbol)
+    var customIcon: String? {
+        switch self {
+        case .ralphWiggum:
+            return "RalphIcon"
+        default:
+            return nil
         }
     }
 
@@ -35,6 +48,8 @@ enum MiniApp: String, CaseIterable, Identifiable {
             return "Find and manage AI configuration files"
         case .fogNote:
             return "Quick capture and note management"
+        case .ralphWiggum:
+            return "AI coding loops with the Ralph Wiggum technique"
         }
     }
 }
