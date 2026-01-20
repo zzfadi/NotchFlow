@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class WorktreeScanner: ObservableObject {
     @Published var repositoryGroups: [RepositoryGroup] = []
     @Published var isScanning: Bool = false
@@ -19,7 +20,7 @@ class WorktreeScanner: ObservableObject {
     func scan() {
         scanTask?.cancel()
 
-        scanTask = Task { @MainActor in
+        scanTask = Task {
             isScanning = true
             errorMessage = nil
             scanProgress = 0
@@ -49,13 +50,13 @@ class WorktreeScanner: ObservableObject {
 
     func refreshStatus() {
         statusTask?.cancel()
-        statusTask = Task { @MainActor in
+        statusTask = Task {
             await fetchAllStatus()
         }
     }
 
     func refreshWorktree(_ worktree: Worktree) {
-        Task { @MainActor in
+        Task {
             await fetchStatusForWorktree(worktree)
         }
     }
@@ -85,14 +86,10 @@ class WorktreeScanner: ObservableObject {
             updatedGroups.append(updatedGroup)
         }
 
-        // Capture the final result before crossing actor boundary
-        let finalGroups = updatedGroups
-        await MainActor.run {
-            if !Task.isCancelled {
-                repositoryGroups = finalGroups
-            }
-            isFetchingStatus = false
+        if !Task.isCancelled {
+            repositoryGroups = updatedGroups
         }
+        isFetchingStatus = false
     }
 
     private func fetchStatusForWorktree(_ worktree: Worktree) async {
@@ -100,13 +97,11 @@ class WorktreeScanner: ObservableObject {
         let updatedWorktree = await fetchStatusData(for: worktree)
 
         // Then update the UI atomically, re-checking indices since they may have changed
-        await MainActor.run {
-            guard let groupIndex = repositoryGroups.firstIndex(where: { $0.worktrees.contains(worktree) }),
-                  let worktreeIndex = repositoryGroups[groupIndex].worktrees.firstIndex(of: worktree) else {
-                return
-            }
-            repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
+        guard let groupIndex = repositoryGroups.firstIndex(where: { $0.worktrees.contains(worktree) }),
+              let worktreeIndex = repositoryGroups[groupIndex].worktrees.firstIndex(of: worktree) else {
+            return
         }
+        repositoryGroups[groupIndex].worktrees[worktreeIndex] = updatedWorktree
     }
 
     private func fetchStatusData(for worktree: Worktree) async -> Worktree {
@@ -159,9 +154,7 @@ class WorktreeScanner: ObservableObject {
             let worktrees = await scanDirectory(path)
             allWorktrees.append(contentsOf: worktrees)
 
-            await MainActor.run {
-                scanProgress = Double(index + 1) / Double(totalPaths)
-            }
+            scanProgress = Double(index + 1) / Double(totalPaths)
         }
 
         // Remove duplicates (same worktree can be discovered via parent repo and direct scan)

@@ -1,4 +1,5 @@
 import Foundation
+import Subprocess
 
 /// Utility for running git commands and parsing their output
 actor GitCommandRunner {
@@ -14,38 +15,21 @@ actor GitCommandRunner {
             return .failure(.commandFailed("Task cancelled"))
         }
 
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-        task.arguments = arguments
-        task.currentDirectoryURL = directory
-
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        task.standardOutput = outputPipe
-        task.standardError = errorPipe
-
         do {
-            try task.run()
+            let result = try await Subprocess.run(
+                .path("/usr/bin/git"),
+                arguments: Arguments(arguments),
+                workingDirectory: .init(directory.path),
+                output: .string(limit: 1024 * 1024),  // 1MB limit
+                error: .string(limit: 64 * 1024)      // 64KB for errors
+            )
 
-            // Use withTaskCancellationHandler to terminate process if task is cancelled
-            return await withTaskCancellationHandler {
-                task.waitUntilExit()
-
-                let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
-                if task.terminationStatus == 0 {
-                    let output = String(data: outputData, encoding: .utf8) ?? ""
-                    return .success(output.trimmingCharacters(in: .whitespacesAndNewlines))
-                } else {
-                    let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                    return .failure(.commandFailed(errorMessage.trimmingCharacters(in: .whitespacesAndNewlines)))
-                }
-            } onCancel: {
-                // Terminate the process if task is cancelled
-                if task.isRunning {
-                    task.terminate()
-                }
+            if result.terminationStatus.isSuccess {
+                let output = result.standardOutput ?? ""
+                return .success(output.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
+            } else {
+                let errorMessage = result.standardError ?? "Unknown error"
+                return .failure(.commandFailed(errorMessage.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)))
             }
         } catch {
             return .failure(.executionFailed(error.localizedDescription))

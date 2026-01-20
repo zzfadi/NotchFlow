@@ -4,6 +4,7 @@ import AppKit
 
 // MARK: - Notch Size Preset
 
+@MainActor
 enum NotchSizePreset: String, CaseIterable, Identifiable {
     case compact = "Compact"
     case `default` = "Default"
@@ -11,7 +12,7 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     case extraLarge = "Extra Large"
     case custom = "Custom"
 
-    var id: String { rawValue }
+    nonisolated var id: String { rawValue }
 
     /// Base (unclamped) size for this preset
     var baseSize: CGSize {
@@ -67,21 +68,22 @@ enum NotchSizePreset: String, CaseIterable, Identifiable {
     }
 }
 
+@MainActor
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 
-    // MARK: - Size Constraints
+    // MARK: - Size Constraints (nonisolated for use outside MainActor)
 
-    static let minNotchWidth: CGFloat = 280
-    static let minNotchHeight: CGFloat = 180
-    
+    nonisolated static let minNotchWidth: CGFloat = 280
+    nonisolated static let minNotchHeight: CGFloat = 180
+
     /// Absolute maximum values (for displays that can support them)
-    static let absoluteMaxNotchWidth: CGFloat = 1000
-    static let absoluteMaxNotchHeight: CGFloat = 700
-    
+    nonisolated static let absoluteMaxNotchWidth: CGFloat = 1000
+    nonisolated static let absoluteMaxNotchHeight: CGFloat = 700
+
     /// Padding to keep content safely within DynamicNotchKit's window bounds
-    private static let windowPaddingWidth: CGFloat = 40
-    private static let windowPaddingHeight: CGFloat = 60
+    nonisolated private static let windowPaddingWidth: CGFloat = 40
+    nonisolated private static let windowPaddingHeight: CGFloat = 60
     
     /// Returns the maximum safe size based on current screen dimensions.
     /// DynamicNotchKit creates windows at 85% of screen size, so we must stay within those bounds.

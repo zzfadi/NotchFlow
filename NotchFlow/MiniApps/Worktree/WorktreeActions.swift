@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 
 /// Shared utility for worktree actions like opening in Terminal, VS Code, or Finder
+@MainActor
 enum WorktreeActions {
 
     /// Opens the specified path in Terminal.app

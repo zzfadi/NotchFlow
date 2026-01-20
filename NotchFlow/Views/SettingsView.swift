@@ -4,6 +4,7 @@ import AppKit
 // MARK: - Shared Utilities
 
 /// Presents an NSOpenPanel to browse for a folder and returns the selected path
+@MainActor
 func browseForFolder(completion: @escaping (String?) -> Void) {
     let panel = NSOpenPanel()
     panel.canChooseFiles = false

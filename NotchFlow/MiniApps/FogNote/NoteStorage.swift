@@ -1,9 +1,12 @@
 import Foundation
 import Combine
 
+@MainActor
 class NoteStorage: ObservableObject {
     @Published var notes: [Note] = []
     @Published var isLoading: Bool = false
+    @Published var loadError: String?
+    @Published var saveError: String?
 
     private let settings = SettingsManager.shared
     private var saveDebouncer: AnyCancellable?
@@ -33,28 +36,32 @@ class NoteStorage: ObservableObject {
 
     func loadNotes() {
         isLoading = true
+        loadError = nil
+        let url = storageURL
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-
+        Task.detached(priority: .userInitiated) {
             var loadedNotes: [Note] = []
+            var errorMessage: String?
 
-            if FileManager.default.fileExists(atPath: self.storageURL.path) {
+            if FileManager.default.fileExists(atPath: url.path) {
                 do {
-                    let data = try Data(contentsOf: self.storageURL)
+                    let data = try Data(contentsOf: url)
                     loadedNotes = try JSONDecoder().decode([Note].self, from: data)
                 } catch {
-                    print("Error loading notes: \(error)")
+                    errorMessage = "Failed to load notes: \(error.localizedDescription)"
                 }
             }
 
-            DispatchQueue.main.async {
-                self.notes = loadedNotes.sorted { note1, note2 in
-                    if note1.isPinned != note2.isPinned {
-                        return note1.isPinned
-                    }
-                    return note1.modifiedAt > note2.modifiedAt
+            let sortedNotes = loadedNotes.sorted { note1, note2 in
+                if note1.isPinned != note2.isPinned {
+                    return note1.isPinned
                 }
+                return note1.modifiedAt > note2.modifiedAt
+            }
+
+            await MainActor.run {
+                self.notes = sortedNotes
+                self.loadError = errorMessage
                 self.isLoading = false
             }
         }
@@ -111,21 +118,36 @@ class NoteStorage: ObservableObject {
     }
 
     private func performSave() {
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self else { return }
+        let notesToSave = notes
+        let url = storageURL
+        let directory = URL(fileURLWithPath: settings.fogNotesDirectory)
+
+        Task.detached(priority: .utility) {
+            var errorMessage: String?
 
             // Ensure directory exists
-            let directory = URL(fileURLWithPath: self.settings.fogNotesDirectory)
-            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-
-            // Save notes
             do {
-                let encoder = JSONEncoder()
-                encoder.outputFormatting = .prettyPrinted
-                let data = try encoder.encode(self.notes)
-                try data.write(to: self.storageURL, options: .atomic)
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             } catch {
-                print("Error saving notes: \(error)")
+                errorMessage = "Failed to create notes directory: \(error.localizedDescription)"
+            }
+
+            // Save notes (only if directory creation succeeded)
+            if errorMessage == nil {
+                do {
+                    let encoder = JSONEncoder()
+                    encoder.outputFormatting = .prettyPrinted
+                    let data = try encoder.encode(notesToSave)
+                    try data.write(to: url, options: .atomic)
+                } catch {
+                    errorMessage = "Failed to save notes: \(error.localizedDescription)"
+                }
+            }
+
+            if let error = errorMessage {
+                await MainActor.run {
+                    self.saveError = error
+                }
             }
         }
     }
