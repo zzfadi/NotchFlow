@@ -232,22 +232,31 @@ struct NoteEditorView: View {
     let onSave: (Note) -> Void
 
     @State private var content: String = ""
+    @State private var showPreview: Bool = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            // Editor
-            TextEditor(text: $content)
-                .font(.system(size: 12, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
-                .focused($isFocused)
-                .onChange(of: content) { _, newValue in
-                    var updatedNote = note
-                    updatedNote.update(content: newValue)
-                    onSave(updatedNote)
+            // Editor or Preview
+            if showPreview {
+                ScrollView {
+                    MarkdownView(content: content)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
                 }
-                .padding(12)
+            } else {
+                TextEditor(text: $content)
+                    .font(.system(size: 12, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .focused($isFocused)
+                    .onChange(of: content) { _, newValue in
+                        var updatedNote = note
+                        updatedNote.update(content: newValue)
+                        onSave(updatedNote)
+                    }
+                    .padding(12)
+            }
 
             Divider()
 
@@ -262,6 +271,17 @@ struct NoteEditorView: View {
                 Text("Modified \(note.modifiedAt, style: .relative)")
                     .font(.system(size: 9))
                     .foregroundColor(.gray)
+
+                Spacer()
+
+                // Preview toggle
+                Button(action: { showPreview.toggle() }) {
+                    Image(systemName: showPreview ? "pencil" : "eye")
+                        .font(.system(size: 10))
+                        .foregroundColor(showPreview ? .pink : .gray)
+                }
+                .buttonStyle(.plain)
+                .help(showPreview ? "Edit" : "Preview Markdown")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -272,6 +292,7 @@ struct NoteEditorView: View {
         }
         .onChange(of: note.id) { _, _ in
             content = note.content
+            showPreview = false  // Reset to edit mode when switching notes
         }
     }
 }

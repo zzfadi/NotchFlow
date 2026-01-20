@@ -15,14 +15,20 @@ let package = Package(
         // Use local fork to support larger window sizes
         .package(path: "Packages/DynamicNotchKit"),
         // Swift 6.2 Subprocess for external process execution
-        .package(url: "https://github.com/swiftlang/swift-subprocess.git", from: "0.0.1")
+        .package(url: "https://github.com/swiftlang/swift-subprocess.git", from: "0.0.1"),
+        // Markdown rendering for rich content display
+        .package(url: "https://github.com/gonzalezreal/swift-markdown-ui", from: "2.4.0"),
+        // Syntax highlighting for code blocks (JSON, YAML, etc.)
+        .package(url: "https://github.com/appstefan/HighlightSwift", from: "1.1.0")
     ],
     targets: [
         .executableTarget(
             name: "NotchFlow",
             dependencies: [
                 "DynamicNotchKit",
-                .product(name: "Subprocess", package: "swift-subprocess")
+                .product(name: "Subprocess", package: "swift-subprocess"),
+                .product(name: "MarkdownUI", package: "swift-markdown-ui"),
+                "HighlightSwift"
             ],
             path: "NotchFlow",
             exclude: [
