@@ -235,8 +235,28 @@ struct NoteEditorView: View {
     @State private var showPreview: Bool = false
     @FocusState private var isFocused: Bool
 
+    // AI state
+    @StateObject private var aiService = FoundationModelsService.shared
+    @ObservedObject private var settings = SettingsManager.shared
+    @State private var aiResult: String = ""
+    @State private var isAIProcessing: Bool = false
+    @State private var showingAIPopover: Bool = false
+    @State private var aiError: FoundationModelsError?
+
+    private var showAIToolbar: Bool {
+        settings.foundationModelsEnabled &&
+        settings.aiFeaturesFogNote &&
+        aiService.availability == .available
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            // AI Toolbar (conditional)
+            if showAIToolbar {
+                aiToolbar
+                Divider()
+            }
+
             // Editor or Preview
             if showPreview {
                 ScrollView {
@@ -258,34 +278,21 @@ struct NoteEditorView: View {
                     .padding(12)
             }
 
+            // AI Error Banner (if any)
+            if let error = aiError {
+                AIErrorBanner(
+                    error: error,
+                    onRetry: nil,
+                    onDismiss: { aiError = nil }
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 4)
+            }
+
             Divider()
 
             // Status bar
-            HStack {
-                Text("\(content.split(whereSeparator: \.isWhitespace).count) words")
-                    .font(.system(size: 9))
-                    .foregroundColor(.gray)
-
-                Spacer()
-
-                Text("Modified \(note.modifiedAt, style: .relative)")
-                    .font(.system(size: 9))
-                    .foregroundColor(.gray)
-
-                Spacer()
-
-                // Preview toggle
-                Button(action: { showPreview.toggle() }) {
-                    Image(systemName: showPreview ? "pencil" : "eye")
-                        .font(.system(size: 10))
-                        .foregroundColor(showPreview ? .pink : .gray)
-                }
-                .buttonStyle(.plain)
-                .help(showPreview ? "Edit" : "Preview Markdown")
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.black.opacity(0.2))
+            statusBar
         }
         .onAppear {
             content = note.content
@@ -293,7 +300,122 @@ struct NoteEditorView: View {
         .onChange(of: note.id) { _, _ in
             content = note.content
             showPreview = false  // Reset to edit mode when switching notes
+            // Reset AI state when switching notes
+            aiResult = ""
+            showingAIPopover = false
+            aiError = nil
         }
+        .popover(isPresented: $showingAIPopover, arrowEdge: .top) {
+            AIResultPopover(
+                result: $aiResult,
+                isProcessing: $isAIProcessing,
+                onInsert: { text in
+                    content += "\n\n" + text
+                    saveContent()
+                    showingAIPopover = false
+                },
+                onReplace: { text in
+                    content = text
+                    saveContent()
+                    showingAIPopover = false
+                },
+                onDismiss: {
+                    showingAIPopover = false
+                }
+            )
+        }
+    }
+
+    // MARK: - AI Toolbar
+
+    private var aiToolbar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 10))
+                .foregroundColor(.indigo)
+
+            AIToolbarButton(icon: "text.badge.minus", label: "Summarize") {
+                performAITask(.summarize)
+            }
+            .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAIProcessing)
+
+            AIToolbarButton(icon: "text.badge.plus", label: "Expand") {
+                performAITask(.expand)
+            }
+            .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAIProcessing)
+
+            Spacer()
+
+            if isAIProcessing {
+                AIProcessingIndicator(isProcessing: true, label: "Generating")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.indigo.opacity(0.08))
+    }
+
+    // MARK: - Status Bar
+
+    private var statusBar: some View {
+        HStack {
+            Text("\(content.split(whereSeparator: \.isWhitespace).count) words")
+                .font(.system(size: 9))
+                .foregroundColor(.gray)
+
+            Spacer()
+
+            Text("Modified \(note.modifiedAt, style: .relative)")
+                .font(.system(size: 9))
+                .foregroundColor(.gray)
+
+            Spacer()
+
+            // Preview toggle
+            Button(action: { showPreview.toggle() }) {
+                Image(systemName: showPreview ? "pencil" : "eye")
+                    .font(.system(size: 10))
+                    .foregroundColor(showPreview ? .pink : .gray)
+            }
+            .buttonStyle(.plain)
+            .help(showPreview ? "Edit" : "Preview Markdown")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.black.opacity(0.2))
+    }
+
+    // MARK: - AI Actions
+
+    private func performAITask(_ task: AITaskType) {
+        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+
+        isAIProcessing = true
+        showingAIPopover = true
+        aiResult = ""
+        aiError = nil
+
+        Task {
+            do {
+                let input = aiService.truncateIfNeeded(content)
+                try await aiService.streamGenerate(for: task, input: input) { chunk in
+                    aiResult += chunk
+                }
+            } catch let error as FoundationModelsError {
+                aiError = error
+                showingAIPopover = false
+            } catch {
+                aiError = .generationFailed(error.localizedDescription)
+                showingAIPopover = false
+            }
+            isAIProcessing = false
+        }
+    }
+
+    private func saveContent() {
+        var updatedNote = note
+        updatedNote.update(content: content)
+        onSave(updatedNote)
     }
 }
 

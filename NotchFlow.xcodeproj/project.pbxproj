@@ -39,6 +39,14 @@
 		A100002A001 /* WorktreeSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002A000 /* WorktreeSettingsSection.swift */; };
 		A100002B001 /* AIConfigSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002B000 /* AIConfigSettingsSection.swift */; };
 		A100002C001 /* FogNoteSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002C000 /* FogNoteSettingsSection.swift */; };
+		A100002D001 /* AppleIntelligenceSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002D000 /* AppleIntelligenceSettingsSection.swift */; };
+
+		/* Core/Services */
+		A100002E001 /* FoundationModelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002E000 /* FoundationModelsService.swift */; };
+
+		/* Views/Components */
+		A100002F001 /* AIToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002F000 /* AIToolbarButton.swift */; };
+		A1000031001 /* AIStreamingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031000 /* AIStreamingView.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -108,6 +116,14 @@
 		A100002A000 /* WorktreeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeSettingsSection.swift; sourceTree = "<group>"; };
 		A100002B000 /* AIConfigSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigSettingsSection.swift; sourceTree = "<group>"; };
 		A100002C000 /* FogNoteSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FogNoteSettingsSection.swift; sourceTree = "<group>"; };
+		A100002D000 /* AppleIntelligenceSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceSettingsSection.swift; sourceTree = "<group>"; };
+
+		/* Core/Services */
+		A100002E000 /* FoundationModelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsService.swift; sourceTree = "<group>"; };
+
+		/* Views/Components */
+		A100002F000 /* AIToolbarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIToolbarButton.swift; sourceTree = "<group>"; };
+		A1000031000 /* AIStreamingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIStreamingView.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -196,8 +212,17 @@
 				A1000003000 /* NotchManager.swift */,
 				A1000004000 /* NavigationState.swift */,
 				A1000005000 /* SettingsManager.swift */,
+				A110000E000 /* Services */,
 			);
 			path = Core;
+			sourceTree = "<group>";
+		};
+		A110000E000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A100002E000 /* FoundationModelsService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		A1100005000 /* Views */ = {
@@ -208,8 +233,18 @@
 				A1000008000 /* SettingsView.swift */,
 				A100001F000 /* ResizeHandle.swift */,
 				A110000B000 /* Settings */,
+				A110000F000 /* Components */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A110000F000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A100002F000 /* AIToolbarButton.swift */,
+				A1000031000 /* AIStreamingView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		A110000B000 /* Settings */ = {
@@ -239,6 +274,7 @@
 			children = (
 				A1000027000 /* GeneralSettingsSection.swift */,
 				A1000028000 /* AppearanceSettingsSection.swift */,
+				A100002D000 /* AppleIntelligenceSettingsSection.swift */,
 				A1000029000 /* AboutSettingsSection.swift */,
 				A100002A000 /* WorktreeSettingsSection.swift */,
 				A100002B000 /* AIConfigSettingsSection.swift */,
@@ -405,6 +441,10 @@
 				A100002A001 /* WorktreeSettingsSection.swift in Sources */,
 				A100002B001 /* AIConfigSettingsSection.swift in Sources */,
 				A100002C001 /* FogNoteSettingsSection.swift in Sources */,
+				A100002D001 /* AppleIntelligenceSettingsSection.swift in Sources */,
+				A100002E001 /* FoundationModelsService.swift in Sources */,
+				A100002F001 /* AIToolbarButton.swift in Sources */,
+				A1000031001 /* AIStreamingView.swift in Sources */,
 				A1000009001 /* NoteModel.swift in Sources */,
 				A100000A001 /* NoteStorage.swift in Sources */,
 				A100000B001 /* FogNoteView.swift in Sources */,

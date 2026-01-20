@@ -125,6 +125,12 @@ class SettingsManager: ObservableObject {
         static let accentColor = "accentColor"
         static let appSizes = "appSizes"
         static let isPinned = "isPinned"
+
+        // Apple Intelligence / Foundation Models
+        static let foundationModelsEnabled = "foundationModelsEnabled"
+        static let aiFeaturesFogNote = "aiFeaturesFogNote"
+        static let aiFeaturesWorktree = "aiFeaturesWorktree"
+        static let aiFeaturesAIConfig = "aiFeaturesAIConfig"
     }
 
     // MARK: - Published Properties
@@ -133,6 +139,12 @@ class SettingsManager: ObservableObject {
     @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
     @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
     @AppStorage("isPinned") var isPinned: Bool = false
+
+    // MARK: - Apple Intelligence Settings
+    @AppStorage("foundationModelsEnabled") var foundationModelsEnabled: Bool = false
+    @AppStorage("aiFeaturesFogNote") var aiFeaturesFogNote: Bool = true
+    @AppStorage("aiFeaturesWorktree") var aiFeaturesWorktree: Bool = true
+    @AppStorage("aiFeaturesAIConfig") var aiFeaturesAIConfig: Bool = true
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []

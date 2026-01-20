@@ -9,6 +9,20 @@ struct AIConfigView: View {
     @State private var selectedProviderFilter: AIProvider?
     @State private var showPreview: Bool = false
 
+    // AI state
+    @StateObject private var aiService = FoundationModelsService.shared
+    @ObservedObject private var settings = SettingsManager.shared
+    @State private var aiExplanation: String = ""
+    @State private var isExplaining: Bool = false
+    @State private var explanationError: String?
+    @State private var showExplanation: Bool = false
+
+    private var showAIFeatures: Bool {
+        settings.foundationModelsEnabled &&
+        settings.aiFeaturesAIConfig &&
+        aiService.availability == .available
+    }
+
     var filteredItems: [AIConfigItem] {
         var items = scanner.allItems
 
@@ -276,6 +290,11 @@ struct AIConfigView: View {
             .padding(8)
             .background(Color.black.opacity(0.3))
 
+            // AI Explain bar (conditional)
+            if showAIFeatures {
+                aiExplainBar(for: item)
+            }
+
             Divider()
 
             // Metadata display for skills
@@ -295,23 +314,153 @@ struct AIConfigView: View {
                 Divider()
             }
 
-            // Preview content with rich rendering
-            if let content = scanner.previewContent(for: item) {
-                ScrollView {
-                    RichContentPreview(
-                        content: content,
-                        filename: item.path.lastPathComponent
-                    )
-                    .padding(8)
-                }
+            // Show explanation or content
+            if showExplanation && !aiExplanation.isEmpty {
+                aiExplanationView
             } else {
-                Text("Unable to preview")
-                    .font(.system(size: 11))
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Preview content with rich rendering
+                if let content = scanner.previewContent(for: item) {
+                    ScrollView {
+                        RichContentPreview(
+                            content: content,
+                            filename: item.path.lastPathComponent
+                        )
+                        .padding(8)
+                    }
+                } else {
+                    Text("Unable to preview")
+                        .font(.system(size: 11))
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
         .background(Color.black.opacity(0.2))
+        .onChange(of: selectedItem?.id) { _, _ in
+            // Reset AI state when changing selection
+            aiExplanation = ""
+            showExplanation = false
+            explanationError = nil
+        }
+    }
+
+    // MARK: - AI Explain Bar
+
+    private func aiExplainBar(for item: AIConfigItem) -> some View {
+        HStack(spacing: 8) {
+            if showExplanation {
+                // Toggle back to content
+                Button(action: { showExplanation = false }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 9))
+                        Text("Show Content")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
+            } else {
+                // Explain button
+                Button(action: { explainConfig(item) }) {
+                    HStack(spacing: 4) {
+                        if isExplaining {
+                            ProgressView()
+                                .scaleEffect(0.5)
+                                .frame(width: 10, height: 10)
+                        } else {
+                            Image(systemName: "wand.and.stars")
+                                .font(.system(size: 9))
+                        }
+                        Text(isExplaining ? "Explaining..." : "Explain this config")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundColor(.indigo)
+                }
+                .buttonStyle(.plain)
+                .disabled(isExplaining)
+            }
+
+            Spacer()
+
+            if let error = explanationError {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.indigo.opacity(0.08))
+    }
+
+    // MARK: - AI Explanation View
+
+    private var aiExplanationView: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Label("AI Explanation", systemImage: "wand.and.stars")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.indigo)
+
+                Spacer()
+
+                Button(action: copyExplanation) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 9))
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
+                .help("Copy explanation")
+            }
+            .padding(8)
+            .background(Color.indigo.opacity(0.1))
+
+            // Explanation content
+            ScrollView {
+                Text(aiExplanation)
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.9))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+
+    // MARK: - AI Actions
+
+    private func explainConfig(_ item: AIConfigItem) {
+        guard let content = scanner.previewContent(for: item) else { return }
+
+        isExplaining = true
+        explanationError = nil
+        aiExplanation = ""
+
+        Task {
+            do {
+                let truncatedContent = aiService.truncateIfNeeded(content)
+                try await aiService.streamGenerate(for: .explain, input: truncatedContent) { chunk in
+                    aiExplanation += chunk
+                }
+                showExplanation = true
+            } catch {
+                explanationError = error.localizedDescription
+            }
+            isExplaining = false
+        }
+    }
+
+    private func copyExplanation() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(aiExplanation, forType: .string)
     }
 
     // MARK: - Actions

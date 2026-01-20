@@ -26,6 +26,8 @@ struct SettingsDetailView: View {
             GeneralSettingsSection()
         case .appearance:
             AppearanceSettingsSection()
+        case .appleIntelligence:
+            AppleIntelligenceSettingsSection()
         case .about:
             AboutSettingsSection()
         case .worktree:

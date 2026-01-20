@@ -6,6 +6,20 @@ struct WorktreeDetailView: View {
     let onClose: () -> Void
     let onRefresh: () -> Void
 
+    // AI state
+    @StateObject private var aiService = FoundationModelsService.shared
+    @ObservedObject private var settings = SettingsManager.shared
+    @State private var suggestedCommitMessage: String?
+    @State private var isGeneratingCommitMessage: Bool = false
+    @State private var commitMessageError: String?
+
+    private var showAISection: Bool {
+        settings.foundationModelsEnabled &&
+        settings.aiFeaturesWorktree &&
+        aiService.availability == .available &&
+        worktree.status?.isClean == false
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -17,6 +31,11 @@ struct WorktreeDetailView: View {
                 VStack(spacing: 12) {
                     // Status Card
                     statusCard
+
+                    // AI Commit Message Suggestion (conditional)
+                    if showAISection {
+                        aiCommitMessageCard
+                    }
 
                     // Remote Tracking Card
                     if let tracking = worktree.remoteTracking {
@@ -347,6 +366,155 @@ struct WorktreeDetailView: View {
             .buttonStyle(.plain)
             .help("Copy path")
         }
+    }
+
+    // MARK: - AI Commit Message Card
+
+    private var aiCommitMessageCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("AI Assist", systemImage: "wand.and.stars")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.indigo)
+
+                Spacer()
+
+                if suggestedCommitMessage != nil {
+                    Button(action: { suggestedCommitMessage = nil }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if let message = suggestedCommitMessage {
+                // Show the generated message
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(message)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.black.opacity(0.3))
+                        .cornerRadius(6)
+                        .textSelection(.enabled)
+
+                    HStack(spacing: 12) {
+                        Button(action: copyCommitMessage) {
+                            Label("Copy", systemImage: "doc.on.doc")
+                                .font(.system(size: 10))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.cyan)
+
+                        Button(action: generateCommitMessage) {
+                            Label("Regenerate", systemImage: "arrow.clockwise")
+                                .font(.system(size: 10))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.gray)
+                    }
+                }
+            } else if let error = commitMessageError {
+                // Show error
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 10))
+                    Text(error)
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                }
+            } else {
+                // Show generate button
+                Button(action: generateCommitMessage) {
+                    HStack(spacing: 6) {
+                        if isGeneratingCommitMessage {
+                            ProgressView()
+                                .scaleEffect(0.5)
+                                .frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 10))
+                        }
+                        Text(isGeneratingCommitMessage ? "Generating..." : "Suggest Commit Message")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(.indigo)
+                }
+                .buttonStyle(.plain)
+                .disabled(isGeneratingCommitMessage)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.indigo.opacity(0.1))
+        .cornerRadius(8)
+    }
+
+    // MARK: - AI Actions
+
+    private func generateCommitMessage() {
+        isGeneratingCommitMessage = true
+        commitMessageError = nil
+        suggestedCommitMessage = nil
+
+        Task {
+            // Get git diff for staged changes, or all changes if nothing staged
+            let diffResult = await GitCommandRunner.shared.run(
+                ["diff", "--cached"],
+                in: worktree.path
+            )
+
+            var diffText: String
+            switch diffResult {
+            case .success(let output):
+                if output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    // No staged changes, get all changes
+                    let allDiffResult = await GitCommandRunner.shared.run(
+                        ["diff"],
+                        in: worktree.path
+                    )
+                    switch allDiffResult {
+                    case .success(let allOutput):
+                        diffText = allOutput
+                    case .failure(let error):
+                        commitMessageError = "Failed to get diff: \(error.localizedDescription)"
+                        isGeneratingCommitMessage = false
+                        return
+                    }
+                } else {
+                    diffText = output
+                }
+            case .failure(let error):
+                commitMessageError = "Failed to get diff: \(error.localizedDescription)"
+                isGeneratingCommitMessage = false
+                return
+            }
+
+            // Truncate if too long
+            let truncatedDiff = aiService.truncateIfNeeded(diffText)
+
+            do {
+                let message = try await aiService.generate(
+                    for: .suggestCommitMessage,
+                    input: truncatedDiff
+                )
+                suggestedCommitMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
+            } catch {
+                commitMessageError = error.localizedDescription
+            }
+
+            isGeneratingCommitMessage = false
+        }
+    }
+
+    private func copyCommitMessage() {
+        guard let message = suggestedCommitMessage else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(message, forType: .string)
     }
 
     // MARK: - Actions Card
