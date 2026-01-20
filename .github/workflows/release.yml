@@ -9,6 +9,9 @@ env:
   PROJECT_NAME: NotchFlow
   SCHEME: NotchFlow
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
