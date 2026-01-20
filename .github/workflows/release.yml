@@ -77,31 +77,17 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application: Fadi Al Zuabi ($APPLE_TEAM_ID)"
 
-      - name: Create export options
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Extract app from archive
         run: |
-          cat > build/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>developer-id</string>
-              <key>teamID</key>
-              <string>${APPLE_TEAM_ID}</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-          </dict>
-          </plist>
-          EOF
+          # The app is already signed during the archive step
+          # Extract it directly instead of using exportArchive
+          mkdir -p build/export
+          cp -R "build/${{ env.PROJECT_NAME }}.xcarchive/Products/Applications/${{ env.PROJECT_NAME }}.app" build/export/
 
-      - name: Export signed app
+      - name: Verify code signature
         run: |
-          xcodebuild -exportArchive \
-            -archivePath "build/${{ env.PROJECT_NAME }}.xcarchive" \
-            -exportPath "build/export" \
-            -exportOptionsPlist "build/ExportOptions.plist"
+          codesign --verify --deep --strict "build/export/${{ env.PROJECT_NAME }}.app"
+          codesign -dv --verbose=4 "build/export/${{ env.PROJECT_NAME }}.app"
 
       - name: Create DMG
         run: |
