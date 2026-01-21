@@ -10,6 +10,26 @@ struct FogNoteView: View {
         if searchText.isEmpty {
             return storage.notes
         }
+
+        // Tag search: #tagname
+        if searchText.hasPrefix("#") {
+            let tag = String(searchText.dropFirst()).lowercased().trimmingCharacters(in: .whitespaces)
+            if !tag.isEmpty {
+                return storage.notes.filter { note in
+                    note.tags?.contains { $0.lowercased().contains(tag) } == true
+                }
+            }
+        }
+
+        // Category search: @category
+        if searchText.hasPrefix("@") {
+            let categoryName = String(searchText.dropFirst()).lowercased().trimmingCharacters(in: .whitespaces)
+            return storage.notes.filter { note in
+                note.category?.rawValue.contains(categoryName) == true
+            }
+        }
+
+        // Regular content search
         return storage.notes.filter {
             $0.content.localizedCaseInsensitiveContains(searchText)
         }
@@ -161,8 +181,26 @@ struct NoteRowView: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(alignment: .top, spacing: 6) {
+                // Category icon (subtle, no AI label)
+                if let category = note.category, category != .uncategorized {
+                    Image(systemName: category.icon)
+                        .font(.system(size: 9))
+                        .foregroundColor(category.color.opacity(0.6))
+                        .frame(width: 12)
+                } else {
+                    Spacer()
+                        .frame(width: 12)
+                }
+
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
+                        // Priority indicator (high only)
+                        if note.priority == .high {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 5, height: 5)
+                        }
+
                         if note.isPinned {
                             Image(systemName: "pin.fill")
                                 .font(.system(size: 8))
@@ -175,9 +213,18 @@ struct NoteRowView: View {
                             .lineLimit(1)
                     }
 
-                    Text(note.modifiedAt, style: .relative)
-                        .font(.system(size: 9))
-                        .foregroundColor(.gray)
+                    HStack(spacing: 4) {
+                        Text(note.modifiedAt, style: .relative)
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray)
+
+                        // Tags (show first tag only, very subtle)
+                        if let firstTag = note.tags?.first {
+                            Text("#\(firstTag)")
+                                .font(.system(size: 8))
+                                .foregroundColor(.gray.opacity(0.6))
+                        }
+                    }
                 }
 
                 Spacer()
@@ -235,33 +282,15 @@ struct NoteEditorView: View {
     @State private var showPreview: Bool = false
     @FocusState private var isFocused: Bool
 
-    // AI state
-    @StateObject private var aiService = FoundationModelsService.shared
-    @ObservedObject private var settings = SettingsManager.shared
-    @State private var aiResult: String = ""
-    @State private var isAIProcessing: Bool = false
-    @State private var showingAIPopover: Bool = false
-    @State private var aiError: FoundationModelsError?
-
-    private var showAIToolbar: Bool {
-        settings.foundationModelsEnabled &&
-        settings.aiFeaturesFogNote &&
-        aiService.availability == .available
-    }
-
     var body: some View {
         VStack(spacing: 0) {
-            // AI Toolbar (conditional)
-            if showAIToolbar {
-                aiToolbar
-                Divider()
-            }
-
             // Editor or Preview
             if showPreview {
                 ScrollView {
-                    MarkdownView(content: content)
+                    Text(content)
+                        .font(.system(size: 12))
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
                         .padding(12)
                 }
             } else {
@@ -278,17 +307,6 @@ struct NoteEditorView: View {
                     .padding(12)
             }
 
-            // AI Error Banner (if any)
-            if let error = aiError {
-                AIErrorBanner(
-                    error: error,
-                    onRetry: nil,
-                    onDismiss: { aiError = nil }
-                )
-                .padding(.horizontal, 12)
-                .padding(.bottom, 4)
-            }
-
             Divider()
 
             // Status bar
@@ -300,59 +318,7 @@ struct NoteEditorView: View {
         .onChange(of: note.id) { _, _ in
             content = note.content
             showPreview = false  // Reset to edit mode when switching notes
-            // Reset AI state when switching notes
-            aiResult = ""
-            showingAIPopover = false
-            aiError = nil
         }
-        .popover(isPresented: $showingAIPopover, arrowEdge: .top) {
-            AIResultPopover(
-                result: $aiResult,
-                isProcessing: $isAIProcessing,
-                onInsert: { text in
-                    content += "\n\n" + text
-                    saveContent()
-                    showingAIPopover = false
-                },
-                onReplace: { text in
-                    content = text
-                    saveContent()
-                    showingAIPopover = false
-                },
-                onDismiss: {
-                    showingAIPopover = false
-                }
-            )
-        }
-    }
-
-    // MARK: - AI Toolbar
-
-    private var aiToolbar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "wand.and.stars")
-                .font(.system(size: 10))
-                .foregroundColor(.indigo)
-
-            AIToolbarButton(icon: "text.badge.minus", label: "Summarize") {
-                performAITask(.summarize)
-            }
-            .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAIProcessing)
-
-            AIToolbarButton(icon: "text.badge.plus", label: "Expand") {
-                performAITask(.expand)
-            }
-            .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAIProcessing)
-
-            Spacer()
-
-            if isAIProcessing {
-                AIProcessingIndicator(isProcessing: true, label: "Generating")
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.indigo.opacity(0.08))
     }
 
     // MARK: - Status Bar
@@ -383,39 +349,6 @@ struct NoteEditorView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(Color.black.opacity(0.2))
-    }
-
-    // MARK: - AI Actions
-
-    private func performAITask(_ task: AITaskType) {
-        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-
-        isAIProcessing = true
-        showingAIPopover = true
-        aiResult = ""
-        aiError = nil
-
-        Task {
-            do {
-                let input = aiService.truncateIfNeeded(content)
-                try await aiService.streamGenerate(for: task, input: input) { chunk in
-                    aiResult += chunk
-                }
-            } catch let error as FoundationModelsError {
-                aiError = error
-                showingAIPopover = false
-            } catch {
-                aiError = .generationFailed(error.localizedDescription)
-                showingAIPopover = false
-            }
-            isAIProcessing = false
-        }
-    }
-
-    private func saveContent() {
-        var updatedNote = note
-        updatedNote.update(content: content)
-        onSave(updatedNote)
     }
 }
 

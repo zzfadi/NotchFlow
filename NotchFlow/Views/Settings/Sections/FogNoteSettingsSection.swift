@@ -55,6 +55,23 @@ struct FogNoteSettingsSection: View {
                     .padding(4)
                 }
 
+                // Smart Organization
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Smart Organization", systemImage: "sparkles")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        Toggle("Automatic note organization", isOn: $settings.autoAnalyzeNotes)
+                            .toggleStyle(.switch)
+
+                        Text("Automatically detects note type, priority, and tags to help organize your notes. Works locally without any cloud services.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(4)
+                }
+
                 Spacer()
             }
             .padding(24)

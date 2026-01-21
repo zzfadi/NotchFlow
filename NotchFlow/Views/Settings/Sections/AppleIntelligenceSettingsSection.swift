@@ -92,7 +92,7 @@ struct AppleIntelligenceSettingsSection: View {
                 Toggle("Enable Apple Intelligence Features", isOn: $settings.foundationModelsEnabled)
                     .toggleStyle(.switch)
 
-                Text("Uses on-device AI to summarize notes, suggest commit messages, and explain configurations. All processing happens locally on your Mac.")
+                Text("Uses on-device AI for smart organization and commit message suggestions. All processing happens locally on your Mac.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -114,7 +114,7 @@ struct AppleIntelligenceSettingsSection: View {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Fog Note")
-                                Text("Summarize and expand notes")
+                                Text("Smart organization of notes")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -146,7 +146,7 @@ struct AppleIntelligenceSettingsSection: View {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("AI Config")
-                                Text("Explain configuration files")
+                                Text("View AI configuration files")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }

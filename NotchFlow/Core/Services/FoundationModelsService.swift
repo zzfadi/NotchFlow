@@ -35,7 +35,7 @@ enum FoundationModelsAvailability: Equatable {
 
     var canBeEnabled: Bool {
         switch self {
-        case .available, .unavailableDownloading:
+        case .available, .unavailableDownloading, .disabled:
             return true
         default:
             return false
@@ -86,21 +86,12 @@ enum FoundationModelsAvailability: Equatable {
 
 /// Predefined AI task types with built-in prompts
 enum AITaskType {
-    case summarize
-    case expand
-    case explain
     case suggestCommitMessage
     case analyzeChanges
     case custom(prompt: String)
 
     var systemPrompt: String? {
         switch self {
-        case .summarize:
-            return "You are a concise summarizer. Provide brief, clear summaries."
-        case .expand:
-            return "You are a helpful writer. Expand ideas with relevant details and examples."
-        case .explain:
-            return "You are a technical explainer. Explain configurations clearly and simply."
         case .suggestCommitMessage:
             return "You are a git expert. Write concise commit messages following conventional commits format (feat:, fix:, docs:, etc.)."
         case .analyzeChanges:
@@ -112,27 +103,6 @@ enum AITaskType {
 
     func buildPrompt(for input: String) -> String {
         switch self {
-        case .summarize:
-            return """
-            Summarize the following text concisely in 2-3 sentences:
-
-            \(input)
-            """
-
-        case .expand:
-            return """
-            Expand on the following idea with more details and examples:
-
-            \(input)
-            """
-
-        case .explain:
-            return """
-            Explain what the following configuration does in simple terms:
-
-            \(input)
-            """
-
         case .suggestCommitMessage:
             return """
             Based on the following git diff, write a concise commit message. Use conventional commits format (feat:, fix:, refactor:, etc.). Keep it under 72 characters for the subject line. Only output the commit message, nothing else.
@@ -231,12 +201,7 @@ final class FoundationModelsService: ObservableObject {
 
     /// Checks and updates the current availability status
     func checkAvailability() {
-        // Check if user disabled in settings first
-        guard SettingsManager.shared.foundationModelsEnabled else {
-            availability = .disabled
-            return
-        }
-
+        // First check system availability, then apply user preference
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *) {
             checkSystemAvailability()
@@ -246,6 +211,11 @@ final class FoundationModelsService: ObservableObject {
         #else
         availability = .unavailableOS
         #endif
+
+        // If system is available but user has disabled, show as disabled
+        if availability == .available && !SettingsManager.shared.foundationModelsEnabled {
+            availability = .disabled
+        }
     }
 
     #if canImport(FoundationModels)

@@ -1,4 +1,68 @@
 import Foundation
+import SwiftUI
+
+// MARK: - Note Category
+
+enum NoteCategory: String, Codable, CaseIterable, Identifiable {
+    case task
+    case idea
+    case reference
+    case meeting
+    case snippet
+    case uncategorized
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .task: return "checkmark.circle"
+        case .idea: return "lightbulb"
+        case .reference: return "doc.text"
+        case .meeting: return "person.2"
+        case .snippet: return "curlybraces"
+        case .uncategorized: return "note.text"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .task: return .green
+        case .idea: return .yellow
+        case .reference: return .blue
+        case .meeting: return .purple
+        case .snippet: return .orange
+        case .uncategorized: return .gray
+        }
+    }
+}
+
+// MARK: - Note Priority
+
+enum NotePriority: String, Codable, CaseIterable, Identifiable {
+    case high
+    case normal
+    case low
+
+    var id: String { rawValue }
+
+    var sortOrder: Int {
+        switch self {
+        case .high: return 0
+        case .normal: return 1
+        case .low: return 2
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .high: return .red
+        case .normal: return .clear
+        case .low: return .gray
+        }
+    }
+}
+
+// MARK: - Note Model
 
 struct Note: Identifiable, Codable, Equatable {
     let id: UUID
@@ -7,12 +71,38 @@ struct Note: Identifiable, Codable, Equatable {
     var modifiedAt: Date
     var isPinned: Bool
 
-    init(id: UUID = UUID(), content: String = "", createdAt: Date = Date(), modifiedAt: Date = Date(), isPinned: Bool = false) {
+    // AI-enhanced metadata (persisted, invisible to user)
+    var tags: [String]?
+    var category: NoteCategory?
+    var priority: NotePriority?
+    var analyzedAt: Date?
+
+    init(
+        id: UUID = UUID(),
+        content: String = "",
+        createdAt: Date = Date(),
+        modifiedAt: Date = Date(),
+        isPinned: Bool = false,
+        tags: [String]? = nil,
+        category: NoteCategory? = nil,
+        priority: NotePriority? = nil,
+        analyzedAt: Date? = nil
+    ) {
         self.id = id
         self.content = content
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
         self.isPinned = isPinned
+        self.tags = tags
+        self.category = category
+        self.priority = priority
+        self.analyzedAt = analyzedAt
+    }
+
+    /// Whether this note needs re-analysis (content changed since last analysis)
+    var needsAnalysis: Bool {
+        guard let analyzedAt = analyzedAt else { return true }
+        return modifiedAt > analyzedAt
     }
 
     var title: String {

@@ -146,6 +146,9 @@ class SettingsManager: ObservableObject {
     @AppStorage("aiFeaturesWorktree") var aiFeaturesWorktree: Bool = true
     @AppStorage("aiFeaturesAIConfig") var aiFeaturesAIConfig: Bool = true
 
+    // MARK: - Smart Organization (Invisible AI)
+    @AppStorage("autoAnalyzeNotes") var autoAnalyzeNotes: Bool = true
+
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []
     @Published var fogNotesDirectory: String = ""
