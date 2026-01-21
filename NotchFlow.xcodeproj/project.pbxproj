@@ -21,6 +21,7 @@
 		A1000007001 /* ExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007000 /* ExpandedView.swift */; };
 		A1000008001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000 /* SettingsView.swift */; };
 		A100001F001 /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001F000 /* ResizeHandle.swift */; };
+		A1000032001 /* ResizableSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032000 /* ResizableSidebar.swift */; };
 
 		/* Settings */
 		A1000021001 /* ModernSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021000 /* ModernSettingsView.swift */; };
@@ -90,6 +91,7 @@
 		A1000007000 /* ExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandedView.swift; sourceTree = "<group>"; };
 		A1000008000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A100001F000 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
+		A1000032000 /* ResizableSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableSidebar.swift; sourceTree = "<group>"; };
 
 		/* Settings */
 		A1000021000 /* ModernSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernSettingsView.swift; sourceTree = "<group>"; };
@@ -208,8 +210,17 @@
 				A1000008000 /* SettingsView.swift */,
 				A100001F000 /* ResizeHandle.swift */,
 				A110000B000 /* Settings */,
+				A110000F000 /* Components */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A110000F000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1000032000 /* ResizableSidebar.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		A110000B000 /* Settings */ = {
@@ -393,6 +404,7 @@
 				A1000007001 /* ExpandedView.swift in Sources */,
 				A1000008001 /* SettingsView.swift in Sources */,
 				A100001F001 /* ResizeHandle.swift in Sources */,
+				A1000032001 /* ResizableSidebar.swift in Sources */,
 				A1000021001 /* ModernSettingsView.swift in Sources */,
 				A1000022001 /* SettingsSidebar.swift in Sources */,
 				A1000023001 /* SettingsDetailView.swift in Sources */,
