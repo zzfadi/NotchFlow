@@ -75,7 +75,6 @@ struct Note: Identifiable, Codable, Equatable {
     var tags: [String]?
     var category: NoteCategory?
     var priority: NotePriority?
-    var analyzedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -85,8 +84,7 @@ struct Note: Identifiable, Codable, Equatable {
         isPinned: Bool = false,
         tags: [String]? = nil,
         category: NoteCategory? = nil,
-        priority: NotePriority? = nil,
-        analyzedAt: Date? = nil
+        priority: NotePriority? = nil
     ) {
         self.id = id
         self.content = content
@@ -96,13 +94,6 @@ struct Note: Identifiable, Codable, Equatable {
         self.tags = tags
         self.category = category
         self.priority = priority
-        self.analyzedAt = analyzedAt
-    }
-
-    /// Whether this note needs re-analysis (content changed since last analysis)
-    var needsAnalysis: Bool {
-        guard let analyzedAt = analyzedAt else { return true }
-        return modifiedAt > analyzedAt
     }
 
     var title: String {

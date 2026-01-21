@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import CryptoKit
 
 #if canImport(FoundationModels)
 import FoundationModels
@@ -8,10 +9,18 @@ import FoundationModels
 // MARK: - Note Analysis Result
 
 /// Result of analyzing a note's content
-struct NoteAnalysisResult {
+struct NoteAnalysisResult: Equatable {
     let tags: [String]
     let category: NoteCategory
     let priority: NotePriority
+    let confidence: Double
+
+    static let empty = NoteAnalysisResult(
+        tags: [],
+        category: .uncategorized,
+        priority: .normal,
+        confidence: 0
+    )
 }
 
 // MARK: - Generable Struct for AI Extraction
@@ -34,7 +43,14 @@ struct AIExtractedNoteMetadata {
 // MARK: - Note Analyzer Service
 
 /// Analyzes notes to extract metadata using AI with rule-based fallback.
-/// Designed to be invisible to users - feels like smart algorithms.
+///
+/// Design principles for 3B on-device model:
+/// - **Stability over novelty**: Don't change metadata on every analysis
+/// - **Debounce**: Wait for user to stop typing before analyzing
+/// - **Content hashing**: Only re-analyze if content significantly changed
+/// - **Sticky metadata**: Keep existing category/priority unless clearly better
+/// - **Minimal prompts**: Short, structured extraction (not open-ended generation)
+/// - **Graceful fallback**: Rule-based analysis when AI unavailable
 @MainActor
 final class NoteAnalyzer: ObservableObject {
     static let shared = NoteAnalyzer()
@@ -43,53 +59,124 @@ final class NoteAnalyzer: ObservableObject {
 
     private let settings = SettingsManager.shared
 
+    // MARK: - Stability Controls
+
+    /// Minimum characters before attempting AI analysis
+    private let minContentForAI = 50
+
+    /// Maximum characters to send to AI (keep prompts small for 3B model)
+    private let maxContentForAI = 300
+
+    /// Cooldown between analyses for same note (seconds)
+    private let analysisCooldown: TimeInterval = 30
+
+    /// Cache of recent analysis times per note ID
+    private var lastAnalysisTime: [UUID: Date] = [:]
+
+    /// Cache of content hashes to detect changes
+    private var contentHashes: [UUID: String] = [:]
+
     private init() {}
 
     // MARK: - Public API
 
     /// Analyze a note and return extracted metadata.
     /// Uses AI when available, falls back to rule-based analysis.
+    /// Returns nil if analysis should be skipped (cooldown, no change, etc.)
     func analyze(_ note: Note) async -> NoteAnalysisResult? {
         // Skip empty notes
-        guard !note.isEmpty else { return nil }
+        let trimmed = note.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
 
-        // Skip if recently analyzed and content unchanged
-        guard note.needsAnalysis else { return nil }
+        // Check cooldown - avoid re-analyzing too frequently
+        if let lastTime = lastAnalysisTime[note.id],
+           Date().timeIntervalSince(lastTime) < analysisCooldown {
+            return nil
+        }
 
-        // Check if auto-analysis is enabled
-        guard settings.autoAnalyzeNotes else { return nil }
+        // Check if content significantly changed
+        let currentHash = contentHash(note.content)
+        if let previousHash = contentHashes[note.id], previousHash == currentHash {
+            return nil
+        }
 
         isAnalyzing = true
-        defer { isAnalyzing = false }
+        defer {
+            isAnalyzing = false
+            lastAnalysisTime[note.id] = Date()
+            contentHashes[note.id] = currentHash
+        }
 
-        // Try AI first if available and enabled
-        if settings.foundationModelsEnabled && settings.aiFeaturesFogNote {
+        // Try AI for longer content when enabled
+        if settings.foundationModelsEnabled && note.content.count >= minContentForAI {
             #if canImport(FoundationModels)
             if #available(macOS 26.0, *) {
                 if let result = await analyzeWithAI(note) {
-                    return result
+                    return applyStickiness(result, existingNote: note)
                 }
             }
             #endif
         }
 
-        // Fall back to rule-based analysis (always works)
+        // Fall back to rule-based analysis
         return analyzeWithRules(note)
     }
 
-    /// Batch analyze multiple notes (e.g., on app launch)
-    func analyzeNotes(_ notes: [Note]) async -> [UUID: NoteAnalysisResult] {
-        var results: [UUID: NoteAnalysisResult] = [:]
+    /// Force immediate analysis, bypassing cooldown
+    func forceAnalyze(_ note: Note) async -> NoteAnalysisResult? {
+        lastAnalysisTime.removeValue(forKey: note.id)
+        contentHashes.removeValue(forKey: note.id)
+        return await analyze(note)
+    }
 
-        for note in notes {
-            if let result = await analyze(note) {
-                results[note.id] = result
+    /// Clear analysis cache for a note
+    func clearCache(for noteId: UUID) {
+        lastAnalysisTime.removeValue(forKey: noteId)
+        contentHashes.removeValue(forKey: noteId)
+    }
+
+    // MARK: - Content Hashing
+
+    private func contentHash(_ content: String) -> String {
+        let normalized = content
+            .lowercased()
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .prefix(500)
+        let data = Data(normalized.utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - Stickiness (Avoid Flip-Flopping)
+
+    private func applyStickiness(_ result: NoteAnalysisResult, existingNote: Note) -> NoteAnalysisResult {
+        var finalCategory = result.category
+        var finalPriority = result.priority
+
+        // Keep existing category if AI confidence is low or new is generic
+        if let existing = existingNote.category, existing != .uncategorized {
+            if result.confidence < 0.7 || result.category == .reference {
+                finalCategory = existing
             }
-            // Small delay between analyses to avoid overwhelming the model
-            try? await Task.sleep(for: .milliseconds(50))
         }
 
-        return results
+        // Keep existing priority unless AI is confident about a change
+        if let existing = existingNote.priority {
+            let isBigJump = (existing == .high && result.priority == .low) ||
+                           (existing == .low && result.priority == .high)
+            if result.priority == .normal || (isBigJump && result.confidence < 0.8) {
+                finalPriority = existing
+            }
+        }
+
+        return NoteAnalysisResult(
+            tags: result.tags,
+            category: finalCategory,
+            priority: finalPriority,
+            confidence: result.confidence
+        )
     }
 
     // MARK: - AI-Based Analysis
@@ -97,150 +184,148 @@ final class NoteAnalyzer: ObservableObject {
     #if canImport(FoundationModels)
     @available(macOS 26.0, *)
     private func analyzeWithAI(_ note: Note) async -> NoteAnalysisResult? {
-        // Check system availability
         let availability = SystemLanguageModel.default.availability
         guard case .available = availability else { return nil }
 
         do {
+            // Keep instructions minimal for 3B model
             let session = LanguageModelSession(instructions: """
-                Extract metadata from notes. Be concise and accurate.
-                For tags: use 1-3 single lowercase words.
-                For category: choose exactly one of task/idea/reference/meeting/snippet.
-                For priority: choose high only if urgent words present, otherwise normal or low.
+                Extract metadata. Be consistent.
+                Tags: 1-3 lowercase words.
+                Category: task/idea/reference/meeting/snippet.
+                Priority: high only if urgent, else normal/low.
                 """)
 
-            // Truncate input to stay within token limits
-            let input = String(note.content.prefix(400))
+            // Truncate to keep within 3B model's sweet spot
+            let input = String(note.content.prefix(maxContentForAI))
 
             let response = try await session.respond(
-                to: "Analyze this note:\n\n\(input)",
+                to: "Analyze:\n\(input)",
                 generating: AIExtractedNoteMetadata.self
             )
 
             let metadata = response.content
-
-            // Parse AI response into our types
             let category = NoteCategory(rawValue: metadata.category.lowercased()) ?? .uncategorized
             let priority = NotePriority(rawValue: metadata.priority.lowercased()) ?? .normal
-            let tags = Array(metadata.tags.prefix(3).map { $0.lowercased() })
+            let tags = metadata.tags
+                .map { $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
+                .filter { !$0.isEmpty && $0.count <= 15 }
+                .prefix(3)
 
-            return NoteAnalysisResult(tags: tags, category: category, priority: priority)
+            let confidence = calculateConfidence(tags: Array(tags), category: category, content: note.content)
 
+            return NoteAnalysisResult(
+                tags: Array(tags),
+                category: category,
+                priority: priority,
+                confidence: confidence
+            )
         } catch {
-            // AI failed, will fall back to rules
-            print("[NoteAnalyzer] AI analysis failed: \(error.localizedDescription)")
-            return nil
+            return nil // Silent fallback to rules
         }
+    }
+
+    private func calculateConfidence(tags: [String], category: NoteCategory, content: String) -> Double {
+        var score = 0.5
+        let lowerContent = content.lowercased()
+
+        // Tags that appear in content boost confidence
+        let relevantTags = tags.filter { lowerContent.contains($0) }
+        score += Double(relevantTags.count) * 0.1
+
+        // Non-generic category boosts confidence
+        if category != .uncategorized && category != .reference {
+            score += 0.15
+        }
+
+        // Longer content = more context
+        if content.count > 100 { score += 0.1 }
+        if content.count > 200 { score += 0.1 }
+
+        return min(1.0, score)
     }
     #endif
 
-    // MARK: - Rule-Based Analysis (Fallback)
+    // MARK: - Rule-Based Analysis
 
     private func analyzeWithRules(_ note: Note) -> NoteAnalysisResult {
         let tags = extractTagsWithRules(note.content)
         let category = detectCategoryWithRules(note.content)
         let priority = detectPriorityWithRules(note.content)
 
-        return NoteAnalysisResult(tags: tags, category: category, priority: priority)
+        return NoteAnalysisResult(
+            tags: tags,
+            category: category,
+            priority: priority,
+            confidence: 0.6
+        )
     }
 
-    /// Extract tags using pattern matching
     private func extractTagsWithRules(_ content: String) -> [String] {
         var tags: Set<String> = []
         let lower = content.lowercased()
 
-        // Extract hashtags using simple parsing
-        let words = lower.components(separatedBy: .whitespacesAndNewlines)
-        for word in words {
-            if word.hasPrefix("#") && word.count > 1 {
-                let tag = word.dropFirst().trimmingCharacters(in: .punctuationCharacters)
-                if !tag.isEmpty && tag.count < 20 {
-                    tags.insert(String(tag))
-                }
+        // Extract explicit hashtags
+        for word in lower.components(separatedBy: .whitespacesAndNewlines)
+            where word.hasPrefix("#") && word.count > 1 {
+            let tag = word.dropFirst().trimmingCharacters(in: .punctuationCharacters)
+            if !tag.isEmpty && tag.count < 20 {
+                tags.insert(String(tag))
             }
         }
 
         // Detect common topics
-        let topicPatterns: [(keywords: [String], tag: String)] = [
-            (["api", "endpoint", "rest"], "api"),
-            (["bug", "fix", "issue", "error"], "bugfix"),
-            (["test", "testing", "spec"], "testing"),
-            (["deploy", "release", "production"], "deployment"),
-            (["database", "db", "sql", "query"], "database"),
-            (["ui", "ux", "design", "layout"], "design"),
-            (["auth", "login", "password", "token"], "auth"),
-            (["performance", "optimize", "speed"], "performance"),
+        let patterns: [(keywords: [String], tag: String)] = [
+            (["api", "endpoint"], "api"),
+            (["bug", "fix", "error"], "bugfix"),
+            (["test", "testing"], "testing"),
+            (["deploy", "release"], "deployment"),
+            (["database", "sql"], "database"),
+            (["ui", "design"], "design"),
+            (["auth", "login"], "auth")
         ]
 
-        for (keywords, tag) in topicPatterns where keywords.contains(where: { lower.contains($0) }) {
+        for (keywords, tag) in patterns where keywords.contains(where: { lower.contains($0) }) {
             tags.insert(tag)
+            if tags.count >= 3 { break }
         }
 
-        // Detect code presence
-        if content.contains("```") || content.contains("func ") ||
-           content.contains("class ") || content.contains("import ") {
+        if content.contains("```") || content.contains("func ") {
             tags.insert("code")
         }
 
         return Array(tags.prefix(3))
     }
 
-    /// Detect category based on content patterns
     private func detectCategoryWithRules(_ content: String) -> NoteCategory {
         let lower = content.lowercased()
 
-        // Task indicators
-        let taskPatterns = ["[ ]", "[x]", "todo", "task", "action item", "deadline", "due"]
-        if taskPatterns.contains(where: { lower.contains($0) }) {
+        if lower.contains("[ ]") || lower.contains("[x]") || lower.contains("todo") {
             return .task
         }
-
-        // Code snippet indicators
-        if content.contains("```") ||
-           (content.contains("func ") && content.contains("{")) ||
-           content.contains("import ") {
+        if content.contains("```") || (content.contains("func ") && content.contains("{")) {
             return .snippet
         }
-
-        // Meeting indicators
-        let meetingPatterns = ["meeting", "attendees", "agenda", "minutes", "call with", "sync with"]
-        if meetingPatterns.contains(where: { lower.contains($0) }) {
+        if lower.contains("meeting") || lower.contains("agenda") {
             return .meeting
         }
-
-        // Idea indicators
-        let ideaPatterns = ["idea", "what if", "could we", "brainstorm", "concept", "proposal"]
-        if ideaPatterns.contains(where: { lower.contains($0) }) {
+        if lower.contains("idea") || lower.contains("what if") {
             return .idea
         }
-
-        // Default to reference
         return .reference
     }
 
-    /// Detect priority based on urgency indicators
     private func detectPriorityWithRules(_ content: String) -> NotePriority {
         let lower = content.lowercased()
 
-        // High priority indicators
-        let urgentPatterns = [
-            "urgent", "asap", "critical", "immediately", "emergency",
-            "high priority", "p0", "p1", "blocker", "deadline today",
-            "due today", "!!!", "🔥", "🚨"
-        ]
-        if urgentPatterns.contains(where: { lower.contains($0) }) {
+        if ["urgent", "asap", "critical", "blocker", "p0", "p1", "!!!"]
+            .contains(where: { lower.contains($0) }) {
             return .high
         }
-
-        // Low priority indicators
-        let lowPatterns = [
-            "low priority", "someday", "maybe", "backlog", "nice to have",
-            "when time permits", "p3", "p4"
-        ]
-        if lowPatterns.contains(where: { lower.contains($0) }) {
+        if ["someday", "maybe", "backlog", "p3"]
+            .contains(where: { lower.contains($0) }) {
             return .low
         }
-
         return .normal
     }
 }

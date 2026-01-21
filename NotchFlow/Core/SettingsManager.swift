@@ -142,12 +142,6 @@ class SettingsManager: ObservableObject {
 
     // MARK: - Apple Intelligence Settings
     @AppStorage("foundationModelsEnabled") var foundationModelsEnabled: Bool = false
-    @AppStorage("aiFeaturesFogNote") var aiFeaturesFogNote: Bool = true
-    @AppStorage("aiFeaturesWorktree") var aiFeaturesWorktree: Bool = true
-    @AppStorage("aiFeaturesAIConfig") var aiFeaturesAIConfig: Bool = true
-
-    // MARK: - Smart Organization (Invisible AI)
-    @AppStorage("autoAnalyzeNotes") var autoAnalyzeNotes: Bool = true
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []

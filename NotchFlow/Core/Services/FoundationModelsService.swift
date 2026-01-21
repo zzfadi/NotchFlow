@@ -84,18 +84,15 @@ enum FoundationModelsAvailability: Equatable {
 
 // MARK: - AI Task Types
 
-/// Predefined AI task types with built-in prompts
+/// Predefined AI task types - FogNote only for now
 enum AITaskType {
-    case suggestCommitMessage
-    case analyzeChanges
+    case analyzeNote
     case custom(prompt: String)
 
     var systemPrompt: String? {
         switch self {
-        case .suggestCommitMessage:
-            return "You are a git expert. Write concise commit messages following conventional commits format (feat:, fix:, docs:, etc.)."
-        case .analyzeChanges:
-            return "You are a code reviewer. Summarize code changes clearly."
+        case .analyzeNote:
+            return "Extract metadata from notes. Be accurate and consistent."
         case .custom:
             return nil
         }
@@ -103,26 +100,10 @@ enum AITaskType {
 
     func buildPrompt(for input: String) -> String {
         switch self {
-        case .suggestCommitMessage:
-            return """
-            Based on the following git diff, write a concise commit message. Use conventional commits format (feat:, fix:, refactor:, etc.). Keep it under 72 characters for the subject line. Only output the commit message, nothing else.
-
-            \(input)
-            """
-
-        case .analyzeChanges:
-            return """
-            Analyze the following git changes and provide a brief summary of what was modified:
-
-            \(input)
-            """
-
+        case .analyzeNote:
+            return "Analyze:\n\(input)"
         case .custom(let prompt):
-            return """
-            \(prompt)
-
-            \(input)
-            """
+            return "\(prompt)\n\n\(input)"
         }
     }
 }

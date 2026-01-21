@@ -298,11 +298,12 @@ struct AIConfigView: View {
             // Preview content
             if let content = scanner.previewContent(for: item) {
                 ScrollView {
-                    SimpleContentPreview(
-                        content: content,
-                        filename: item.path.lastPathComponent
-                    )
-                    .padding(8)
+                    Text(content)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.9))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
                 }
             } else {
                 Text("Unable to preview")

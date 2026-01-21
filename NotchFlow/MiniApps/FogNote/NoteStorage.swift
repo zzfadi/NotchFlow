@@ -97,11 +97,9 @@ class NoteStorage: ObservableObject {
     private func applyAnalysisResult(_ result: NoteAnalysisResult, to noteId: UUID) async {
         guard let index = notes.firstIndex(where: { $0.id == noteId }) else { return }
 
-        // Only update if content hasn't changed since analysis started
         notes[index].tags = result.tags
         notes[index].category = result.category
         notes[index].priority = result.priority
-        notes[index].analyzedAt = Date()
 
         // Re-sort and save
         sortNotes()
@@ -147,15 +145,17 @@ class NoteStorage: ObservableObject {
         }
     }
 
-    /// Analyze notes that need analysis (called after load)
+    /// Analyze notes in background (called after load)
     private func analyzeNotesInBackground() {
-        let notesNeedingAnalysis = notes.filter { $0.needsAnalysis && !$0.isEmpty }
-        guard !notesNeedingAnalysis.isEmpty else { return }
+        let notesToAnalyze = notes.filter { !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard !notesToAnalyze.isEmpty else { return }
 
         Task {
-            let results = await NoteAnalyzer.shared.analyzeNotes(notesNeedingAnalysis)
-            for (noteId, result) in results {
-                await applyAnalysisResult(result, to: noteId)
+            for note in notesToAnalyze.prefix(5) { // Limit initial batch
+                if let result = await NoteAnalyzer.shared.forceAnalyze(note) {
+                    await applyAnalysisResult(result, to: note.id)
+                }
+                try? await Task.sleep(for: .milliseconds(100))
             }
         }
     }

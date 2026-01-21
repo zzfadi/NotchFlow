@@ -62,10 +62,10 @@ struct FogNoteSettingsSection: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        Toggle("Automatic note organization", isOn: $settings.autoAnalyzeNotes)
+                        Toggle("Enable smart organization", isOn: $settings.foundationModelsEnabled)
                             .toggleStyle(.switch)
 
-                        Text("Automatically detects note type, priority, and tags to help organize your notes. Works locally without any cloud services.")
+                        Text("Automatically detects note type, priority, and tags using on-device AI. All processing stays on your Mac.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

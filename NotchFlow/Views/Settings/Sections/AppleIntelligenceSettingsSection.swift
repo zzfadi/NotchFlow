@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Apple Intelligence settings section - on-device AI configuration
+/// Apple Intelligence settings - on-device AI for FogNote
 struct AppleIntelligenceSettingsSection: View {
     @ObservedObject private var settings = SettingsManager.shared
     @StateObject private var aiService = FoundationModelsService.shared
@@ -11,21 +11,16 @@ struct AppleIntelligenceSettingsSection: View {
                 SettingsHeader(
                     icon: "wand.and.stars",
                     title: "Apple Intelligence",
-                    subtitle: "On-device AI features",
+                    subtitle: "Smart note organization",
                     accentColor: .indigo
                 )
 
-                // Availability status card
+                // Availability status
                 availabilityCard
 
-                // Main toggle (show if can be enabled OR if already enabled)
+                // Main toggle
                 if aiService.availability.canBeEnabled || settings.foundationModelsEnabled {
                     mainToggleCard
-                }
-
-                // Per-app toggles (only show when enabled and available)
-                if settings.foundationModelsEnabled && aiService.availability == .available {
-                    perAppTogglesCard
                 }
 
                 // Info section
@@ -35,25 +30,27 @@ struct AppleIntelligenceSettingsSection: View {
             }
             .padding(24)
         }
-        .onAppear {
-            aiService.checkAvailability()
-        }
+        .onAppear { aiService.checkAvailability() }
         .onChange(of: settings.foundationModelsEnabled) { _, _ in
             aiService.checkAvailability()
         }
     }
 
-    // MARK: - Availability Card
-
     private var availabilityCard: some View {
         GroupBox {
             HStack(spacing: 12) {
-                statusIcon
+                ZStack {
+                    Circle()
+                        .fill(aiService.availability.statusColor.opacity(0.2))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: aiService.availability.statusSymbol)
+                        .font(.system(size: 18))
+                        .foregroundColor(aiService.availability.statusColor)
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(aiService.availability.statusTitle)
                         .font(.headline)
-
                     Text(aiService.availability.localizedDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -63,7 +60,9 @@ struct AppleIntelligenceSettingsSection: View {
 
                 if aiService.availability == .unavailableNotConfigured {
                     Button("Open Settings") {
-                        openSystemSettings()
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.appleintelligencelanguage") {
+                            NSWorkspace.shared.open(url)
+                        }
                     }
                     .buttonStyle(.bordered)
                 }
@@ -72,27 +71,13 @@ struct AppleIntelligenceSettingsSection: View {
         }
     }
 
-    private var statusIcon: some View {
-        ZStack {
-            Circle()
-                .fill(aiService.availability.statusColor.opacity(0.2))
-                .frame(width: 40, height: 40)
-
-            Image(systemName: aiService.availability.statusSymbol)
-                .font(.system(size: 18))
-                .foregroundColor(aiService.availability.statusColor)
-        }
-    }
-
-    // MARK: - Main Toggle Card
-
     private var mainToggleCard: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Enable Apple Intelligence Features", isOn: $settings.foundationModelsEnabled)
+                Toggle("Enable Smart Organization", isOn: $settings.foundationModelsEnabled)
                     .toggleStyle(.switch)
 
-                Text("Uses on-device AI for smart organization and commit message suggestions. All processing happens locally on your Mac.")
+                Text("Automatically organizes notes with tags, categories, and priorities. All processing happens on-device.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -100,97 +85,24 @@ struct AppleIntelligenceSettingsSection: View {
         }
     }
 
-    // MARK: - Per-App Toggles Card
-
-    private var perAppTogglesCard: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 16) {
-                Label("Enable for Mini Apps", systemImage: "app.badge")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-
-                VStack(spacing: 12) {
-                    Toggle(isOn: $settings.aiFeaturesFogNote) {
-                        Label {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Fog Note")
-                                Text("Smart organization of notes")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        } icon: {
-                            Image(systemName: "note.text")
-                                .foregroundColor(settings.accentColor)
-                        }
-                    }
-
-                    Divider()
-
-                    Toggle(isOn: $settings.aiFeaturesWorktree) {
-                        Label {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Worktree")
-                                Text("Suggest commit messages")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        } icon: {
-                            Image(systemName: "arrow.triangle.branch")
-                                .foregroundColor(.orange)
-                        }
-                    }
-
-                    Divider()
-
-                    Toggle(isOn: $settings.aiFeaturesAIConfig) {
-                        Label {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("AI Config")
-                                Text("View AI configuration files")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        } icon: {
-                            Image(systemName: "brain")
-                                .foregroundColor(.cyan)
-                        }
-                    }
-                }
-            }
-            .padding(4)
-        }
-    }
-
-    // MARK: - Info Card
-
     private var infoCard: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 12) {
-                Label("About Apple Intelligence", systemImage: "info.circle")
+                Label("How It Works", systemImage: "info.circle")
                     .font(.headline)
                     .foregroundColor(.secondary)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    InfoRow(icon: "lock.shield", text: "All AI processing happens on-device")
-                    InfoRow(icon: "arrow.up.arrow.down", text: "No data is sent to external servers")
-                    InfoRow(icon: "cpu", text: "Requires Apple Silicon and macOS 26+")
+                    InfoRow(icon: "tag", text: "Extracts relevant tags from note content")
+                    InfoRow(icon: "folder", text: "Categorizes notes (task, idea, meeting, etc.)")
+                    InfoRow(icon: "exclamationmark.circle", text: "Detects priority from urgency words")
+                    InfoRow(icon: "lock.shield", text: "All processing stays on your Mac")
                 }
             }
             .padding(4)
         }
     }
-
-    // MARK: - Actions
-
-    private func openSystemSettings() {
-        // Open Apple Intelligence settings in System Settings
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.appleintelligencelanguage") {
-            NSWorkspace.shared.open(url)
-        }
-    }
 }
-
-// MARK: - Info Row Component
 
 private struct InfoRow: View {
     let icon: String
@@ -202,7 +114,6 @@ private struct InfoRow: View {
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
                 .frame(width: 16)
-
             Text(text)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -210,9 +121,7 @@ private struct InfoRow: View {
     }
 }
 
-// MARK: - Preview
-
 #Preview {
     AppleIntelligenceSettingsSection()
-        .frame(width: 450, height: 600)
+        .frame(width: 450, height: 500)
 }
