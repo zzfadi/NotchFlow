@@ -57,8 +57,25 @@ struct MainNotchView: View {
         .frame(width: currentSize.width, height: currentSize.height)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentSize)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.9))
+            Group {
+                switch settings.notchTheme {
+                case .solid:
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.black.opacity(0.9))
+                case .glass:
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                        .environment(\.colorScheme, .dark)
+                case .glassTinted:
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .environment(\.colorScheme, .dark)
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(settings.accentColor.opacity(0.15))
+                    }
+                }
+            }
         )
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             // Validate and clamp sizes when screen configuration changes

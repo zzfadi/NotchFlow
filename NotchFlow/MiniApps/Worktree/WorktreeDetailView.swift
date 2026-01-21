@@ -569,15 +569,16 @@ struct ActionCardButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: 16))
                 Text(label)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10))
             }
             .foregroundColor(.white.opacity(0.8))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .frame(minHeight: 48)
+            .padding(.vertical, 10)
             .background(Color.white.opacity(0.1))
             .cornerRadius(6)
         }

@@ -2,6 +2,50 @@ import Foundation
 import SwiftUI
 import AppKit
 
+// MARK: - UI Scale
+
+@MainActor
+enum UIScale: String, CaseIterable, Identifiable {
+    case compact = "Compact"
+    case `default` = "Default"
+    case comfortable = "Comfortable"
+    case large = "Large"
+
+    nonisolated var id: String { rawValue }
+
+    var scaleFactor: CGFloat {
+        switch self {
+        case .compact: return 0.85
+        case .default: return 1.0
+        case .comfortable: return 1.15
+        case .large: return 1.3
+        }
+    }
+
+    func scaled(_ baseSize: CGFloat) -> CGFloat {
+        (baseSize * scaleFactor).rounded()
+    }
+}
+
+// MARK: - Notch Theme
+
+@MainActor
+enum NotchTheme: String, CaseIterable, Identifiable {
+    case solid = "Solid"
+    case glass = "Glass"
+    case glassTinted = "Tinted Glass"
+
+    nonisolated var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .solid: return "square.fill"
+        case .glass: return "square"
+        case .glassTinted: return "square.tophalf.filled"
+        }
+    }
+}
+
 // MARK: - Notch Size Preset
 
 @MainActor
@@ -139,6 +183,8 @@ class SettingsManager: ObservableObject {
     @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
     @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
     @AppStorage("isPinned") var isPinned: Bool = false
+    @AppStorage("uiScale") var uiScaleRawValue: String = UIScale.default.rawValue
+    @AppStorage("notchTheme") var notchThemeRawValue: String = NotchTheme.solid.rawValue
 
     // MARK: - Apple Intelligence Settings
     @AppStorage("foundationModelsEnabled") var foundationModelsEnabled: Bool = false
@@ -160,6 +206,16 @@ class SettingsManager: ObservableObject {
 
     var accentColor: Color {
         Color(hex: accentColorHex) ?? .pink
+    }
+
+    var uiScale: UIScale {
+        get { UIScale(rawValue: uiScaleRawValue) ?? .default }
+        set { uiScaleRawValue = newValue.rawValue }
+    }
+
+    var notchTheme: NotchTheme {
+        get { NotchTheme(rawValue: notchThemeRawValue) ?? .solid }
+        set { notchThemeRawValue = newValue.rawValue }
     }
 
     // MARK: - Per-App Size Methods
@@ -350,5 +406,29 @@ extension Color {
         let g = Int(max(0, min(255, green * 255)))
         let b = Int(max(0, min(255, blue * 255)))
         return String(format: "%02X%02X%02X", r, g, b)
+    }
+}
+
+// MARK: - Scaled Font View Modifier
+
+struct ScaledFontModifier: ViewModifier {
+    @ObservedObject private var settings = SettingsManager.shared
+    let baseSize: CGFloat
+    let weight: Font.Weight
+
+    init(size: CGFloat, weight: Font.Weight = .regular) {
+        self.baseSize = size
+        self.weight = weight
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: settings.uiScale.scaled(baseSize), weight: weight))
+    }
+}
+
+extension View {
+    func scaledFont(size: CGFloat, weight: Font.Weight = .regular) -> some View {
+        modifier(ScaledFontModifier(size: size, weight: weight))
     }
 }

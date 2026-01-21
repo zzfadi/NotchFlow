@@ -47,6 +47,7 @@
 		/* Views/Components */
 		A100002F001 /* AIToolbarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002F000 /* AIToolbarButton.swift */; };
 		A1000031001 /* AIStreamingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031000 /* AIStreamingView.swift */; };
+		A1000032001 /* ResizableSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032000 /* ResizableSidebar.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -124,6 +125,7 @@
 		/* Views/Components */
 		A100002F000 /* AIToolbarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIToolbarButton.swift; sourceTree = "<group>"; };
 		A1000031000 /* AIStreamingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIStreamingView.swift; sourceTree = "<group>"; };
+		A1000032000 /* ResizableSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableSidebar.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 			children = (
 				A100002F000 /* AIToolbarButton.swift */,
 				A1000031000 /* AIStreamingView.swift */,
+				A1000032000 /* ResizableSidebar.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -445,6 +448,7 @@
 				A100002E001 /* FoundationModelsService.swift in Sources */,
 				A100002F001 /* AIToolbarButton.swift in Sources */,
 				A1000031001 /* AIStreamingView.swift in Sources */,
+				A1000032001 /* ResizableSidebar.swift in Sources */,
 				A1000009001 /* NoteModel.swift in Sources */,
 				A100000A001 /* NoteStorage.swift in Sources */,
 				A100000B001 /* FogNoteView.swift in Sources */,
