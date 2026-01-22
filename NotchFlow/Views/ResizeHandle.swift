@@ -1,4 +1,27 @@
 import SwiftUI
+import AppKit
+
+// MARK: - Custom Diagonal Resize Cursor
+
+extension NSCursor {
+    /// Custom diagonal resize cursor using SF Symbol
+    static var resizeDiagonal: NSCursor {
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+        if let image = NSImage(systemSymbolName: "arrow.up.left.and.arrow.down.right", accessibilityDescription: "Resize")?
+            .withSymbolConfiguration(config) {
+            // Create a new image with white color
+            let coloredImage = NSImage(size: image.size)
+            coloredImage.lockFocus()
+            NSColor.white.set()
+            let rect = NSRect(origin: .zero, size: image.size)
+            image.draw(in: rect, from: rect, operation: .destinationIn, fraction: 1.0)
+            image.draw(in: rect, from: rect, operation: .sourceAtop, fraction: 1.0)
+            coloredImage.unlockFocus()
+            return NSCursor(image: coloredImage, hotSpot: NSPoint(x: image.size.width / 2, y: image.size.height / 2))
+        }
+        return NSCursor.crosshair
+    }
+}
 
 /// Bottom close bar - click or swipe up to close
 struct NotchCloseBar: View {
@@ -116,7 +139,7 @@ struct NotchResizeHandle: View {
                 isHovering = hovering
             }
             if hovering {
-                NSCursor.crosshair.push()  // Best available diagonal-like cursor in macOS
+                NSCursor.resizeDiagonal.push()
             } else {
                 NSCursor.pop()
             }

@@ -240,9 +240,10 @@ struct NoteEditorView: View {
             // Editor or Preview
             if showPreview {
                 ScrollView {
-                    MarkdownView(content: content)
+                    Text(content)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
+                        .textSelection(.enabled)
                 }
             } else {
                 TextEditor(text: $content)

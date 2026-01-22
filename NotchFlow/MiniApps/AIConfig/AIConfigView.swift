@@ -295,14 +295,13 @@ struct AIConfigView: View {
                 Divider()
             }
 
-            // Preview content with rich rendering
+            // Preview content
             if let content = scanner.previewContent(for: item) {
                 ScrollView {
-                    RichContentPreview(
-                        content: content,
-                        filename: item.path.lastPathComponent
-                    )
-                    .padding(8)
+                    Text(content)
+                        .font(.system(size: 11, design: .monospaced))
+                        .textSelection(.enabled)
+                        .padding(8)
                 }
             } else {
                 Text("Unable to preview")

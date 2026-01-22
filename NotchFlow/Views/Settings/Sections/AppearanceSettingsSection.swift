@@ -26,6 +26,49 @@ struct AppearanceSettingsSection: View {
                     .padding(4)
                 }
 
+                // Window style (theme)
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Window Style", systemImage: "rectangle.on.rectangle")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        Picker("Style", selection: $settings.notchTheme) {
+                            ForEach(NotchTheme.allCases) { theme in
+                                Label(theme.rawValue, systemImage: theme.icon)
+                                    .tag(theme)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        Text("Tinted Glass blends your accent color with a translucent background")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(4)
+                }
+
+                // UI Scale
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Text Size", systemImage: "textformat.size")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        Picker("Scale", selection: $settings.uiScale) {
+                            ForEach(UIScale.allCases) { scale in
+                                Text(scale.rawValue).tag(scale)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        Text("Adjusts font sizes in mini apps")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(4)
+                }
+
                 // Notch size configuration
                 GroupBox {
                     VStack(alignment: .leading, spacing: 16) {
