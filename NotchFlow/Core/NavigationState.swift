@@ -9,44 +9,37 @@ extension Notification.Name {
     static let showSettings = Notification.Name("showSettings")
 }
 
-enum MiniApp: String, CaseIterable, Identifiable {
-    case worktree = "Worktree"
-    case aiConfig = "AI Config"
-    case fogNote = "Fog Note"
+// MARK: - Navigation State
 
-    var id: String { rawValue }
-
-    var icon: String {
-        switch self {
-        case .worktree:
-            return "arrow.triangle.branch"
-        case .aiConfig:
-            return "brain"
-        case .fogNote:
-            return "note.text"
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .worktree:
-            return "Git worktree discovery and management"
-        case .aiConfig:
-            return "Find and manage AI configuration files"
-        case .fogNote:
-            return "Quick capture and note management"
-        }
-    }
-}
-
+@MainActor
 class NavigationState: ObservableObject {
-    @Published var activeApp: MiniApp = .fogNote
+    /// Current active plugin ID (string-based for dynamic plugins)
+    @Published var activeAppId: String = "fogNote"
     @Published var isExpanded: Bool = false
 
-    func switchTo(_ app: MiniApp) {
+    /// Get the currently active plugin from the registry
+    var activePlugin: (any MiniAppPlugin)? {
+        PluginRegistry.shared.plugin(for: activeAppId)
+    }
+
+    /// Switch to a plugin by ID with lifecycle callbacks
+    func switchTo(_ pluginId: String) {
+        guard pluginId != activeAppId else { return }
+
+        // Notify old plugin it's being deactivated
+        activePlugin?.onDeactivate()
+
         withAnimation(.easeInOut(duration: 0.2)) {
-            activeApp = app
+            activeAppId = pluginId
         }
+
+        // Notify new plugin it's now active
+        activePlugin?.onActivate()
+    }
+
+    /// Switch to a plugin directly
+    func switchTo(_ plugin: any MiniAppPlugin) {
+        switchTo(plugin.id)
     }
 
     func expand() {

@@ -61,7 +61,8 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @ObservedObject private var settings = SettingsManager.shared
-    @State private var selectedApp: MiniApp = .fogNote
+    @ObservedObject private var pluginRegistry = PluginRegistry.shared
+    @State private var selectedPluginId: String = "fogNote"
 
     var body: some View {
         Form {
@@ -69,8 +70,8 @@ struct GeneralSettingsView: View {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
 
                 Picker("Default Mini-App", selection: $settings.defaultApp) {
-                    ForEach(MiniApp.allCases) { app in
-                        Text(app.rawValue).tag(app.rawValue)
+                    ForEach(pluginRegistry.plugins, id: \.id) { plugin in
+                        Text(plugin.displayName).tag(plugin.id)
                     }
                 }
             }
@@ -80,15 +81,15 @@ struct GeneralSettingsView: View {
             }
 
             Section("Notch Size") {
-                Picker("Configure for", selection: $selectedApp) {
-                    ForEach(MiniApp.allCases) { app in
-                        Text(app.rawValue).tag(app)
+                Picker("Configure for", selection: $selectedPluginId) {
+                    ForEach(pluginRegistry.plugins, id: \.id) { plugin in
+                        Text(plugin.displayName).tag(plugin.id)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                let currentPreset = settings.presetForApp(selectedApp)
-                let currentSize = settings.sizeForApp(selectedApp)
+                let currentPreset = settings.presetForPlugin(selectedPluginId)
+                let currentSize = settings.sizeForPlugin(selectedPluginId)
                 let maxSafe = SettingsManager.screenSafeMaxSize()
 
                 // Show screen bounds info
@@ -185,32 +186,32 @@ struct GeneralSettingsView: View {
 
     private var presetBinding: Binding<NotchSizePreset> {
         Binding(
-            get: { settings.presetForApp(selectedApp) },
+            get: { settings.presetForPlugin(selectedPluginId) },
             set: { newPreset in
                 // Custom is a computed state (not a selectable preset)
                 // Only apply if it's an actual preset
                 guard newPreset != .custom else { return }
-                settings.applyPreset(newPreset, to: selectedApp)
+                settings.applyPreset(newPreset, toPlugin: selectedPluginId)
             }
         )
     }
 
     private var widthBinding: Binding<CGFloat> {
         Binding(
-            get: { settings.sizeForApp(selectedApp).width },
+            get: { settings.sizeForPlugin(selectedPluginId).width },
             set: { newWidth in
-                let currentSize = settings.sizeForApp(selectedApp)
-                settings.setSize(CGSize(width: newWidth, height: currentSize.height), for: selectedApp)
+                let currentSize = settings.sizeForPlugin(selectedPluginId)
+                settings.setSizeForPlugin(selectedPluginId, size: CGSize(width: newWidth, height: currentSize.height))
             }
         )
     }
 
     private var heightBinding: Binding<CGFloat> {
         Binding(
-            get: { settings.sizeForApp(selectedApp).height },
+            get: { settings.sizeForPlugin(selectedPluginId).height },
             set: { newHeight in
-                let currentSize = settings.sizeForApp(selectedApp)
-                settings.setSize(CGSize(width: currentSize.width, height: newHeight), for: selectedApp)
+                let currentSize = settings.sizeForPlugin(selectedPluginId)
+                settings.setSizeForPlugin(selectedPluginId, size: CGSize(width: currentSize.width, height: newHeight))
             }
         )
     }

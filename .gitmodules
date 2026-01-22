@@ -1,0 +1,3 @@
+[submodule "External/CodexBar"]
+	path = External/CodexBar
+	url = https://github.com/zzfadi/CodexBar.git

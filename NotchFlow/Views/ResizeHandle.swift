@@ -62,7 +62,7 @@ struct NotchCloseBar: View {
 
 /// Corner resize handle - drag to resize
 struct NotchResizeHandle: View {
-    let currentApp: MiniApp
+    let currentPluginId: String
     @ObservedObject private var settings = SettingsManager.shared
 
     @State private var isDragging = false
@@ -91,7 +91,7 @@ struct NotchResizeHandle: View {
                 .onChanged { value in
                     if !isDragging {
                         isDragging = true
-                        dragStartSize = settings.sizeForApp(currentApp)
+                        dragStartSize = settings.sizeForPlugin(currentPluginId)
                     }
 
                     let newWidth = dragStartSize.width + value.translation.width
@@ -103,12 +103,12 @@ struct NotchResizeHandle: View {
                     )
 
                     // Update UI immediately without persisting to disk
-                    settings.updateSizeWithoutSaving(currentDragSize, for: currentApp)
+                    settings.updateSizeWithoutSaving(currentDragSize, forPlugin: currentPluginId)
                 }
                 .onEnded { _ in
                     isDragging = false
                     // Persist to disk only when drag ends
-                    settings.setSize(currentDragSize, for: currentApp)
+                    settings.setSizeForPlugin(currentPluginId, size: currentDragSize)
                 }
         )
         .onHover { hovering in
@@ -126,7 +126,7 @@ struct NotchResizeHandle: View {
 
 /// Combined bottom bar with close center and resize corner
 struct NotchBottomBar: View {
-    let currentApp: MiniApp
+    let currentPluginId: String
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -134,7 +134,7 @@ struct NotchBottomBar: View {
             NotchCloseBar()
 
             // Resize handle in bottom-right corner
-            NotchResizeHandle(currentApp: currentApp)
+            NotchResizeHandle(currentPluginId: currentPluginId)
                 .padding(.trailing, 4)
                 .padding(.bottom, 2)
         }
@@ -147,7 +147,7 @@ struct NotchBottomBar: View {
         Color.black
         VStack {
             Spacer()
-            NotchBottomBar(currentApp: .fogNote)
+            NotchBottomBar(currentPluginId: "fogNote")
         }
     }
     .frame(width: 300, height: 150)

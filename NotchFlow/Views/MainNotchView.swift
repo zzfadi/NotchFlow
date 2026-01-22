@@ -4,9 +4,10 @@ import AppKit
 struct MainNotchView: View {
     @EnvironmentObject var navigationState: NavigationState
     @ObservedObject private var settings = SettingsManager.shared
+    @ObservedObject private var pluginRegistry = PluginRegistry.shared
 
     private var currentSize: CGSize {
-        settings.sizeForApp(navigationState.activeApp)
+        settings.sizeForPlugin(navigationState.activeAppId)
     }
 
     var body: some View {
@@ -15,30 +16,20 @@ struct MainNotchView: View {
             HStack(spacing: 12) {
                 // Pin toggle button
                 PinButton()
-                
-                // Left side - Worktree button
-                TabButton(
-                    app: .worktree,
-                    isActive: navigationState.activeApp == .worktree
-                ) {
-                    navigationState.switchTo(.worktree)
-                }
 
-                Spacer()
+                // Dynamic plugin tabs from registry
+                ForEach(pluginRegistry.plugins, id: \.id) { plugin in
+                    PluginTabButton(
+                        plugin: plugin,
+                        isActive: navigationState.activeAppId == plugin.id
+                    ) {
+                        navigationState.switchTo(plugin)
+                    }
 
-                // Right side - AI Config and Fog Note buttons
-                TabButton(
-                    app: .aiConfig,
-                    isActive: navigationState.activeApp == .aiConfig
-                ) {
-                    navigationState.switchTo(.aiConfig)
-                }
-
-                TabButton(
-                    app: .fogNote,
-                    isActive: navigationState.activeApp == .fogNote
-                ) {
-                    navigationState.switchTo(.fogNote)
+                    // Add spacer after first plugin (worktree) to push rest to right
+                    if plugin.id == pluginRegistry.plugins.first?.id {
+                        Spacer()
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -52,7 +43,7 @@ struct MainNotchView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Bottom bar - swipe up to close, drag to resize
-            NotchBottomBar(currentApp: navigationState.activeApp)
+            NotchBottomBar(currentPluginId: navigationState.activeAppId)
         }
         .frame(width: currentSize.width, height: currentSize.height)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: currentSize)
@@ -62,8 +53,8 @@ struct MainNotchView: View {
         )
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             // Validate and clamp sizes when screen configuration changes
-            for app in MiniApp.allCases {
-                settings.validateSizeForCurrentScreen(app)
+            for plugin in pluginRegistry.plugins {
+                settings.validateSizeForCurrentScreen(plugin.id)
             }
         }
     }
@@ -90,8 +81,8 @@ struct PinButton: View {
     }
 }
 
-struct TabButton: View {
-    let app: MiniApp
+struct PluginTabButton: View {
+    let plugin: any MiniAppPlugin
     let isActive: Bool
     let action: () -> Void
 
@@ -100,25 +91,25 @@ struct TabButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: app.icon)
+                Image(systemName: plugin.icon)
                     .font(.system(size: 14, weight: .medium))
 
                 if isActive {
-                    Text(app.rawValue)
+                    Text(plugin.displayName)
                         .font(.system(size: 12, weight: .medium))
                 }
             }
-            .foregroundColor(isActive ? settings.accentColor : .gray)
+            .foregroundColor(isActive ? (plugin.accentColor ?? settings.accentColor) : .gray)
             .padding(.horizontal, isActive ? 12 : 8)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isActive ? settings.accentColor.opacity(0.2) : Color.clear)
+                    .fill(isActive ? (plugin.accentColor ?? settings.accentColor).opacity(0.2) : Color.clear)
             )
             .animation(.easeInOut(duration: 0.2), value: isActive)
         }
         .buttonStyle(.plain)
-        .help(app.description)
+        .help(plugin.description)
     }
 }
 

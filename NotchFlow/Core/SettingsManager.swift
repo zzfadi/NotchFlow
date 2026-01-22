@@ -84,7 +84,7 @@ class SettingsManager: ObservableObject {
     /// Padding to keep content safely within DynamicNotchKit's window bounds
     nonisolated private static let windowPaddingWidth: CGFloat = 40
     nonisolated private static let windowPaddingHeight: CGFloat = 60
-    
+
     /// Returns the maximum safe size based on current screen dimensions.
     /// DynamicNotchKit creates windows at 85% of screen size, so we must stay within those bounds.
     static func screenSafeMaxSize(for screen: NSScreen? = NSScreen.main) -> CGSize {
@@ -103,12 +103,12 @@ class SettingsManager: ObservableObject {
             height: max(minNotchHeight, maxHeight)
         )
     }
-    
+
     /// Dynamic max width based on current screen
     static var maxNotchWidth: CGFloat {
         screenSafeMaxSize().width
     }
-    
+
     /// Dynamic max height based on current screen
     static var maxNotchHeight: CGFloat {
         screenSafeMaxSize().height
@@ -130,7 +130,7 @@ class SettingsManager: ObservableObject {
     // MARK: - Published Properties
 
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false
-    @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
+    @AppStorage("defaultApp") var defaultApp: String = "fogNote"
     @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
     @AppStorage("isPinned") var isPinned: Bool = false
 
@@ -141,39 +141,50 @@ class SettingsManager: ObservableObject {
 
     // MARK: - Computed Properties
 
-    var defaultMiniApp: MiniApp {
-        get { MiniApp(rawValue: defaultApp) ?? .fogNote }
-        set { defaultApp = newValue.rawValue }
+    /// The default plugin to show when opening the notch
+    var defaultPlugin: (any MiniAppPlugin)? {
+        PluginRegistry.shared.plugin(for: defaultApp)
+    }
+
+    /// Default plugin ID
+    var defaultPluginId: String {
+        get { defaultApp }
+        set { defaultApp = newValue }
     }
 
     var accentColor: Color {
         Color(hex: accentColorHex) ?? .pink
     }
 
-    // MARK: - Per-App Size Methods
+    // MARK: - Per-Plugin Size Methods
 
-    func sizeForApp(_ app: MiniApp) -> CGSize {
-        if let sizeDict = appSizes[app.rawValue],
+    /// Get size for a plugin by ID
+    func sizeForPlugin(_ pluginId: String) -> CGSize {
+        if let sizeDict = appSizes[pluginId],
            let width = sizeDict["width"],
            let height = sizeDict["height"] {
             return CGSize(width: width, height: height)
         }
+        // Fall back to plugin's preferred size if available
+        if let plugin = PluginRegistry.shared.plugin(for: pluginId) {
+            return plugin.preferredSize
+        }
         return NotchSizePreset.default.size
     }
 
-    func setSize(_ size: CGSize, for app: MiniApp) {
+    /// Set size for a plugin by ID
+    func setSizeForPlugin(_ pluginId: String, size: CGSize) {
         let clamped = Self.clampedSize(size)
-        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
+        appSizes[pluginId] = ["width": clamped.width, "height": clamped.height]
         saveSettings()
     }
 
     /// Updates size in memory for live UI updates during drag, without persisting to disk.
-    /// Call `setSize(_:for:)` when the drag ends to persist.
-    func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
+    func updateSizeWithoutSaving(_ size: CGSize, forPlugin pluginId: String) {
         let clamped = Self.clampedSize(size)
-        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
+        appSizes[pluginId] = ["width": clamped.width, "height": clamped.height]
     }
-    
+
     /// Clamps a size to the current screen's safe bounds
     static func clampedSize(_ size: CGSize) -> CGSize {
         let maxSafe = screenSafeMaxSize()
@@ -182,27 +193,27 @@ class SettingsManager: ObservableObject {
             height: max(minNotchHeight, min(maxSafe.height, size.height))
         )
     }
-    
-    /// Validates and clamps the current size for an app (useful after screen changes)
-    func validateSizeForCurrentScreen(_ app: MiniApp) {
-        let currentSize = sizeForApp(app)
+
+    /// Validates and clamps the current size for a plugin (useful after screen changes)
+    func validateSizeForCurrentScreen(_ pluginId: String) {
+        let currentSize = sizeForPlugin(pluginId)
         let clamped = Self.clampedSize(currentSize)
         if currentSize != clamped {
-            print("[SettingsManager] Clamping \(app.rawValue) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
-            setSize(clamped, for: app)
+            print("[SettingsManager] Clamping \(pluginId) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
+            setSizeForPlugin(pluginId, size: clamped)
         }
     }
 
-    func presetForApp(_ app: MiniApp) -> NotchSizePreset {
-        return NotchSizePreset.preset(for: sizeForApp(app))
+    func presetForPlugin(_ pluginId: String) -> NotchSizePreset {
+        return NotchSizePreset.preset(for: sizeForPlugin(pluginId))
     }
 
-    func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
+    func applyPreset(_ preset: NotchSizePreset, toPlugin pluginId: String) {
         if preset != .custom {
             // Defer the state change to the next run loop tick to avoid publishing during view updates
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                self.setSize(preset.size, for: app)
+                self.setSizeForPlugin(pluginId, size: preset.size)
             }
         }
     }
@@ -263,7 +274,7 @@ class SettingsManager: ObservableObject {
         aiConfigScanPaths = defaultAIConfigPaths()
         fogNotesDirectory = defaultFogNotesDirectory()
         launchAtLogin = false
-        defaultApp = MiniApp.fogNote.rawValue
+        defaultApp = "fogNote"
         accentColorHex = "FF69B4"
         appSizes = [:]
         saveSettings()

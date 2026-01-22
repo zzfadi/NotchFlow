@@ -5,13 +5,12 @@ struct ExpandedView: View {
 
     var body: some View {
         Group {
-            switch navigationState.activeApp {
-            case .worktree:
-                WorktreeView()
-            case .aiConfig:
-                AIConfigView()
-            case .fogNote:
-                FogNoteView()
+            if let plugin = navigationState.activePlugin {
+                plugin.makeView()
+            } else {
+                // Fallback if no plugin found
+                Text("No plugin loaded")
+                    .foregroundColor(.secondary)
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.98)))

@@ -3,6 +3,7 @@ import SwiftUI
 /// General settings section - core app preferences
 struct GeneralSettingsSection: View {
     @ObservedObject private var settings = SettingsManager.shared
+    @ObservedObject private var pluginRegistry = PluginRegistry.shared
 
     var body: some View {
         ScrollView {
@@ -25,9 +26,9 @@ struct GeneralSettingsSection: View {
                             Text("Default Mini-App")
                             Spacer()
                             Picker("", selection: $settings.defaultApp) {
-                                ForEach(MiniApp.allCases) { app in
-                                    Label(app.rawValue, systemImage: app.icon)
-                                        .tag(app.rawValue)
+                                ForEach(pluginRegistry.plugins, id: \.id) { plugin in
+                                    Label(plugin.displayName, systemImage: plugin.icon)
+                                        .tag(plugin.id)
                                 }
                             }
                             .labelsHidden()
