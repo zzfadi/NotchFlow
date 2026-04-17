@@ -18,17 +18,28 @@ class AIConfigScanner: ObservableObject {
     func scan() {
         scanTask?.cancel()
 
-        scanTask = Task {
-            isScanning = true
-            errorMessage = nil
+        // Capture scan inputs on the main actor before hopping off. The
+        // disk walk that follows runs on a background executor and must not
+        // touch @MainActor state mid-flight.
+        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
+        let legacyPaths = settings.aiConfigScanPaths
+        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
 
-            let items = await performScan()
+        isScanning = true
+        errorMessage = nil
 
-            if !Task.isCancelled {
-                allItems = items
-                categoryGroups = groupItemsByCategory(items)
-                lastScanDate = Date()
-                isScanning = false
+        scanTask = Task.detached(priority: .userInitiated) {
+            let items = await Self.performScan(projectPaths: combinedPaths)
+
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                // Only publish if we weren't superseded by a newer scan.
+                // If cancelled, the new scan owns the state — don't clobber.
+                guard !Task.isCancelled else { return }
+                self.allItems = items
+                self.categoryGroups = self.groupItemsByCategory(items)
+                self.lastScanDate = Date()
+                self.isScanning = false
             }
         }
     }
@@ -39,22 +50,23 @@ class AIConfigScanner: ObservableObject {
     }
 
     // MARK: - Private Scanning Methods
+    //
+    // All disk-walk helpers are `nonisolated static` so they run on the
+    // background executor dispatched by `Task.detached` in `scan()`. They
+    // take all inputs as parameters and return results; none of them touch
+    // `self` or any @MainActor state, so there's no risk of priority
+    // inversion or UI stalls from deep directory recursion.
 
-    private func performScan() async -> [AIConfigItem] {
+    nonisolated private static func performScan(projectPaths: [String]) async -> [AIConfigItem] {
         var items: [AIConfigItem] = []
 
-        // 1. First scan global config locations (MCP configs, user settings)
-        let globalItems = await scanGlobalConfigs()
-        items.append(contentsOf: globalItems)
+        // 1. Scan global config locations (MCP configs, user settings)
+        items.append(contentsOf: scanGlobalConfigs())
 
-        // 2. Then scan project directories. Paths come from the granted-folder
-        //    set (authoritative) plus any legacy custom paths in SettingsManager.
-        //    Dedupe on standardized path so we don't walk the same tree twice.
-        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
-        let legacyPaths = settings.aiConfigScanPaths
-        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
-
-        for pathString in combinedPaths {
+        // 2. Scan project directories. Dedupe on standardized path so we
+        //    don't walk the same tree twice.
+        for pathString in projectPaths {
+            if Task.isCancelled { return [] }
             let path = URL(fileURLWithPath: pathString)
 
             guard FileManager.default.fileExists(atPath: path.path) else {
@@ -80,7 +92,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Scan global config locations (user-level configs)
-    private func scanGlobalConfigs() async -> [AIConfigItem] {
+    nonisolated private static func scanGlobalConfigs() -> [AIConfigItem] {
         var items: [AIConfigItem] = []
         let fileManager = FileManager.default
 
@@ -99,7 +111,7 @@ class AIConfigScanner: ObservableObject {
         return items
     }
 
-    private func scanDirectory(_ directory: URL) async -> [AIConfigItem] {
+    nonisolated private static func scanDirectory(_ directory: URL) async -> [AIConfigItem] {
         var items: [AIConfigItem] = []
         let fileManager = FileManager.default
 
@@ -128,7 +140,7 @@ class AIConfigScanner: ObservableObject {
         return items
     }
 
-    private func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, items: inout [AIConfigItem]) async {
+    nonisolated private static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, items: inout [AIConfigItem]) async {
         guard depth < maxDepth else { return }
 
         let fileManager = FileManager.default
@@ -176,7 +188,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Scan for glob pattern matches (*.prompt.md, *.mdc, *.instructions.md)
-    private func scanGlobPatterns(_ directory: URL, items: inout [AIConfigItem]) async {
+    nonisolated private static func scanGlobPatterns(_ directory: URL, items: inout [AIConfigItem]) async {
         let fileManager = FileManager.default
 
         guard let contents = try? fileManager.contentsOfDirectory(
@@ -236,7 +248,7 @@ class AIConfigScanner: ObservableObject {
         }
     }
 
-    private func shouldSkipDirectory(_ name: String) -> Bool {
+    nonisolated private static func shouldSkipDirectory(_ name: String) -> Bool {
         let skipDirs = [
             "node_modules",
             ".git",
@@ -256,7 +268,7 @@ class AIConfigScanner: ObservableObject {
         return skipDirs.contains(name)
     }
 
-    private func createConfigItem(
+    nonisolated private static func createConfigItem(
         at path: URL,
         fileType: AIConfigFileType,
         projectPath: URL,
@@ -289,7 +301,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Extract YAML frontmatter metadata from a file (for SKILL.md, agent.yaml, etc.)
-    private func extractYAMLFrontmatter(from path: URL) -> ConfigMetadata? {
+    nonisolated private static func extractYAMLFrontmatter(from path: URL) -> ConfigMetadata? {
         // Ensure the path points to a regular file before attempting to read
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: path.path, isDirectory: &isDirectory),
@@ -335,7 +347,7 @@ class AIConfigScanner: ObservableObject {
         return nil
     }
 
-    private func extractYAMLValue(from line: String, key: String) -> String? {
+    nonisolated private static func extractYAMLValue(from line: String, key: String) -> String? {
         let value = line
             .replacingOccurrences(of: "\(key):", with: "")
             .trimmingCharacters(in: .whitespaces)
