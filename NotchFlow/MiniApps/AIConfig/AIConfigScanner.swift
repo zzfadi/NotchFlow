@@ -10,6 +10,7 @@ class AIConfigScanner: ObservableObject {
     @Published var errorMessage: String?
 
     private let settings = SettingsManager.shared
+    private let permissions = PermissionManager.shared
     private var scanTask: Task<Void, Never>?
 
     // MARK: - Public Methods
@@ -46,8 +47,14 @@ class AIConfigScanner: ObservableObject {
         let globalItems = await scanGlobalConfigs()
         items.append(contentsOf: globalItems)
 
-        // 2. Then scan project directories
-        for pathString in settings.aiConfigScanPaths {
+        // 2. Then scan project directories. Paths come from the granted-folder
+        //    set (authoritative) plus any legacy custom paths in SettingsManager.
+        //    Dedupe on standardized path so we don't walk the same tree twice.
+        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
+        let legacyPaths = settings.aiConfigScanPaths
+        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
+
+        for pathString in combinedPaths {
             let path = URL(fileURLWithPath: pathString)
 
             guard FileManager.default.fileExists(atPath: path.path) else {

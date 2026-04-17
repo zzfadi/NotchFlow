@@ -7,6 +7,7 @@ extension Notification.Name {
     static let hideNotch = Notification.Name("hideNotch")
     static let showNotch = Notification.Name("showNotch")
     static let showSettings = Notification.Name("showSettings")
+    static let showOnboarding = Notification.Name("showOnboarding")
 }
 
 enum MiniApp: String, CaseIterable, Identifiable {

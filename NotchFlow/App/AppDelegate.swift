@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var notchManager: NotchManager?
     var statusItem: NSStatusItem?
     var settingsWindow: NSWindow?
+    var onboardingWindow: NSWindow?
 
     // Store observer tokens to remove them later
     private var notificationObservers: [NSObjectProtocol] = []
@@ -16,10 +17,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupNotch()
         setupNotifications()
 
-        // Show the notch after a short delay to ensure window is ready
-        Task {
-            try? await Task.sleep(for: .milliseconds(500))
-            await notchManager?.expand()
+        if SettingsManager.shared.onboardingComplete {
+            // Normal path — reveal the notch shortly after the window is ready
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                await notchManager?.expand()
+            }
+        } else {
+            // First launch (or user asked to redo onboarding) — show the
+            // welcome window instead of the notch. The notch expands when
+            // onboarding finishes.
+            showOnboardingWindow()
         }
     }
 
@@ -68,6 +76,74 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         notificationObservers.append(settingsObserver)
+
+        let onboardingObserver = NotificationCenter.default.addObserver(
+            forName: .showOnboarding,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.showOnboardingWindow()
+            }
+        }
+        notificationObservers.append(onboardingObserver)
+    }
+
+    // MARK: - Onboarding
+
+    @objc func showOnboardingWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = onboardingWindow, window.isVisible {
+            window.orderFrontRegardless()
+            window.makeKey()
+            return
+        }
+
+        // Hide the notch while onboarding is up so the user isn't distracted
+        Task { await notchManager?.collapse() }
+
+        let onboardingView = OnboardingView { [weak self] in
+            self?.finishOnboarding()
+        }
+        let hostingController = NSHostingController(rootView: onboardingView)
+        hostingController.view.autoresizingMask = [
+            NSView.AutoresizingMask.width,
+            NSView.AutoresizingMask.height
+        ]
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 520),
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Welcome to NotchFlow"
+        window.contentViewController = hostingController
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.titlebarAppearsTransparent = true
+        window.minSize = NSSize(width: 540, height: 460)
+
+        window.level = .floating
+        window.orderFrontRegardless()
+        window.makeKey()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
+            window?.level = .normal
+        }
+
+        onboardingWindow = window
+    }
+
+    private func finishOnboarding() {
+        onboardingWindow?.close()
+        onboardingWindow = nil
+
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            await notchManager?.expand()
+        }
     }
 
     // MARK: - Menu Bar Setup
