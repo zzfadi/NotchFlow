@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FogNoteView: View {
-    @StateObject private var storage = NoteStorage()
+    @ObservedObject private var storage = NoteStorage.shared
     @State private var selectedNote: Note?
     @State private var isEditing: Bool = false
     @State private var searchText: String = ""

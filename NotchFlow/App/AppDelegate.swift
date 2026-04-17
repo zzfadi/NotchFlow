@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
         setupNotch()
         setupNotifications()
+        prewarmMiniAppState()
 
         if SettingsManager.shared.onboardingComplete {
             // Normal path — reveal the notch shortly after the window is ready
@@ -28,6 +29,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // welcome window instead of the notch. The notch expands when
             // onboarding finishes.
             showOnboardingWindow()
+        }
+    }
+
+    /// Kick off every mini-app's expensive-to-load data in the background
+    /// immediately at launch, so clicking a tab for the first time doesn't
+    /// block on a disk walk or manifest fetch. Each scanner is a singleton
+    /// and publishes results back on the main actor when done.
+    private func prewarmMiniAppState() {
+        // Touch the singletons once to force initialization. Their inits
+        // kick off their own background loading (NoteStorage loads from
+        // disk, LocalPluginSynthesizer starts its AIConfigScanner scan).
+        _ = NoteStorage.shared
+        _ = LocalPluginSynthesizer.shared
+
+        // Worktree + remote marketplaces don't auto-scan on init, so fire
+        // them explicitly. scan() / refreshAll() internally dispatch the
+        // expensive work off the main actor.
+        WorktreeScanner.shared.scan()
+        Task {
+            await MetaMarketplaceStore.shared.refreshAll()
         }
     }
 

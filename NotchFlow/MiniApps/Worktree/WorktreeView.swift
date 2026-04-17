@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 struct WorktreeView: View {
-    @StateObject private var scanner = WorktreeScanner()
+    @ObservedObject private var scanner = WorktreeScanner.shared
     @State private var selectedWorktree: Worktree?
     @State private var searchText: String = ""
     @State private var expandedRepos: Set<UUID> = []
