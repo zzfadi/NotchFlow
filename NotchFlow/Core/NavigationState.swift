@@ -12,7 +12,7 @@ extension Notification.Name {
 
 enum MiniApp: String, CaseIterable, Identifiable {
     case worktree = "Worktree"
-    case aiConfig = "AI Config"
+    case aiMeta = "AI Meta"
     case fogNote = "Fog Note"
 
     var id: String { rawValue }
@@ -21,8 +21,8 @@ enum MiniApp: String, CaseIterable, Identifiable {
         switch self {
         case .worktree:
             return "arrow.triangle.branch"
-        case .aiConfig:
-            return "brain"
+        case .aiMeta:
+            return "sparkles.rectangle.stack"
         case .fogNote:
             return "note.text"
         }
@@ -32,8 +32,8 @@ enum MiniApp: String, CaseIterable, Identifiable {
         switch self {
         case .worktree:
             return "Git worktree discovery and management"
-        case .aiConfig:
-            return "Find and manage AI configuration files"
+        case .aiMeta:
+            return "AI components marketplace — rules, skills, prompts, agents"
         case .fogNote:
             return "Quick capture and note management"
         }
