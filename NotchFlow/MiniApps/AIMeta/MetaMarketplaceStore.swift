@@ -32,6 +32,11 @@ final class MetaMarketplaceStore: ObservableObject {
     /// once more than one remote was subscribed.
     @Published private(set) var fetchErrors: [String: String] = [:]
 
+    /// Marketplace ids currently being fetched. Lets a section show a
+    /// loading row instead of the "empty marketplace" copy while a fresh
+    /// add or per-marketplace refresh is in flight.
+    @Published private(set) var fetchingMarketplaces: Set<String> = []
+
     private let urlDefaultsKey = "metaMarketplaceURLs"
     private let synthesizer = LocalPluginSynthesizer.shared
     private var cancellables: Set<AnyCancellable> = []
@@ -90,6 +95,14 @@ final class MetaMarketplaceStore: ObservableObject {
         fetchErrors[id]
     }
 
+    func isFetching(marketplaceId id: String) -> Bool {
+        fetchingMarketplaces.contains(id)
+    }
+
+    func isSubscribed(to url: URL) -> Bool {
+        subscribedURLs.contains(url)
+    }
+
     // MARK: - Refresh
 
     /// Refreshes both the synthesized local marketplace (by triggering a
@@ -109,6 +122,9 @@ final class MetaMarketplaceStore: ObservableObject {
 
     func refreshMarketplace(_ url: URL) async {
         let marketplaceId = url.absoluteString
+        fetchingMarketplaces.insert(marketplaceId)
+        defer { fetchingMarketplaces.remove(marketplaceId) }
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let baseURL = url.deletingLastPathComponent()
