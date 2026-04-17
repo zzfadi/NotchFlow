@@ -30,12 +30,20 @@ struct MetaMarketplaceSection: View {
             if let fetchError {
                 errorBanner(fetchError)
             }
-            if plugins.isEmpty {
+            if plugins.isEmpty && !suppressEmptyBody {
                 emptyBody
-            } else {
+            } else if !plugins.isEmpty {
                 pluginList
             }
         }
+    }
+
+    /// Hides the "No plugins in this marketplace yet." copy when a fetch
+    /// error is the real reason the section has nothing to show — the error
+    /// banner already explains it, and stacking the generic empty text below
+    /// would imply the marketplace is actually empty.
+    private var suppressEmptyBody: Bool {
+        fetchError != nil && !isSearchActive && totalPluginCount == 0
     }
 
     private var header: some View {
