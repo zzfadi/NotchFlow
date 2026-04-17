@@ -79,20 +79,18 @@ struct AIMetaView: View {
     private var content: some View {
         if shouldShowInitialLoading {
             loadingState
-        } else if isCompletelyEmpty {
-            emptyState
         } else {
             marketplaceList
         }
     }
 
+    /// Only shows during the very first scan before any plugins have landed.
+    /// Subsequent refreshes don't replace the list — they just spin the
+    /// refresh button in the header.
     private var shouldShowInitialLoading: Bool {
-        synthesizer.isScanning && synthesizer.plugins.isEmpty
-    }
-
-    private var isCompletelyEmpty: Bool {
-        store.pluginsByMarketplace.values.allSatisfy { $0.isEmpty }
-            && !synthesizer.isScanning
+        synthesizer.isScanning
+            && synthesizer.plugins.isEmpty
+            && store.subscribedURLs.isEmpty
     }
 
     private var loadingState: some View {
@@ -106,50 +104,37 @@ struct AIMetaView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "sparkles.rectangle.stack")
-                .font(.system(size: 28))
-                .foregroundColor(.secondary.opacity(0.6))
-            Text("No AI components yet")
-                .font(.system(size: 13, weight: .semibold))
-            Text("Grant folder access in Settings → Permissions so NotchFlow can find rules, skills, prompts, and agents in your projects.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 24)
-            Button("Open Permissions") {
-                NotificationCenter.default.post(name: .showSettings, object: nil)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 20)
-    }
-
     private var marketplaceList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(store.orderedMarketplaceIds, id: \.self) { marketplaceId in
-                    let allPlugins = store.pluginsByMarketplace[marketplaceId] ?? []
-                    let filtered = filter(plugins: allPlugins)
-                    MetaMarketplaceSection(
-                        title: store.displayName(forMarketplaceId: marketplaceId),
-                        subtitle: store.description(forMarketplaceId: marketplaceId),
-                        plugins: filtered,
-                        isLocal: marketplaceId == synthesizer.marketplace.id,
-                        onRemove: removalHandler(for: marketplaceId)
-                    )
-                }
-
-                if let error = store.lastFetchError {
-                    errorBanner(error)
+                    section(for: marketplaceId)
                 }
             }
             .padding(12)
         }
+    }
+
+    private func section(for marketplaceId: String) -> MetaMarketplaceSection {
+        let allPlugins = store.pluginsByMarketplace[marketplaceId] ?? []
+        let filtered = filter(plugins: allPlugins)
+        let isLocal = marketplaceId == synthesizer.marketplace.id
+        let subtitle: String? = store.description(forMarketplaceId: marketplaceId)
+        let fetchError: String? = store.fetchError(forMarketplaceId: marketplaceId)
+        let onRemove: (() -> Void)? = removalHandler(for: marketplaceId)
+        let onOpenPermissions: (() -> Void)? = permissionsHandler(for: marketplaceId)
+
+        return MetaMarketplaceSection(
+            title: store.displayName(forMarketplaceId: marketplaceId),
+            subtitle: subtitle,
+            plugins: filtered,
+            totalPluginCount: allPlugins.count,
+            isSearchActive: !searchText.isEmpty,
+            isLocal: isLocal,
+            fetchError: fetchError,
+            onRemove: onRemove,
+            onOpenPermissions: onOpenPermissions
+        )
     }
 
     private func filter(plugins: [MetaPlugin]) -> [MetaPlugin] {
@@ -166,24 +151,12 @@ struct AIMetaView: View {
               let url = URL(string: marketplaceId) else {
             return nil
         }
-        return { store.removeMarketplace(url) }
+        return { self.store.removeMarketplace(url) }
     }
 
-    private func errorBanner(_ message: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.orange)
-            Text(message)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-            Spacer()
-        }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.orange.opacity(0.08))
-        )
+    private func permissionsHandler(for marketplaceId: String) -> (() -> Void)? {
+        guard marketplaceId == synthesizer.marketplace.id else { return nil }
+        return { NotificationCenter.default.post(name: .showSettings, object: nil) }
     }
 }
 

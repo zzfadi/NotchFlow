@@ -25,7 +25,12 @@ final class MetaMarketplaceStore: ObservableObject {
     @Published private(set) var pluginsByMarketplace: [String: [MetaPlugin]] = [:]
     @Published private(set) var localMarketplace: SyntheticMarketplace?
     @Published private(set) var isRefreshing: Bool = false
-    @Published private(set) var lastFetchError: String?
+
+    /// Fetch errors keyed by marketplace id. Per-marketplace so concurrent
+    /// refreshes don't clobber each other's state — a previous PR iteration
+    /// used a single `lastFetchError: String?` which was nondeterministic
+    /// once more than one remote was subscribed.
+    @Published private(set) var fetchErrors: [String: String] = [:]
 
     private let urlDefaultsKey = "metaMarketplaceURLs"
     private let synthesizer = LocalPluginSynthesizer.shared
@@ -77,7 +82,12 @@ final class MetaMarketplaceStore: ObservableObject {
     func removeMarketplace(_ url: URL) {
         subscribedURLs.removeAll { $0 == url }
         pluginsByMarketplace.removeValue(forKey: url.absoluteString)
+        fetchErrors.removeValue(forKey: url.absoluteString)
         persistURLs()
+    }
+
+    func fetchError(forMarketplaceId id: String) -> String? {
+        fetchErrors[id]
     }
 
     // MARK: - Refresh
@@ -98,19 +108,20 @@ final class MetaMarketplaceStore: ObservableObject {
     }
 
     func refreshMarketplace(_ url: URL) async {
+        let marketplaceId = url.absoluteString
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let baseURL = url.deletingLastPathComponent()
             let (_, plugins) = try MetaMarketplace.decode(
                 data,
                 baseURL: baseURL,
-                marketplaceId: url.absoluteString
+                marketplaceId: marketplaceId
             )
-            pluginsByMarketplace[url.absoluteString] = plugins
-            lastFetchError = nil
+            pluginsByMarketplace[marketplaceId] = plugins
+            fetchErrors.removeValue(forKey: marketplaceId)
         } catch {
-            log.error("Failed to refresh \(url.absoluteString, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            lastFetchError = "\(url.lastPathComponent): \(error.localizedDescription)"
+            log.error("Failed to refresh \(marketplaceId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            fetchErrors[marketplaceId] = error.localizedDescription
         }
     }
 
