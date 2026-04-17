@@ -1,17 +1,14 @@
 import SwiftUI
 import AppKit
 
-/// The "AI Meta" mini-app — NotchFlow's cross-tool AI component marketplace.
-///
-/// PR #3 renders a native card/rail UI powered by `MetaMarketplaceStore`.
-/// The "My Machine" synthesized marketplace always shows first, with any
-/// user-added remote marketplaces below it. Remote-marketplace add/fetch
-/// flow lives in later PRs — the store already exposes the plumbing.
 struct AIMetaView: View {
     @ObservedObject private var store = MetaMarketplaceStore.shared
     @ObservedObject private var synthesizer = LocalPluginSynthesizer.shared
 
     @State private var searchText: String = ""
+    @State private var isAddingMarketplace = false
+    @State private var urlInputText = ""
+    @State private var urlError: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,13 +25,25 @@ struct AIMetaView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 8) {
-            searchField
-            Spacer(minLength: 0)
-            refreshButton
+        VStack(spacing: 0) {
+            if isAddingMarketplace {
+                addMarketplaceBar
+            } else {
+                searchBar
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        .animation(.easeInOut(duration: 0.15), value: isAddingMarketplace)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            searchField
+            Spacer(minLength: 0)
+            addButton
+            refreshButton
+        }
     }
 
     private var searchField: some View {
@@ -52,6 +61,20 @@ struct AIMetaView: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color.white.opacity(0.06))
         )
+    }
+
+    private var addButton: some View {
+        Button {
+            urlInputText = ""
+            urlError = nil
+            isAddingMarketplace = true
+        } label: {
+            Image(systemName: "plus.circle")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Add marketplace URL")
     }
 
     private var refreshButton: some View {
@@ -73,6 +96,102 @@ struct AIMetaView: View {
         .help("Refresh marketplaces")
     }
 
+    // MARK: - Add Marketplace Bar
+
+    private var addMarketplaceBar: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .font(.system(size: 10))
+                    .foregroundColor(.cyan)
+
+                TextField("https://example.com/marketplace.json", text: $urlInputText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 11))
+                    .onSubmit { commitAdd() }
+
+                if let clipboard = NSPasteboard.general.string(forType: .string),
+                   !clipboard.isEmpty,
+                   urlInputText.isEmpty {
+                    Button {
+                        urlInputText = clipboard
+                        urlError = nil
+                    } label: {
+                        Image(systemName: "doc.on.clipboard")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Paste from clipboard")
+                }
+
+                Button(action: commitAdd) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(validatedURL(from: urlInputText) != nil ? .cyan : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Add marketplace")
+                .disabled(urlInputText.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                Button {
+                    isAddingMarketplace = false
+                    urlError = nil
+                } label: {
+                    Image(systemName: "xmark.circle")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Cancel")
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(
+                                urlError != nil ? Color.red.opacity(0.5) : Color.cyan.opacity(0.25),
+                                lineWidth: 1
+                            )
+                    )
+            )
+
+            if let urlError {
+                Text(urlError)
+                    .font(.system(size: 10))
+                    .foregroundColor(.red.opacity(0.8))
+                    .padding(.horizontal, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private func commitAdd() {
+        let trimmed = urlInputText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        guard let url = validatedURL(from: trimmed) else {
+            withAnimation(.easeInOut(duration: 0.12)) {
+                urlError = "Must be a valid http:// or https:// URL"
+            }
+            return
+        }
+        store.addMarketplace(url)
+        isAddingMarketplace = false
+        urlError = nil
+    }
+
+    private func validatedURL(from string: String) -> URL? {
+        let trimmed = string.trimmingCharacters(in: .whitespaces)
+        guard let url = URL(string: trimmed),
+              let scheme = url.scheme,
+              ["http", "https"].contains(scheme.lowercased()),
+              url.host != nil else { return nil }
+        return url
+    }
+
     // MARK: - Content
 
     @ViewBuilder
@@ -84,9 +203,6 @@ struct AIMetaView: View {
         }
     }
 
-    /// Only shows during the very first scan before any plugins have landed.
-    /// Subsequent refreshes don't replace the list — they just spin the
-    /// refresh button in the header.
     private var shouldShowInitialLoading: Bool {
         synthesizer.isScanning
             && synthesizer.plugins.isEmpty
