@@ -8,8 +8,8 @@ struct ExpandedView: View {
             switch navigationState.activeApp {
             case .worktree:
                 WorktreeView()
-            case .aiConfig:
-                AIConfigView()
+            case .aiMeta:
+                AIMetaView()
             case .fogNote:
                 FogNoteView()
             }

@@ -308,6 +308,25 @@ class SettingsManager: ObservableObject {
         if let sizesData = defaults.dictionary(forKey: Keys.appSizes) as? [String: [String: CGFloat]] {
             appSizes = sizesData
         }
+
+        migrateAIConfigToAIMeta()
+    }
+
+    /// Migrates legacy "AI Config" persistence keys to "AI Meta" after the tab
+    /// rename. Idempotent — a no-op once the rename has run once.
+    private func migrateAIConfigToAIMeta() {
+        let legacyKey = "AI Config"
+        let newKey = MiniApp.aiMeta.rawValue
+
+        if let legacySize = appSizes[legacyKey], appSizes[newKey] == nil {
+            appSizes[newKey] = legacySize
+            appSizes.removeValue(forKey: legacyKey)
+            UserDefaults.standard.set(appSizes, forKey: Keys.appSizes)
+        }
+
+        if defaultApp == legacyKey {
+            defaultApp = newKey
+        }
     }
 
     func saveSettings() {
