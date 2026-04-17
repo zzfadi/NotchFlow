@@ -18,6 +18,7 @@ struct MetaMarketplaceSection: View {
     let totalPluginCount: Int
     let isSearchActive: Bool
     let isLocal: Bool
+    let isFetching: Bool
     let fetchError: String?
     let onRemove: (() -> Void)?
     let onOpenPermissions: (() -> Void)?
@@ -30,7 +31,9 @@ struct MetaMarketplaceSection: View {
             if let fetchError {
                 errorBanner(fetchError)
             }
-            if plugins.isEmpty && !suppressEmptyBody {
+            if isFetching && plugins.isEmpty && !isSearchActive {
+                fetchingBody
+            } else if plugins.isEmpty && !suppressEmptyBody {
                 emptyBody
             } else if !plugins.isEmpty {
                 pluginList
@@ -108,6 +111,23 @@ struct MetaMarketplaceSection: View {
         } else {
             remoteEmptyBody
         }
+    }
+
+    private var fetchingBody: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .scaleEffect(0.5)
+                .frame(width: 14, height: 14)
+            Text("Fetching marketplace…")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.04))
+        )
     }
 
     private var noMatchesBody: some View {
@@ -208,6 +228,7 @@ struct MetaMarketplaceSection: View {
             totalPluginCount: 0,
             isSearchActive: false,
             isLocal: true,
+            isFetching: false,
             fetchError: nil,
             onRemove: nil,
             onOpenPermissions: {}
@@ -217,9 +238,10 @@ struct MetaMarketplaceSection: View {
             title: "example.com",
             subtitle: nil,
             plugins: [],
-            totalPluginCount: 5,
-            isSearchActive: true,
+            totalPluginCount: 0,
+            isSearchActive: false,
             isLocal: false,
+            isFetching: true,
             fetchError: nil,
             onRemove: {},
             onOpenPermissions: nil

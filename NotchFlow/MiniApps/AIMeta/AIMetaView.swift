@@ -9,6 +9,7 @@ struct AIMetaView: View {
     @State private var isAddingMarketplace = false
     @State private var urlInputText = ""
     @State private var urlError: String? = nil
+    @FocusState private var urlFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,6 +69,7 @@ struct AIMetaView: View {
             urlInputText = ""
             urlError = nil
             isAddingMarketplace = true
+            DispatchQueue.main.async { urlFieldFocused = true }
         } label: {
             Image(systemName: "plus.circle")
                 .font(.system(size: 11, weight: .semibold))
@@ -108,7 +110,11 @@ struct AIMetaView: View {
                 TextField("https://example.com/marketplace.json", text: $urlInputText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 11))
+                    .focused($urlFieldFocused)
                     .onSubmit { commitAdd() }
+                    .onChange(of: urlInputText) { _, _ in
+                        if urlError != nil { urlError = nil }
+                    }
 
                 if let clipboard = NSPasteboard.general.string(forType: .string),
                    !clipboard.isEmpty,
@@ -178,6 +184,12 @@ struct AIMetaView: View {
             }
             return
         }
+        guard !store.isSubscribed(to: url) else {
+            withAnimation(.easeInOut(duration: 0.12)) {
+                urlError = "Already added"
+            }
+            return
+        }
         store.addMarketplace(url)
         isAddingMarketplace = false
         urlError = nil
@@ -235,6 +247,7 @@ struct AIMetaView: View {
         let allPlugins = store.pluginsByMarketplace[marketplaceId] ?? []
         let filtered = filter(plugins: allPlugins)
         let isLocal = marketplaceId == synthesizer.marketplace.id
+        let isFetching = !isLocal && store.isFetching(marketplaceId: marketplaceId)
         let subtitle: String? = store.description(forMarketplaceId: marketplaceId)
         let fetchError: String? = store.fetchError(forMarketplaceId: marketplaceId)
         let onRemove: (() -> Void)? = removalHandler(for: marketplaceId)
@@ -247,6 +260,7 @@ struct AIMetaView: View {
             totalPluginCount: allPlugins.count,
             isSearchActive: !searchText.isEmpty,
             isLocal: isLocal,
+            isFetching: isFetching,
             fetchError: fetchError,
             onRemove: onRemove,
             onOpenPermissions: onOpenPermissions
