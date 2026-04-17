@@ -22,7 +22,7 @@
 		A1000007001 /* ExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007000 /* ExpandedView.swift */; };
 		A1000008001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000 /* SettingsView.swift */; };
 		A100001F001 /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001F000 /* ResizeHandle.swift */; };
-		A1000032001 /* ResizableSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032000 /* ResizableSidebar.swift */; };
+		A1000037001 /* ResizableSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032000 /* ResizableSidebar.swift */; };
 
 		/* Settings */
 		A1000021001 /* ModernSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021000 /* ModernSettingsView.swift */; };
@@ -45,6 +45,13 @@
 
 		/* Views/Onboarding */
 		A100002F001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002F000 /* OnboardingView.swift */; };
+
+		/* MiniApps/AIMeta */
+		A100003A001 /* MetaPluginModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003A000 /* MetaPluginModel.swift */; };
+		A100003B001 /* MetaMarketplace.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003B000 /* MetaMarketplace.swift */; };
+		A100003C001 /* MetaMarketplaceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003C000 /* MetaMarketplaceStore.swift */; };
+		A100003D001 /* LocalPluginSynthesizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003D000 /* LocalPluginSynthesizer.swift */; };
+		A100003E001 /* AIMetaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003E000 /* AIMetaView.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -120,6 +127,13 @@
 
 		/* Views/Onboarding */
 		A100002F000 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+
+		/* MiniApps/AIMeta */
+		A100003A000 /* MetaPluginModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaPluginModel.swift; sourceTree = "<group>"; };
+		A100003B000 /* MetaMarketplace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMarketplace.swift; sourceTree = "<group>"; };
+		A100003C000 /* MetaMarketplaceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMarketplaceStore.swift; sourceTree = "<group>"; };
+		A100003D000 /* LocalPluginSynthesizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPluginSynthesizer.swift; sourceTree = "<group>"; };
+		A100003E000 /* AIMetaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMetaView.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -285,6 +299,7 @@
 				A1100008000 /* FogNote */,
 				A1100009000 /* Worktree */,
 				A110000A000 /* AIConfig */,
+				A1100010000 /* AIMeta */,
 			);
 			path = MiniApps;
 			sourceTree = "<group>";
@@ -337,6 +352,18 @@
 				A1000011000 /* AIConfigView.swift */,
 			);
 			path = AIConfig;
+			sourceTree = "<group>";
+		};
+		A1100010000 /* AIMeta */ = {
+			isa = PBXGroup;
+			children = (
+				A100003A000 /* MetaPluginModel.swift */,
+				A100003B000 /* MetaMarketplace.swift */,
+				A100003C000 /* MetaMarketplaceStore.swift */,
+				A100003D000 /* LocalPluginSynthesizer.swift */,
+				A100003E000 /* AIMetaView.swift */,
+			);
+			path = AIMeta;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -425,7 +452,7 @@
 				A1000007001 /* ExpandedView.swift in Sources */,
 				A1000008001 /* SettingsView.swift in Sources */,
 				A100001F001 /* ResizeHandle.swift in Sources */,
-				A1000032001 /* ResizableSidebar.swift in Sources */,
+				A1000037001 /* ResizableSidebar.swift in Sources */,
 				A1000021001 /* ModernSettingsView.swift in Sources */,
 				A1000022001 /* SettingsSidebar.swift in Sources */,
 				A1000023001 /* SettingsDetailView.swift in Sources */,
@@ -460,6 +487,11 @@
 				A100002D001 /* PermissionManager.swift in Sources */,
 				A100002E001 /* PermissionsSettingsSection.swift in Sources */,
 				A100002F001 /* OnboardingView.swift in Sources */,
+				A100003A001 /* MetaPluginModel.swift in Sources */,
+				A100003B001 /* MetaMarketplace.swift in Sources */,
+				A100003C001 /* MetaMarketplaceStore.swift in Sources */,
+				A100003D001 /* LocalPluginSynthesizer.swift in Sources */,
+				A100003E001 /* AIMetaView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

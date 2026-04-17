@@ -26,12 +26,12 @@ struct MainNotchView: View {
 
                 Spacer()
 
-                // Right side - AI Config and Fog Note buttons
+                // Right side - AI Meta and Fog Note buttons
                 TabButton(
-                    app: .aiConfig,
-                    isActive: navigationState.activeApp == .aiConfig
+                    app: .aiMeta,
+                    isActive: navigationState.activeApp == .aiMeta
                 ) {
-                    navigationState.switchTo(.aiConfig)
+                    navigationState.switchTo(.aiMeta)
                 }
 
                 TabButton(
