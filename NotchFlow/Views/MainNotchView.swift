@@ -47,9 +47,15 @@ struct MainNotchView: View {
             Divider()
                 .background(Color.white.opacity(0.1))
 
-            // Content area
-            ExpandedView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Content area, with toast overlay stacked on top so surfaced
+            // errors are visible over whichever tab is active.
+            ZStack(alignment: .bottom) {
+                ExpandedView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                ToastOverlayView()
+                    .allowsHitTesting(true)
+            }
 
             // Bottom bar - swipe up to close, drag to resize
             NotchBottomBar(currentApp: navigationState.activeApp)

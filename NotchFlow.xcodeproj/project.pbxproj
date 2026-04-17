@@ -16,6 +16,8 @@
 		A1000004001 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000 /* NavigationState.swift */; };
 		A1000005001 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005000 /* SettingsManager.swift */; };
 		A100002D001 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002D000 /* PermissionManager.swift */; };
+		A1000080001 /* ErrorCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000080000 /* ErrorCenter.swift */; };
+		A1000081001 /* ToastOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000081000 /* ToastOverlayView.swift */; };
 
 		/* Views */
 		A1000006001 /* MainNotchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000 /* MainNotchView.swift */; };
@@ -100,6 +102,8 @@
 		A1000004000 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		A1000005000 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		A100002D000 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
+		A1000080000 /* ErrorCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCenter.swift; sourceTree = "<group>"; };
+		A1000081000 /* ToastOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastOverlayView.swift; sourceTree = "<group>"; };
 
 		/* Views */
 		A1000006000 /* MainNotchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNotchView.swift; sourceTree = "<group>"; };
@@ -227,6 +231,7 @@
 				A1000004000 /* NavigationState.swift */,
 				A1000005000 /* SettingsManager.swift */,
 				A100002D000 /* PermissionManager.swift */,
+				A1000080000 /* ErrorCenter.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -238,6 +243,7 @@
 				A1000007000 /* ExpandedView.swift */,
 				A1000008000 /* SettingsView.swift */,
 				A100001F000 /* ResizeHandle.swift */,
+				A1000081000 /* ToastOverlayView.swift */,
 				A110000B000 /* Settings */,
 				A110000F000 /* Components */,
 				A110000E000 /* Onboarding */,
@@ -491,6 +497,8 @@
 				A1000010001 /* AIConfigScanner.swift in Sources */,
 				A1000011001 /* AIConfigView.swift in Sources */,
 				A100002D001 /* PermissionManager.swift in Sources */,
+				A1000080001 /* ErrorCenter.swift in Sources */,
+				A1000081001 /* ToastOverlayView.swift in Sources */,
 				A100002E001 /* PermissionsSettingsSection.swift in Sources */,
 				A100002F001 /* OnboardingView.swift in Sources */,
 				A100003A001 /* MetaPluginModel.swift in Sources */,

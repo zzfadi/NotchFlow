@@ -20,11 +20,17 @@ class WorktreeScanner: ObservableObject {
     private let gitRunner = GitCommandRunner.shared
     private var scanTask: Task<Void, Never>?
     private var statusTask: Task<Void, Never>?
+    /// Monotonic id for the most recent scan. Only the task that owns the
+    /// latest token publishes results / clears `isScanning`, which keeps
+    /// the loading flag leak-safe across rapid cancel-and-restart cycles.
+    private var latestScanToken: Int = 0
 
     // MARK: - Public Methods
 
     func scan() {
         scanTask?.cancel()
+        latestScanToken &+= 1
+        let myToken = latestScanToken
 
         // Capture scan inputs on the main actor before hopping off.
         let grantedPaths = permissions.grantedFolders.map { $0.url.path }
@@ -40,7 +46,8 @@ class WorktreeScanner: ObservableObject {
 
             await MainActor.run { [weak self] in
                 guard let self else { return }
-                guard !Task.isCancelled else { return }
+                // Leak-safe publish: only the latest scan flips state.
+                guard self.latestScanToken == myToken else { return }
                 self.repositoryGroups = groups
                 self.lastScanDate = Date()
                 self.scanProgress = 1.0
