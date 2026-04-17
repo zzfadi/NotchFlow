@@ -1,5 +1,8 @@
 import SwiftUI
 import AppKit
+import os
+
+private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchflow.app", category: "settings")
 
 /// A reusable component for editing a list of directory paths
 struct PathListEditor: View {
@@ -78,7 +81,7 @@ struct PathListEditor: View {
         // Check for duplicates using standardized paths
         let existingStandardized = paths.map { ($0 as NSString).standardizingPath }
         guard !existingStandardized.contains(standardized) else {
-            print("[PathListEditor] Path already exists: \(standardized)")
+            log.info("Path already exists: \(standardized, privacy: .private)")
             return
         }
 
@@ -86,7 +89,7 @@ struct PathListEditor: View {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: standardized, isDirectory: &isDirectory),
               isDirectory.boolValue else {
-            print("[PathListEditor] Invalid path (not a directory or doesn't exist): \(standardized)")
+            log.warning("Invalid path (not a directory or doesn't exist): \(standardized, privacy: .private)")
             return
         }
 

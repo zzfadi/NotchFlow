@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
 import AppKit
+import os
+
+private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchflow.app", category: "settings")
 
 // MARK: - UI Scale
 
@@ -133,7 +136,7 @@ class SettingsManager: ObservableObject {
     /// DynamicNotchKit creates windows at 85% of screen size, so we must stay within those bounds.
     static func screenSafeMaxSize(for screen: NSScreen? = NSScreen.main) -> CGSize {
         guard let screen = screen else {
-            print("[SettingsManager] Warning: No screen available, using fallback size 600x400")
+            log.warning("No screen available, using fallback size 600x400")
             return CGSize(width: 600, height: 400)
         }
 
@@ -244,7 +247,7 @@ class SettingsManager: ObservableObject {
         let currentSize = sizeForApp(app)
         let clamped = Self.clampedSize(currentSize)
         if currentSize != clamped {
-            print("[SettingsManager] Clamping \(app.rawValue) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
+            log.info("Clamping \(app.rawValue, privacy: .public) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
             setSize(clamped, for: app)
         }
     }

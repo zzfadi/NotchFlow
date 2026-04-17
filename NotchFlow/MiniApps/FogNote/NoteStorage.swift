@@ -1,5 +1,8 @@
 import Foundation
 import Combine
+import os
+
+private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchflow.app", category: "fognote")
 
 @MainActor
 class NoteStorage: ObservableObject {
@@ -163,7 +166,7 @@ class NoteStorage: ObservableObject {
             try note.content.write(to: fileURL, atomically: true, encoding: .utf8)
             return fileURL
         } catch {
-            print("Error exporting note: \(error)")
+            log.error("Error exporting note: \(error.localizedDescription, privacy: .private)")
             return nil
         }
     }

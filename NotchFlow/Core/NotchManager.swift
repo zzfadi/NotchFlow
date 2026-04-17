@@ -2,6 +2,9 @@ import Foundation
 import SwiftUI
 import AppKit
 import DynamicNotchKit
+import os
+
+private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchflow.app", category: "notch")
 
 @MainActor
 class NotchManager: ObservableObject {
@@ -38,9 +41,9 @@ class NotchManager: ObservableObject {
         }
         
         if notch == nil {
-            print("[NotchManager] Error: Failed to initialize DynamicNotch")
+            log.error("Failed to initialize DynamicNotch")
         } else {
-            print("[NotchManager] Successfully initialized notch")
+            log.info("DynamicNotch initialized successfully")
         }
         
         setupClickAwayMonitor()
@@ -90,20 +93,20 @@ class NotchManager: ObservableObject {
 
         // Verify monitors were registered successfully
         if globalClickMonitor == nil {
-            print("[NotchManager] Warning: Failed to register global click monitor - accessibility permissions may be required")
+            log.warning("Failed to register global click monitor - accessibility permissions may be required")
         }
         if localClickMonitor == nil {
-            print("[NotchManager] Warning: Failed to register local click monitor")
+            log.warning("Failed to register local click monitor")
         }
     }
 
     func expand() async {
         guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-            print("[NotchManager] Error: No screen available for expansion")
+            log.error("No screen available for expansion")
             return
         }
         guard let notch = notch else {
-            print("[NotchManager] Error: Notch not initialized")
+            log.error("Notch not initialized")
             return
         }
         await notch.expand(on: screen)
@@ -112,11 +115,11 @@ class NotchManager: ObservableObject {
 
     func collapse() async {
         guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-            print("[NotchManager] Error: No screen available for collapse")
+            log.error("No screen available for collapse")
             return
         }
         guard let notch = notch else {
-            print("[NotchManager] Error: Notch not initialized")
+            log.error("Notch not initialized")
             return
         }
         // Go to compact mode instead of fully hiding - this keeps a clickable icon
@@ -126,7 +129,7 @@ class NotchManager: ObservableObject {
 
     func hide() async {
         guard let notch = notch else {
-            print("[NotchManager] Error: Notch not initialized for hide")
+            log.error("Notch not initialized for hide")
             return
         }
         await notch.hide()

@@ -1,5 +1,8 @@
 import SwiftUI
 import AppKit
+import os
+
+private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchflow.app", category: "fognote")
 
 /// Fog Note mini-app settings section
 struct FogNoteSettingsSection: View {
@@ -71,7 +74,7 @@ struct FogNoteSettingsSection: View {
             let contents = try FileManager.default.contentsOfDirectory(atPath: path)
             return contents.filter { $0.hasSuffix(".md") }.count
         } catch {
-            print("[FogNoteSettings] Error reading notes directory: \(error.localizedDescription)")
+            log.error("Error reading notes directory: \(error.localizedDescription, privacy: .private)")
             return nil
         }
     }
@@ -94,7 +97,7 @@ struct FogNoteSettingsSection: View {
     private func openInFinder() {
         let success = NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: settings.fogNotesDirectory)
         if !success {
-            print("[FogNoteSettings] Failed to open directory in Finder: \(settings.fogNotesDirectory)")
+            log.error("Failed to open directory in Finder: \(settings.fogNotesDirectory, privacy: .private)")
         }
     }
 }
