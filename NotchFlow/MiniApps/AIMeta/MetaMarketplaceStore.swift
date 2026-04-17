@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 import os.log
 
 private let log = Logger(
@@ -28,9 +29,40 @@ final class MetaMarketplaceStore: ObservableObject {
 
     private let urlDefaultsKey = "metaMarketplaceURLs"
     private let synthesizer = LocalPluginSynthesizer.shared
+    private var cancellables: Set<AnyCancellable> = []
 
     private init() {
         loadSubscribedURLs()
+        bindLocalSynthesizer()
+    }
+
+    // MARK: - Marketplace ordering
+
+    /// Rendering order: local marketplace first, then subscribed remotes in
+    /// the order they were added. Views should iterate this, not the
+    /// dictionary, so the UI is stable across re-renders.
+    var orderedMarketplaceIds: [String] {
+        var ids: [String] = []
+        if let local = localMarketplace { ids.append(local.id) }
+        ids.append(contentsOf: subscribedURLs.map { $0.absoluteString })
+        return ids
+    }
+
+    func displayName(forMarketplaceId id: String) -> String {
+        if id == localMarketplace?.id {
+            return localMarketplace?.name ?? id
+        }
+        if let url = URL(string: id) {
+            return url.host ?? url.absoluteString
+        }
+        return id
+    }
+
+    func description(forMarketplaceId id: String) -> String? {
+        if id == localMarketplace?.id {
+            return localMarketplace?.description
+        }
+        return nil
     }
 
     // MARK: - Subscriptions
@@ -50,25 +82,19 @@ final class MetaMarketplaceStore: ObservableObject {
 
     // MARK: - Refresh
 
-    /// Refreshes both the synthesized local marketplace and every subscribed
-    /// remote manifest in parallel.
+    /// Refreshes both the synthesized local marketplace (by triggering a
+    /// fresh disk scan) and every subscribed remote manifest in parallel.
     func refreshAll() async {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        refreshLocalMarketplace()
+        synthesizer.refresh()
 
         await withTaskGroup(of: Void.self) { group in
             for url in subscribedURLs {
                 group.addTask { await self.refreshMarketplace(url) }
             }
         }
-    }
-
-    func refreshLocalMarketplace() {
-        let (marketplace, plugins) = synthesizer.synthesize()
-        localMarketplace = marketplace
-        pluginsByMarketplace[marketplace.id] = plugins
     }
 
     func refreshMarketplace(_ url: URL) async {
@@ -88,7 +114,19 @@ final class MetaMarketplaceStore: ObservableObject {
         }
     }
 
-    // MARK: - Persistence
+    // MARK: - Private
+
+    private func bindLocalSynthesizer() {
+        localMarketplace = synthesizer.marketplace
+
+        synthesizer.$plugins
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] plugins in
+                guard let self else { return }
+                self.pluginsByMarketplace[self.synthesizer.marketplace.id] = plugins
+            }
+            .store(in: &cancellables)
+    }
 
     private func loadSubscribedURLs() {
         let raw = UserDefaults.standard.stringArray(forKey: urlDefaultsKey) ?? []

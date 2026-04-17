@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 import os.log
 
 private let log = Logger(
@@ -25,30 +26,70 @@ struct SyntheticMarketplace: Identifiable, Hashable {
 /// folder. Each project with AI components becomes one plugin entry under the
 /// "My Machine" marketplace.
 ///
-/// In later PRs this will be extended to understand plugin directories
-/// (`.claude-plugin/`, `.github/plugin/`) explicitly, so a single project's
-/// plugin shows up as a plugin rather than just a grab-bag of its files. For
-/// the PR-2 scaffold, the "one project = one card" rollup is enough.
+/// Observes the underlying scanner reactively: when `scanner.allItems` or
+/// `scanner.isScanning` change, `plugins` and `isScanning` republish on this
+/// object, so SwiftUI views subscribing via `@ObservedObject` re-render
+/// automatically as the scan completes.
 @MainActor
-final class LocalPluginSynthesizer {
+final class LocalPluginSynthesizer: ObservableObject {
     static let shared = LocalPluginSynthesizer()
 
-    let marketplaceId = "local.my-machine"
+    let marketplace = SyntheticMarketplace(
+        id: "local.my-machine",
+        name: "My Machine",
+        description: "AI components already on this Mac"
+    )
+
+    @Published private(set) var plugins: [MetaPlugin] = []
+    @Published private(set) var isScanning: Bool = false
+    @Published private(set) var lastScanDate: Date?
+
     private let scanner = AIConfigScanner()
+    private var cancellables: Set<AnyCancellable> = []
 
-    private init() {}
+    private init() {
+        bindScanner()
+        scanner.scan()
+    }
 
-    func synthesize() -> (SyntheticMarketplace, [MetaPlugin]) {
-        let items = scanner.allItems
+    // MARK: - Public API
+
+    /// Trigger a fresh on-disk scan. The scanner runs async and re-publishes
+    /// `allItems` when done; this synthesizer picks those up through the
+    /// Combine bindings set up in `bindScanner()`.
+    func refresh() {
+        scanner.scan()
+    }
+
+    // MARK: - Private
+
+    private func bindScanner() {
+        scanner.$allItems
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] items in
+                self?.synthesize(from: items)
+            }
+            .store(in: &cancellables)
+
+        scanner.$isScanning
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$isScanning)
+
+        scanner.$lastScanDate
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$lastScanDate)
+    }
+
+    private func synthesize(from items: [AIConfigItem]) {
         let byProject = Dictionary(grouping: items) { $0.projectPath }
 
-        let plugins: [MetaPlugin] = byProject
+        plugins = byProject
             .sorted { $0.key.lastPathComponent < $1.key.lastPathComponent }
             .map { projectPath, items in
                 let summary = components(from: items)
                 let name = projectPath.lastPathComponent
                 return MetaPlugin(
-                    id: "\(marketplaceId):\(projectPath.path)",
+                    id: "\(marketplace.id):\(projectPath.path)",
                     name: name,
                     displayName: name,
                     description: "On-disk AI components in \(shortPath(projectPath))",
@@ -60,29 +101,14 @@ final class LocalPluginSynthesizer {
                     keywords: [],
                     source: .local(projectPath),
                     components: summary,
-                    marketplaceId: marketplaceId,
+                    marketplaceId: marketplace.id,
                     rawSource: projectPath.path,
                     isInstalled: true,
                     isEnabled: true
                 )
             }
 
-        let marketplace = SyntheticMarketplace(
-            id: marketplaceId,
-            name: "My Machine",
-            description: "AI components already on this Mac"
-        )
-
-        log.debug("Synthesized \(plugins.count, privacy: .public) local plugins")
-        return (marketplace, plugins)
-    }
-
-    /// Kick off a fresh on-disk scan. The scanner runs the work on its own
-    /// Task and publishes results through `allItems`; callers that want the
-    /// post-scan snapshot should observe `scanner.allItems` or call
-    /// `synthesize()` after `isScanning` flips back to false.
-    func refresh() {
-        scanner.scan()
+        log.debug("Synthesized \(self.plugins.count, privacy: .public) local plugins")
     }
 
     private func components(from items: [AIConfigItem]) -> ComponentSummary {
