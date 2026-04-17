@@ -26,6 +26,8 @@ struct SettingsDetailView: View {
             GeneralSettingsSection()
         case .appearance:
             AppearanceSettingsSection()
+        case .permissions:
+            PermissionsSettingsSection()
         case .about:
             AboutSettingsSection()
         case .worktree:

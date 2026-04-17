@@ -6,6 +6,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     // Platform sections
     case general = "General"
     case appearance = "Appearance"
+    case permissions = "Permissions"
     case about = "About"
 
     // Mini-app sections
@@ -21,6 +22,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
             return "gear"
         case .appearance:
             return "paintpalette"
+        case .permissions:
+            return "lock.shield"
         case .about:
             return "info.circle"
         case .worktree:
@@ -34,7 +37,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var isPlatformSection: Bool {
         switch self {
-        case .general, .appearance, .about:
+        case .general, .appearance, .permissions, .about:
             return true
         case .worktree, .aiConfig, .fogNote:
             return false
@@ -101,6 +104,8 @@ private struct SidebarRow: View {
             return .blue
         case .appearance:
             return .purple
+        case .permissions:
+            return .green
         case .about:
             return .gray
         case .worktree:

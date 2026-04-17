@@ -15,6 +15,7 @@
 		A1000003001 /* NotchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003000 /* NotchManager.swift */; };
 		A1000004001 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000 /* NavigationState.swift */; };
 		A1000005001 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005000 /* SettingsManager.swift */; };
+		A100002D001 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002D000 /* PermissionManager.swift */; };
 
 		/* Views */
 		A1000006001 /* MainNotchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000 /* MainNotchView.swift */; };
@@ -40,6 +41,10 @@
 		A100002A001 /* WorktreeSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002A000 /* WorktreeSettingsSection.swift */; };
 		A100002B001 /* AIConfigSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002B000 /* AIConfigSettingsSection.swift */; };
 		A100002C001 /* FogNoteSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002C000 /* FogNoteSettingsSection.swift */; };
+		A100002E001 /* PermissionsSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002E000 /* PermissionsSettingsSection.swift */; };
+
+		/* Views/Onboarding */
+		A100002F001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002F000 /* OnboardingView.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -85,6 +90,7 @@
 		A1000003000 /* NotchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchManager.swift; sourceTree = "<group>"; };
 		A1000004000 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		A1000005000 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		A100002D000 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 
 		/* Views */
 		A1000006000 /* MainNotchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNotchView.swift; sourceTree = "<group>"; };
@@ -110,6 +116,10 @@
 		A100002A000 /* WorktreeSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeSettingsSection.swift; sourceTree = "<group>"; };
 		A100002B000 /* AIConfigSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigSettingsSection.swift; sourceTree = "<group>"; };
 		A100002C000 /* FogNoteSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FogNoteSettingsSection.swift; sourceTree = "<group>"; };
+		A100002E000 /* PermissionsSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsSection.swift; sourceTree = "<group>"; };
+
+		/* Views/Onboarding */
+		A100002F000 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -198,6 +208,7 @@
 				A1000003000 /* NotchManager.swift */,
 				A1000004000 /* NavigationState.swift */,
 				A1000005000 /* SettingsManager.swift */,
+				A100002D000 /* PermissionManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -211,8 +222,17 @@
 				A100001F000 /* ResizeHandle.swift */,
 				A110000B000 /* Settings */,
 				A110000F000 /* Components */,
+				A110000E000 /* Onboarding */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A110000E000 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				A100002F000 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		A110000F000 /* Components */ = {
@@ -254,6 +274,7 @@
 				A100002A000 /* WorktreeSettingsSection.swift */,
 				A100002B000 /* AIConfigSettingsSection.swift */,
 				A100002C000 /* FogNoteSettingsSection.swift */,
+				A100002E000 /* PermissionsSettingsSection.swift */,
 			);
 			path = Sections;
 			sourceTree = "<group>";
@@ -436,6 +457,9 @@
 				A100000F001 /* AIConfigModel.swift in Sources */,
 				A1000010001 /* AIConfigScanner.swift in Sources */,
 				A1000011001 /* AIConfigView.swift in Sources */,
+				A100002D001 /* PermissionManager.swift in Sources */,
+				A100002E001 /* PermissionsSettingsSection.swift in Sources */,
+				A100002F001 /* OnboardingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

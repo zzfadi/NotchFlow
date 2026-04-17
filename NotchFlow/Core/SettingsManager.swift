@@ -182,6 +182,7 @@ class SettingsManager: ObservableObject {
     @AppStorage("isPinned") var isPinned: Bool = false
     @AppStorage("uiScale") var uiScaleRawValue: String = UIScale.default.rawValue
     @AppStorage("notchTheme") var notchThemeRawValue: String = NotchTheme.solid.rawValue
+    @AppStorage("onboardingComplete") var onboardingComplete: Bool = false
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []
@@ -330,26 +331,31 @@ class SettingsManager: ObservableObject {
 
     // MARK: - Default Values
 
+    /// Default project roots. Intentionally excludes `$HOME` itself (scanning
+    /// `~` walks into `~/Desktop`, `~/Documents`, `~/Downloads` which each
+    /// trigger a separate macOS TCC prompt). Only conventional developer
+    /// folders are seeded, and only if they already exist on disk — missing
+    /// ones are filtered out so a fresh account doesn't get dead paths.
     private func defaultWorktreePaths() -> [String] {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return [
-            home,
+        let candidates = [
             "\(home)/Developer",
             "\(home)/Projects",
             "\(home)/Code",
             "\(home)/Repos",
             "\(home)/GitHub"
         ]
+        return candidates.filter { FileManager.default.fileExists(atPath: $0) }
     }
 
     private func defaultAIConfigPaths() -> [String] {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return [
-            home,
+        let candidates = [
             "\(home)/Developer",
             "\(home)/Projects",
             "\(home)/Code"
         ]
+        return candidates.filter { FileManager.default.fileExists(atPath: $0) }
     }
 
     private func defaultFogNotesDirectory() -> String {

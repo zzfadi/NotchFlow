@@ -11,6 +11,7 @@ class WorktreeScanner: ObservableObject {
     @Published var scanProgress: Double = 0
 
     private let settings = SettingsManager.shared
+    private let permissions = PermissionManager.shared
     private let gitRunner = GitCommandRunner.shared
     private var scanTask: Task<Void, Never>?
     private var statusTask: Task<Void, Never>?
@@ -135,14 +136,20 @@ class WorktreeScanner: ObservableObject {
 
     private func performScan() async -> [RepositoryGroup] {
         var allWorktrees: [Worktree] = []
-        let totalPaths = settings.worktreeScanPaths.count
 
-        // Guard against division by zero
+        // Union granted folders (authoritative post-onboarding) with any legacy
+        // custom paths the user set in Settings before the permission model
+        // existed. Dedupe so we never walk the same tree twice.
+        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
+        let legacyPaths = settings.worktreeScanPaths
+        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
+        let totalPaths = combinedPaths.count
+
         guard totalPaths > 0 else {
             return []
         }
 
-        for (index, pathString) in settings.worktreeScanPaths.enumerated() {
+        for (index, pathString) in combinedPaths.enumerated() {
             if Task.isCancelled { break }
 
             let path = URL(fileURLWithPath: pathString)
