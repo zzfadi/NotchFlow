@@ -52,6 +52,8 @@
 		A100003C001 /* MetaMarketplaceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003C000 /* MetaMarketplaceStore.swift */; };
 		A100003D001 /* LocalPluginSynthesizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003D000 /* LocalPluginSynthesizer.swift */; };
 		A100003E001 /* AIMetaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003E000 /* AIMetaView.swift */; };
+		A100003F001 /* MetaPluginCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100003F000 /* MetaPluginCard.swift */; };
+		A1000060001 /* MetaMarketplaceSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000060000 /* MetaMarketplaceSection.swift */; };
 
 		/* FogNote */
 		A1000009001 /* NoteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* NoteModel.swift */; };
@@ -134,6 +136,8 @@
 		A100003C000 /* MetaMarketplaceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMarketplaceStore.swift; sourceTree = "<group>"; };
 		A100003D000 /* LocalPluginSynthesizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPluginSynthesizer.swift; sourceTree = "<group>"; };
 		A100003E000 /* AIMetaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMetaView.swift; sourceTree = "<group>"; };
+		A100003F000 /* MetaPluginCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaPluginCard.swift; sourceTree = "<group>"; };
+		A1000060000 /* MetaMarketplaceSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMarketplaceSection.swift; sourceTree = "<group>"; };
 
 		/* FogNote */
 		A1000009000 /* NoteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteModel.swift; sourceTree = "<group>"; };
@@ -362,6 +366,8 @@
 				A100003C000 /* MetaMarketplaceStore.swift */,
 				A100003D000 /* LocalPluginSynthesizer.swift */,
 				A100003E000 /* AIMetaView.swift */,
+				A100003F000 /* MetaPluginCard.swift */,
+				A1000060000 /* MetaMarketplaceSection.swift */,
 			);
 			path = AIMeta;
 			sourceTree = "<group>";
@@ -492,6 +498,8 @@
 				A100003C001 /* MetaMarketplaceStore.swift in Sources */,
 				A100003D001 /* LocalPluginSynthesizer.swift in Sources */,
 				A100003E001 /* AIMetaView.swift in Sources */,
+				A100003F001 /* MetaPluginCard.swift in Sources */,
+				A1000060001 /* MetaMarketplaceSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

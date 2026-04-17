@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 import os.log
 
 private let log = Logger(
@@ -24,13 +25,49 @@ final class MetaMarketplaceStore: ObservableObject {
     @Published private(set) var pluginsByMarketplace: [String: [MetaPlugin]] = [:]
     @Published private(set) var localMarketplace: SyntheticMarketplace?
     @Published private(set) var isRefreshing: Bool = false
-    @Published private(set) var lastFetchError: String?
+
+    /// Fetch errors keyed by marketplace id. Per-marketplace so concurrent
+    /// refreshes don't clobber each other's state — a previous PR iteration
+    /// used a single `lastFetchError: String?` which was nondeterministic
+    /// once more than one remote was subscribed.
+    @Published private(set) var fetchErrors: [String: String] = [:]
 
     private let urlDefaultsKey = "metaMarketplaceURLs"
     private let synthesizer = LocalPluginSynthesizer.shared
+    private var cancellables: Set<AnyCancellable> = []
 
     private init() {
         loadSubscribedURLs()
+        bindLocalSynthesizer()
+    }
+
+    // MARK: - Marketplace ordering
+
+    /// Rendering order: local marketplace first, then subscribed remotes in
+    /// the order they were added. Views should iterate this, not the
+    /// dictionary, so the UI is stable across re-renders.
+    var orderedMarketplaceIds: [String] {
+        var ids: [String] = []
+        if let local = localMarketplace { ids.append(local.id) }
+        ids.append(contentsOf: subscribedURLs.map { $0.absoluteString })
+        return ids
+    }
+
+    func displayName(forMarketplaceId id: String) -> String {
+        if id == localMarketplace?.id {
+            return localMarketplace?.name ?? id
+        }
+        if let url = URL(string: id) {
+            return url.host ?? url.absoluteString
+        }
+        return id
+    }
+
+    func description(forMarketplaceId id: String) -> String? {
+        if id == localMarketplace?.id {
+            return localMarketplace?.description
+        }
+        return nil
     }
 
     // MARK: - Subscriptions
@@ -45,18 +82,23 @@ final class MetaMarketplaceStore: ObservableObject {
     func removeMarketplace(_ url: URL) {
         subscribedURLs.removeAll { $0 == url }
         pluginsByMarketplace.removeValue(forKey: url.absoluteString)
+        fetchErrors.removeValue(forKey: url.absoluteString)
         persistURLs()
+    }
+
+    func fetchError(forMarketplaceId id: String) -> String? {
+        fetchErrors[id]
     }
 
     // MARK: - Refresh
 
-    /// Refreshes both the synthesized local marketplace and every subscribed
-    /// remote manifest in parallel.
+    /// Refreshes both the synthesized local marketplace (by triggering a
+    /// fresh disk scan) and every subscribed remote manifest in parallel.
     func refreshAll() async {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        refreshLocalMarketplace()
+        synthesizer.refresh()
 
         await withTaskGroup(of: Void.self) { group in
             for url in subscribedURLs {
@@ -65,30 +107,37 @@ final class MetaMarketplaceStore: ObservableObject {
         }
     }
 
-    func refreshLocalMarketplace() {
-        let (marketplace, plugins) = synthesizer.synthesize()
-        localMarketplace = marketplace
-        pluginsByMarketplace[marketplace.id] = plugins
-    }
-
     func refreshMarketplace(_ url: URL) async {
+        let marketplaceId = url.absoluteString
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let baseURL = url.deletingLastPathComponent()
             let (_, plugins) = try MetaMarketplace.decode(
                 data,
                 baseURL: baseURL,
-                marketplaceId: url.absoluteString
+                marketplaceId: marketplaceId
             )
-            pluginsByMarketplace[url.absoluteString] = plugins
-            lastFetchError = nil
+            pluginsByMarketplace[marketplaceId] = plugins
+            fetchErrors.removeValue(forKey: marketplaceId)
         } catch {
-            log.error("Failed to refresh \(url.absoluteString, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            lastFetchError = "\(url.lastPathComponent): \(error.localizedDescription)"
+            log.error("Failed to refresh \(marketplaceId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            fetchErrors[marketplaceId] = error.localizedDescription
         }
     }
 
-    // MARK: - Persistence
+    // MARK: - Private
+
+    private func bindLocalSynthesizer() {
+        localMarketplace = synthesizer.marketplace
+
+        synthesizer.$plugins
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] plugins in
+                guard let self else { return }
+                self.pluginsByMarketplace[self.synthesizer.marketplace.id] = plugins
+            }
+            .store(in: &cancellables)
+    }
 
     private func loadSubscribedURLs() {
         let raw = UserDefaults.standard.stringArray(forKey: urlDefaultsKey) ?? []
