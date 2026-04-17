@@ -138,7 +138,7 @@ struct AIMetaView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Add marketplace")
-                .disabled(urlInputText.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(urlInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                 Button {
                     isAddingMarketplace = false
@@ -176,7 +176,7 @@ struct AIMetaView: View {
     }
 
     private func commitAdd() {
-        let trimmed = urlInputText.trimmingCharacters(in: .whitespaces)
+        let trimmed = urlInputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         guard let url = validatedURL(from: trimmed) else {
             withAnimation(.easeInOut(duration: 0.12)) {
@@ -196,7 +196,7 @@ struct AIMetaView: View {
     }
 
     private func validatedURL(from string: String) -> URL? {
-        let trimmed = string.trimmingCharacters(in: .whitespaces)
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: trimmed),
               let scheme = url.scheme,
               ["http", "https"].contains(scheme.lowercased()),
@@ -243,6 +243,13 @@ struct AIMetaView: View {
         }
     }
 
+    /// Search is only "active" when the search field is visible. The add
+    /// bar replaces the search field, so filtering by a stale `searchText`
+    /// behind a hidden input would surface confusing "no matches" copy.
+    private var isSearchActive: Bool {
+        !searchText.isEmpty && !isAddingMarketplace
+    }
+
     private func section(for marketplaceId: String) -> MetaMarketplaceSection {
         let allPlugins = store.pluginsByMarketplace[marketplaceId] ?? []
         let filtered = filter(plugins: allPlugins)
@@ -258,7 +265,7 @@ struct AIMetaView: View {
             subtitle: subtitle,
             plugins: filtered,
             totalPluginCount: allPlugins.count,
-            isSearchActive: !searchText.isEmpty,
+            isSearchActive: isSearchActive,
             isLocal: isLocal,
             isFetching: isFetching,
             fetchError: fetchError,
@@ -268,7 +275,7 @@ struct AIMetaView: View {
     }
 
     private func filter(plugins: [MetaPlugin]) -> [MetaPlugin] {
-        guard !searchText.isEmpty else { return plugins }
+        guard isSearchActive else { return plugins }
         return plugins.filter { plugin in
             plugin.title.localizedCaseInsensitiveContains(searchText)
                 || (plugin.description ?? "").localizedCaseInsensitiveContains(searchText)
