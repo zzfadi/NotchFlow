@@ -6,6 +6,10 @@ private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.notchfl
 
 @MainActor
 class NoteStorage: ObservableObject {
+    /// Shared instance so notes persist across tab switches and the app can
+    /// prewarm the load at launch. Views bind via `@ObservedObject` to this.
+    static let shared = NoteStorage()
+
     @Published var notes: [Note] = []
     @Published var isLoading: Bool = false
     @Published var loadError: String?

@@ -3,6 +3,11 @@ import Combine
 
 @MainActor
 class WorktreeScanner: ObservableObject {
+    /// Shared instance so scanners persist across tab switches and can be
+    /// prewarmed at app launch. Views use `@ObservedObject` on this instance
+    /// rather than owning their own via `@StateObject`.
+    static let shared = WorktreeScanner()
+
     @Published var repositoryGroups: [RepositoryGroup] = []
     @Published var isScanning: Bool = false
     @Published var isFetchingStatus: Bool = false
@@ -21,20 +26,29 @@ class WorktreeScanner: ObservableObject {
     func scan() {
         scanTask?.cancel()
 
-        scanTask = Task {
-            isScanning = true
-            errorMessage = nil
-            scanProgress = 0
+        // Capture scan inputs on the main actor before hopping off.
+        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
+        let legacyPaths = settings.worktreeScanPaths
+        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
 
-            let groups = await performScan()
+        isScanning = true
+        errorMessage = nil
+        scanProgress = 0
 
-            if !Task.isCancelled {
-                repositoryGroups = groups
-                lastScanDate = Date()
-                isScanning = false
+        scanTask = Task.detached(priority: .userInitiated) {
+            let groups = await Self.performScan(projectPaths: combinedPaths)
 
-                // Fetch rich status for all worktrees
-                await fetchAllStatus()
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                guard !Task.isCancelled else { return }
+                self.repositoryGroups = groups
+                self.lastScanDate = Date()
+                self.scanProgress = 1.0
+                self.isScanning = false
+
+                // Git-status enrichment runs on main actor — it only
+                // coordinates git subprocess calls which are async themselves.
+                Task { await self.fetchAllStatus() }
             }
         }
     }
@@ -133,23 +147,19 @@ class WorktreeScanner: ObservableObject {
     }
 
     // MARK: - Private Scanning Methods
+    //
+    // Disk-walk helpers are `nonisolated static` so they run on the background
+    // executor dispatched by `Task.detached` in `scan()`. They take inputs as
+    // parameters and never touch @MainActor state during the walk.
 
-    private func performScan() async -> [RepositoryGroup] {
+    nonisolated private static func performScan(projectPaths: [String]) async -> [RepositoryGroup] {
         var allWorktrees: [Worktree] = []
 
-        // Union granted folders (authoritative post-onboarding) with any legacy
-        // custom paths the user set in Settings before the permission model
-        // existed. Dedupe so we never walk the same tree twice.
-        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
-        let legacyPaths = settings.worktreeScanPaths
-        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
-        let totalPaths = combinedPaths.count
-
-        guard totalPaths > 0 else {
+        guard !projectPaths.isEmpty else {
             return []
         }
 
-        for (index, pathString) in combinedPaths.enumerated() {
+        for pathString in projectPaths {
             if Task.isCancelled { break }
 
             let path = URL(fileURLWithPath: pathString)
@@ -160,8 +170,6 @@ class WorktreeScanner: ObservableObject {
 
             let worktrees = await scanDirectory(path)
             allWorktrees.append(contentsOf: worktrees)
-
-            scanProgress = Double(index + 1) / Double(totalPaths)
         }
 
         // Remove duplicates (same worktree can be discovered via parent repo and direct scan)
@@ -179,7 +187,7 @@ class WorktreeScanner: ObservableObject {
         return groupWorktreesByRepo(uniqueWorktrees)
     }
 
-    private func scanDirectory(_ directory: URL) async -> [Worktree] {
+    nonisolated private static func scanDirectory(_ directory: URL) async -> [Worktree] {
         var worktrees: [Worktree] = []
         let fileManager = FileManager.default
 
@@ -205,7 +213,7 @@ class WorktreeScanner: ObservableObject {
         return worktrees
     }
 
-    private func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, worktrees: inout [Worktree]) async {
+    nonisolated private static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, worktrees: inout [Worktree]) async {
         guard depth < maxDepth else { return }
 
         let fileManager = FileManager.default
@@ -253,7 +261,7 @@ class WorktreeScanner: ObservableObject {
         }
     }
 
-    private func scanWorktreesDirectory(_ worktreesDir: URL, parentRepo: URL) -> [Worktree] {
+    nonisolated private static func scanWorktreesDirectory(_ worktreesDir: URL, parentRepo: URL) -> [Worktree] {
         var worktrees: [Worktree] = []
         let fileManager = FileManager.default
 
@@ -297,7 +305,7 @@ class WorktreeScanner: ObservableObject {
         return worktrees
     }
 
-    private func parseMainWorktree(_ repoPath: URL) -> Worktree? {
+    nonisolated private static func parseMainWorktree(_ repoPath: URL) -> Worktree? {
         let fileManager = FileManager.default
         let headFile = repoPath.appendingPathComponent(".git/HEAD")
 
@@ -319,7 +327,7 @@ class WorktreeScanner: ObservableObject {
         )
     }
 
-    private func parseLinkedWorktree(_ worktreePath: URL, gitFileContents: String) -> Worktree? {
+    nonisolated private static func parseLinkedWorktree(_ worktreePath: URL, gitFileContents: String) -> Worktree? {
         let gitdirPath = gitFileContents
             .replacingOccurrences(of: "gitdir:", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -352,7 +360,7 @@ class WorktreeScanner: ObservableObject {
         )
     }
 
-    private func parseHEAD(_ headFile: URL) -> (branch: String, isDetached: Bool, commitHash: String?) {
+    nonisolated private static func parseHEAD(_ headFile: URL) -> (branch: String, isDetached: Bool, commitHash: String?) {
         guard let contents = try? String(contentsOf: headFile, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines) else {
             return ("unknown", false, nil)
         }
@@ -366,7 +374,7 @@ class WorktreeScanner: ObservableObject {
         }
     }
 
-    private func groupWorktreesByRepo(_ worktrees: [Worktree]) -> [RepositoryGroup] {
+    nonisolated private static func groupWorktreesByRepo(_ worktrees: [Worktree]) -> [RepositoryGroup] {
         var groups: [URL: RepositoryGroup] = [:]
 
         for worktree in worktrees {

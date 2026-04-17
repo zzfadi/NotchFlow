@@ -4,17 +4,22 @@ struct ExpandedView: View {
     @EnvironmentObject var navigationState: NavigationState
 
     var body: some View {
-        Group {
-            switch navigationState.activeApp {
-            case .worktree:
-                WorktreeView()
-            case .aiMeta:
-                AIMetaView()
-            case .fogNote:
-                FogNoteView()
-            }
+        // All three views stay mounted so tab switches don't destroy
+        // scanner state or scroll position. Only the active tab is visible.
+        ZStack {
+            WorktreeView()
+                .opacity(navigationState.activeApp == .worktree ? 1 : 0)
+                .allowsHitTesting(navigationState.activeApp == .worktree)
+
+            AIMetaView()
+                .opacity(navigationState.activeApp == .aiMeta ? 1 : 0)
+                .allowsHitTesting(navigationState.activeApp == .aiMeta)
+
+            FogNoteView()
+                .opacity(navigationState.activeApp == .fogNote ? 1 : 0)
+                .allowsHitTesting(navigationState.activeApp == .fogNote)
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .animation(.easeInOut(duration: 0.18), value: navigationState.activeApp)
     }
 }
 
