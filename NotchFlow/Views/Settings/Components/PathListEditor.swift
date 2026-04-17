@@ -81,7 +81,7 @@ struct PathListEditor: View {
         // Check for duplicates using standardized paths
         let existingStandardized = paths.map { ($0 as NSString).standardizingPath }
         guard !existingStandardized.contains(standardized) else {
-            log.info("Path already exists: \(standardized, privacy: .public)")
+            log.info("Path already exists: \(standardized, privacy: .private)")
             return
         }
 
@@ -89,7 +89,7 @@ struct PathListEditor: View {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: standardized, isDirectory: &isDirectory),
               isDirectory.boolValue else {
-            log.warning("Invalid path (not a directory or doesn't exist): \(standardized, privacy: .public)")
+            log.warning("Invalid path (not a directory or doesn't exist): \(standardized, privacy: .private)")
             return
         }
 

@@ -74,7 +74,7 @@ struct FogNoteSettingsSection: View {
             let contents = try FileManager.default.contentsOfDirectory(atPath: path)
             return contents.filter { $0.hasSuffix(".md") }.count
         } catch {
-            log.error("Error reading notes directory: \(error.localizedDescription, privacy: .public)")
+            log.error("Error reading notes directory: \(error.localizedDescription, privacy: .private)")
             return nil
         }
     }
@@ -97,7 +97,7 @@ struct FogNoteSettingsSection: View {
     private func openInFinder() {
         let success = NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: settings.fogNotesDirectory)
         if !success {
-            log.error("Failed to open directory in Finder: \(settings.fogNotesDirectory, privacy: .public)")
+            log.error("Failed to open directory in Finder: \(settings.fogNotesDirectory, privacy: .private)")
         }
     }
 }

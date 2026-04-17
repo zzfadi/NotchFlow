@@ -166,7 +166,7 @@ class NoteStorage: ObservableObject {
             try note.content.write(to: fileURL, atomically: true, encoding: .utf8)
             return fileURL
         } catch {
-            log.error("Error exporting note: \(error.localizedDescription, privacy: .public)")
+            log.error("Error exporting note: \(error.localizedDescription, privacy: .private)")
             return nil
         }
     }
