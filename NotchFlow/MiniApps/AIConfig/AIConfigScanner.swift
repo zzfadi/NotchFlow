@@ -12,11 +12,17 @@ class AIConfigScanner: ObservableObject {
     private let settings = SettingsManager.shared
     private let permissions = PermissionManager.shared
     private var scanTask: Task<Void, Never>?
+    /// Monotonic id for the most recent scan. `isScanning` is only cleared
+    /// by the task that owns the latest token — prevents a cancelled scan
+    /// from clobbering `isScanning` after a newer scan has set it to true.
+    private var latestScanToken: Int = 0
 
     // MARK: - Public Methods
 
     func scan() {
         scanTask?.cancel()
+        latestScanToken &+= 1
+        let myToken = latestScanToken
 
         // Capture scan inputs on the main actor before hopping off. The
         // disk walk that follows runs on a background executor and must not
@@ -33,9 +39,11 @@ class AIConfigScanner: ObservableObject {
 
             await MainActor.run { [weak self] in
                 guard let self else { return }
-                // Only publish if we weren't superseded by a newer scan.
-                // If cancelled, the new scan owns the state — don't clobber.
-                guard !Task.isCancelled else { return }
+                // Only publish if this is still the latest scan. The token
+                // check makes the isScanning flag leak-safe: a cancelled
+                // scan can never flip isScanning back to false behind the
+                // back of a newer scan that already set it to true.
+                guard self.latestScanToken == myToken else { return }
                 self.allItems = items
                 self.categoryGroups = self.groupItemsByCategory(items)
                 self.lastScanDate = Date()

@@ -70,6 +70,9 @@ class NoteStorage: ObservableObject {
                 self.notes = sortedNotes
                 self.loadError = errorMessage
                 self.isLoading = false
+                if let errorMessage {
+                    ErrorCenter.shared.surface(errorMessage, level: .error, source: "NoteStorage.load")
+                }
             }
         }
     }
@@ -154,6 +157,7 @@ class NoteStorage: ObservableObject {
             if let error = errorMessage {
                 await MainActor.run {
                     self.saveError = error
+                    ErrorCenter.shared.surface(error, level: .error, source: "NoteStorage.save")
                 }
             }
         }
