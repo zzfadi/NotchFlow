@@ -147,6 +147,7 @@ extension MetaMarketplace.PluginEntry {
             keywords: keywords ?? [],
             source: resolved,
             components: ComponentSummary(),
+            files: [],
             marketplaceId: marketplaceId,
             rawSource: rawSourceString(),
             isInstalled: false,

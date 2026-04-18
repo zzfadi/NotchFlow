@@ -15,7 +15,7 @@ class NoteStorage: ObservableObject {
     @Published var loadError: String?
     @Published var saveError: String?
 
-    private let settings = SettingsManager.shared
+    private let settings: SettingsProviding
     private var saveDebouncer: AnyCancellable?
     private let saveSubject = PassthroughSubject<Void, Never>()
 
@@ -24,7 +24,8 @@ class NoteStorage: ObservableObject {
         return directory.appendingPathComponent("notes.json")
     }
 
-    init() {
+    init(settings: SettingsProviding = SettingsManager.shared) {
+        self.settings = settings
         setupDebouncer()
         loadNotes()
     }

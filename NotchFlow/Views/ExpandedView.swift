@@ -4,20 +4,17 @@ struct ExpandedView: View {
     @EnvironmentObject var navigationState: NavigationState
 
     var body: some View {
-        // All three views stay mounted so tab switches don't destroy
-        // scanner state or scroll position. Only the active tab is visible.
+        // Every registered mini-app stays mounted so tab switches don't
+        // destroy scanner state or scroll position. Only the active tab is
+        // visible and hit-testable. Iterating the registry is what makes a
+        // new tab cost exactly one struct in MiniAppRegistry.all — no new
+        // switch arm here, no changes in MainNotchView beyond the tab bar.
         ZStack {
-            WorktreeView()
-                .opacity(navigationState.activeApp == .worktree ? 1 : 0)
-                .allowsHitTesting(navigationState.activeApp == .worktree)
-
-            AIMetaView()
-                .opacity(navigationState.activeApp == .aiMeta ? 1 : 0)
-                .allowsHitTesting(navigationState.activeApp == .aiMeta)
-
-            FogNoteView()
-                .opacity(navigationState.activeApp == .fogNote ? 1 : 0)
-                .allowsHitTesting(navigationState.activeApp == .fogNote)
+            ForEach(MiniAppRegistry.all, id: \.id) { app in
+                app.makeView()
+                    .opacity(navigationState.activeApp == app.id ? 1 : 0)
+                    .allowsHitTesting(navigationState.activeApp == app.id)
+            }
         }
         .animation(.easeInOut(duration: 0.18), value: navigationState.activeApp)
     }

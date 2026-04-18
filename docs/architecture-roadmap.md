@@ -1,13 +1,26 @@
 # NotchFlow Architecture Roadmap
 
 This doc captures the architectural improvement plan that followed the
-first public-polish round. Waves 1 and 2 have shipped; this file scopes
-Waves 3 and 4, which are deferred for a future PR series.
+first public-polish round. All four waves have shipped; this file is
+kept as a reference for the intent behind the structural choices and
+the "why" behind each change.
 
 See also:
 - PR #33 — off-main-actor fix for `AIConfigScanner` (Wave 1 seed)
 - PR #34 — Wave 1: prewarm + persistent tabs + off-main `WorktreeScanner`
 - PR #35 — Wave 2: `ErrorCenter` toast system + scan-token cancellation
+- Waves 3 + 4 (single PR series):
+  - `Core/DefaultsKeys.swift` + `Defaults` helper (Wave 3c)
+  - `Core/ScannerDependencies.swift` with `SettingsProviding` /
+    `PermissionsProviding` protocols (Wave 3a)
+  - `NotchFlowTests/` XCTest target with ~19 tests (Wave 4a)
+  - `MiniApps/MiniAppRegistry.swift` replacing the `MiniApp` enum (Wave 3b)
+  - `AppDelegate` lifecycle cleanup — `NSWindowDelegate` callbacks
+    replace the prior `asyncAfter`/`Task.sleep` hacks (Wave 4b)
+
+The dedupe-test from Wave 4a also uncovered and fixed a real production
+bug: path dedupe in both scanners now uses `resolvingSymlinksInPath()`
+so `/var` and `/private/var` variants of the same file collapse.
 
 ## Recap — what Waves 1 and 2 already fixed
 

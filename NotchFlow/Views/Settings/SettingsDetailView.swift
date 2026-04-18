@@ -28,6 +28,8 @@ struct SettingsDetailView: View {
             AppearanceSettingsSection()
         case .permissions:
             PermissionsSettingsSection()
+        case .plugins:
+            PluginsSettingsSection()
         case .about:
             AboutSettingsSection()
         case .worktree:

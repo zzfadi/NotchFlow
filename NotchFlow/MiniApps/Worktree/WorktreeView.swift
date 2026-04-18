@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 struct WorktreeView: View {
+    @EnvironmentObject var navigationState: NavigationState
     @ObservedObject private var scanner = WorktreeScanner.shared
     @State private var selectedWorktree: Worktree?
     @State private var searchText: String = ""
@@ -11,6 +12,10 @@ struct WorktreeView: View {
     @State private var showingCreateSheet: Bool = false
     @State private var showingCleanupView: Bool = false
     @State private var refreshRotation: Double = 0
+
+    private var isActive: Bool {
+        navigationState.activeApp == MiniAppRegistry.worktree.id
+    }
 
     enum ViewMode: String, CaseIterable {
         case list = "List"
@@ -69,11 +74,15 @@ struct WorktreeView: View {
                 .frame(minWidth: 280, maxWidth: 320)
             }
         }
-        .onAppear {
-            if scanner.repositoryGroups.isEmpty {
-                scanner.scan()
-            }
-        }
+        // Defer the first scan until this tab is ACTIVELY viewed. The
+        // ZStack in `ExpandedView` mounts every tab simultaneously, so a
+        // plain `.onAppear` would fire for all tabs when the notch first
+        // opens — and each scan walks user-granted folders, which triggers
+        // a macOS TCC prompt per protected folder. Gating on `isActive`
+        // ties the scan (and its prompts) to the user's deliberate click
+        // on this tab.
+        .onAppear { scanIfNeeded() }
+        .onChange(of: navigationState.activeApp) { _, _ in scanIfNeeded() }
         .sheet(isPresented: $showingCleanupView) {
             CleanupCandidatesView(
                 repositoryGroups: scanner.repositoryGroups,
@@ -84,6 +93,18 @@ struct WorktreeView: View {
                 }
             )
         }
+    }
+
+    /// Triggers an initial scan when this tab is active and has no data
+    /// yet. Called from both `.onAppear` (the very first render) and
+    /// `.onChange(of: activeApp)` (user clicked into this tab from
+    /// another). Idempotent — re-entering the tab after data is loaded
+    /// does nothing.
+    private func scanIfNeeded() {
+        guard isActive, scanner.repositoryGroups.isEmpty, !scanner.isScanning else {
+            return
+        }
+        scanner.scan()
     }
 
     // MARK: - Header

@@ -21,8 +21,6 @@ final class PermissionManager: ObservableObject {
 
     @Published private(set) var grantedFolders: [GrantedFolder] = []
 
-    private let defaultsKey = "grantedFolderPaths"
-
     private init() {
         loadGrantedFolders()
     }
@@ -122,7 +120,7 @@ final class PermissionManager: ObservableObject {
     // MARK: - Persistence
 
     private func loadGrantedFolders() {
-        guard let paths = UserDefaults.standard.stringArray(forKey: defaultsKey) else {
+        guard let paths = Defaults.stringArray(DefaultsKeys.grantedFolderPaths) else {
             return
         }
         grantedFolders = paths.compactMap { path in
@@ -142,7 +140,7 @@ final class PermissionManager: ObservableObject {
 
     private func persist() {
         let paths = grantedFolders.map { $0.url.path }
-        UserDefaults.standard.set(paths, forKey: defaultsKey)
+        Defaults.setStringArray(DefaultsKeys.grantedFolderPaths, paths)
     }
 }
 

@@ -3,7 +3,7 @@ import SwiftUI
 /// Appearance settings section - visual customization
 struct AppearanceSettingsSection: View {
     @ObservedObject private var settings = SettingsManager.shared
-    @State private var selectedApp: MiniApp = .fogNote
+    @State private var selectedApp: String = MiniAppRegistry.defaultApp.id
 
     var body: some View {
         ScrollView {
@@ -78,8 +78,8 @@ struct AppearanceSettingsSection: View {
 
                         // App selector
                         Picker("Configure for", selection: $selectedApp) {
-                            ForEach(MiniApp.allCases) { app in
-                                Text(app.rawValue).tag(app)
+                            ForEach(MiniAppRegistry.all, id: \.id) { app in
+                                Text(app.title).tag(app.id)
                             }
                         }
                         .pickerStyle(.segmented)

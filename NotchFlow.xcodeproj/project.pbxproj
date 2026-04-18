@@ -18,6 +18,31 @@
 		A100002D001 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100002D000 /* PermissionManager.swift */; };
 		A1000080001 /* ErrorCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000080000 /* ErrorCenter.swift */; };
 		A1000081001 /* ToastOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000081000 /* ToastOverlayView.swift */; };
+		A1000082001 /* ScannerSkipList.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000082000 /* ScannerSkipList.swift */; };
+		A1000083001 /* DefaultsKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000083000 /* DefaultsKeys.swift */; };
+		A1000084001 /* ScannerDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000084000 /* ScannerDependencies.swift */; };
+
+		/* Tests */
+		A1000090001 /* TestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000090000 /* TestSupport.swift */; };
+		A1000091001 /* ScannerSkipListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000091000 /* ScannerSkipListTests.swift */; };
+		A1000092001 /* AIConfigScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000092000 /* AIConfigScannerTests.swift */; };
+		A1000093001 /* WorktreeScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000093000 /* WorktreeScannerTests.swift */; };
+		A1000094001 /* ErrorCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000094000 /* ErrorCenterTests.swift */; };
+		A1000095001 /* MetaMarketplaceStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000095000 /* MetaMarketplaceStoreTests.swift */; };
+		A1000096001 /* PluginIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000096000 /* PluginIdentityTests.swift */; };
+		A1000097001 /* MarketplaceFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000097000 /* MarketplaceFilterTests.swift */; };
+		A1000098001 /* PluginInstallerRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000098000 /* PluginInstallerRegistryTests.swift */; };
+		A1000085001 /* MiniAppRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000085000 /* MiniAppRegistry.swift */; };
+		A1000086001 /* ManifestFetching.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000086000 /* ManifestFetching.swift */; };
+		A1000087001 /* AIConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000087000 /* AIConfigStore.swift */; };
+		A1000088001 /* PluginIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000088000 /* PluginIdentity.swift */; };
+		A1000089001 /* MarketplaceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000089000 /* MarketplaceFilter.swift */; };
+		A100008A001 /* PluginInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008A000 /* PluginInstaller.swift */; };
+		A100008B001 /* ClaudeCodePluginInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008B000 /* ClaudeCodePluginInstaller.swift */; };
+		A100008C001 /* CursorPluginInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008C000 /* CursorPluginInstaller.swift */; };
+		A100008D001 /* AwesomeCopilotFileInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008D000 /* AwesomeCopilotFileInstaller.swift */; };
+		A100008E001 /* PluginInstallCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008E000 /* PluginInstallCoordinator.swift */; };
+		A100008F001 /* PluginsSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100008F000 /* PluginsSettingsSection.swift */; };
 
 		/* Views */
 		A1000006001 /* MainNotchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000 /* MainNotchView.swift */; };
@@ -104,6 +129,32 @@
 		A100002D000 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		A1000080000 /* ErrorCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCenter.swift; sourceTree = "<group>"; };
 		A1000081000 /* ToastOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastOverlayView.swift; sourceTree = "<group>"; };
+		A1000082000 /* ScannerSkipList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerSkipList.swift; sourceTree = "<group>"; };
+		A1000083000 /* DefaultsKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultsKeys.swift; sourceTree = "<group>"; };
+		A1000084000 /* ScannerDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerDependencies.swift; sourceTree = "<group>"; };
+
+		/* Tests */
+		A1000000002 /* NotchFlowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NotchFlowTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000090000 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
+		A1000091000 /* ScannerSkipListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerSkipListTests.swift; sourceTree = "<group>"; };
+		A1000092000 /* AIConfigScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigScannerTests.swift; sourceTree = "<group>"; };
+		A1000093000 /* WorktreeScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeScannerTests.swift; sourceTree = "<group>"; };
+		A1000094000 /* ErrorCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorCenterTests.swift; sourceTree = "<group>"; };
+		A1000095000 /* MetaMarketplaceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaMarketplaceStoreTests.swift; sourceTree = "<group>"; };
+		A1000096000 /* PluginIdentityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginIdentityTests.swift; sourceTree = "<group>"; };
+		A1000097000 /* MarketplaceFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceFilterTests.swift; sourceTree = "<group>"; };
+		A1000098000 /* PluginInstallerRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginInstallerRegistryTests.swift; sourceTree = "<group>"; };
+		A1000085000 /* MiniAppRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniAppRegistry.swift; sourceTree = "<group>"; };
+		A1000086000 /* ManifestFetching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManifestFetching.swift; sourceTree = "<group>"; };
+		A1000087000 /* AIConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfigStore.swift; sourceTree = "<group>"; };
+		A1000088000 /* PluginIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginIdentity.swift; sourceTree = "<group>"; };
+		A1000089000 /* MarketplaceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceFilter.swift; sourceTree = "<group>"; };
+		A100008A000 /* PluginInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginInstaller.swift; sourceTree = "<group>"; };
+		A100008B000 /* ClaudeCodePluginInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodePluginInstaller.swift; sourceTree = "<group>"; };
+		A100008C000 /* CursorPluginInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorPluginInstaller.swift; sourceTree = "<group>"; };
+		A100008D000 /* AwesomeCopilotFileInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwesomeCopilotFileInstaller.swift; sourceTree = "<group>"; };
+		A100008E000 /* PluginInstallCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginInstallCoordinator.swift; sourceTree = "<group>"; };
+		A100008F000 /* PluginsSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginsSettingsSection.swift; sourceTree = "<group>"; };
 
 		/* Views */
 		A1000006000 /* MainNotchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNotchView.swift; sourceTree = "<group>"; };
@@ -184,6 +235,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1000046000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -191,8 +249,25 @@
 			isa = PBXGroup;
 			children = (
 				A1100001000 /* NotchFlow */,
+				A1100020000 /* NotchFlowTests */,
 				A1100002000 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A1100020000 /* NotchFlowTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1000090000 /* TestSupport.swift */,
+				A1000091000 /* ScannerSkipListTests.swift */,
+				A1000092000 /* AIConfigScannerTests.swift */,
+				A1000093000 /* WorktreeScannerTests.swift */,
+				A1000094000 /* ErrorCenterTests.swift */,
+				A1000095000 /* MetaMarketplaceStoreTests.swift */,
+				A1000096000 /* PluginIdentityTests.swift */,
+				A1000097000 /* MarketplaceFilterTests.swift */,
+				A1000098000 /* PluginInstallerRegistryTests.swift */,
+			);
+			path = NotchFlowTests;
 			sourceTree = "<group>";
 		};
 		A1100001000 /* NotchFlow */ = {
@@ -211,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000000000 /* NotchFlow.app */,
+				A1000000002 /* NotchFlowTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -232,6 +308,15 @@
 				A1000005000 /* SettingsManager.swift */,
 				A100002D000 /* PermissionManager.swift */,
 				A1000080000 /* ErrorCenter.swift */,
+				A1000082000 /* ScannerSkipList.swift */,
+				A1000083000 /* DefaultsKeys.swift */,
+				A1000084000 /* ScannerDependencies.swift */,
+				A1000086000 /* ManifestFetching.swift */,
+				A1000088000 /* PluginIdentity.swift */,
+				A100008A000 /* PluginInstaller.swift */,
+				A100008B000 /* ClaudeCodePluginInstaller.swift */,
+				A100008C000 /* CursorPluginInstaller.swift */,
+				A100008D000 /* AwesomeCopilotFileInstaller.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -299,6 +384,7 @@
 				A100002B000 /* AIConfigSettingsSection.swift */,
 				A100002C000 /* FogNoteSettingsSection.swift */,
 				A100002E000 /* PermissionsSettingsSection.swift */,
+				A100008F000 /* PluginsSettingsSection.swift */,
 			);
 			path = Sections;
 			sourceTree = "<group>";
@@ -306,6 +392,7 @@
 		A1100006000 /* MiniApps */ = {
 			isa = PBXGroup;
 			children = (
+				A1000085000 /* MiniAppRegistry.swift */,
 				A1100008000 /* FogNote */,
 				A1100009000 /* Worktree */,
 				A110000A000 /* AIConfig */,
@@ -360,6 +447,7 @@
 				A100000F000 /* AIConfigModel.swift */,
 				A1000010000 /* AIConfigScanner.swift */,
 				A1000011000 /* AIConfigView.swift */,
+				A1000087000 /* AIConfigStore.swift */,
 			);
 			path = AIConfig;
 			sourceTree = "<group>";
@@ -374,6 +462,8 @@
 				A100003E000 /* AIMetaView.swift */,
 				A100003F000 /* MetaPluginCard.swift */,
 				A1000060000 /* MetaMarketplaceSection.swift */,
+				A1000089000 /* MarketplaceFilter.swift */,
+				A100008E000 /* PluginInstallCoordinator.swift */,
 			);
 			path = AIMeta;
 			sourceTree = "<group>";
@@ -402,6 +492,24 @@
 			productReference = A1000000000 /* NotchFlow.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A1200001000 /* NotchFlowTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1400002000 /* Build configuration list for PBXNativeTarget "NotchFlowTests" */;
+			buildPhases = (
+				A1000045000 /* Sources */,
+				A1000046000 /* Frameworks */,
+				A1000047000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1300002000 /* PBXTargetDependency */,
+			);
+			name = NotchFlowTests;
+			productName = NotchFlowTests;
+			productReference = A1000000002 /* NotchFlowTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -414,6 +522,10 @@
 				TargetAttributes = {
 					A1200000000 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					A1200001000 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = A1200000000;
 					};
 				};
 			};
@@ -435,6 +547,7 @@
 			projectRoot = "";
 			targets = (
 				A1200000000 /* NotchFlow */,
+				A1200001000 /* NotchFlowTests */,
 			);
 		};
 /* End PBXProject section */
@@ -445,6 +558,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000012001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000047000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -499,6 +619,9 @@
 				A100002D001 /* PermissionManager.swift in Sources */,
 				A1000080001 /* ErrorCenter.swift in Sources */,
 				A1000081001 /* ToastOverlayView.swift in Sources */,
+				A1000082001 /* ScannerSkipList.swift in Sources */,
+				A1000083001 /* DefaultsKeys.swift in Sources */,
+				A1000084001 /* ScannerDependencies.swift in Sources */,
 				A100002E001 /* PermissionsSettingsSection.swift in Sources */,
 				A100002F001 /* OnboardingView.swift in Sources */,
 				A100003A001 /* MetaPluginModel.swift in Sources */,
@@ -508,6 +631,33 @@
 				A100003E001 /* AIMetaView.swift in Sources */,
 				A100003F001 /* MetaPluginCard.swift in Sources */,
 				A1000060001 /* MetaMarketplaceSection.swift in Sources */,
+				A1000085001 /* MiniAppRegistry.swift in Sources */,
+				A1000086001 /* ManifestFetching.swift in Sources */,
+				A1000087001 /* AIConfigStore.swift in Sources */,
+				A1000088001 /* PluginIdentity.swift in Sources */,
+				A1000089001 /* MarketplaceFilter.swift in Sources */,
+				A100008A001 /* PluginInstaller.swift in Sources */,
+				A100008B001 /* ClaudeCodePluginInstaller.swift in Sources */,
+				A100008C001 /* CursorPluginInstaller.swift in Sources */,
+				A100008D001 /* AwesomeCopilotFileInstaller.swift in Sources */,
+				A100008E001 /* PluginInstallCoordinator.swift in Sources */,
+				A100008F001 /* PluginsSettingsSection.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000045000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000090001 /* TestSupport.swift in Sources */,
+				A1000091001 /* ScannerSkipListTests.swift in Sources */,
+				A1000092001 /* AIConfigScannerTests.swift in Sources */,
+				A1000093001 /* WorktreeScannerTests.swift in Sources */,
+				A1000094001 /* ErrorCenterTests.swift in Sources */,
+				A1000095001 /* MetaMarketplaceStoreTests.swift in Sources */,
+				A1000096001 /* PluginIdentityTests.swift in Sources */,
+				A1000097001 /* MarketplaceFilterTests.swift in Sources */,
+				A1000098001 /* PluginInstallerRegistryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -692,6 +842,52 @@
 			};
 			name = Release;
 		};
+		A1600004000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.notchflow.app.NotchFlowTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NotchFlow.app/Contents/MacOS/NotchFlow";
+			};
+			name = Debug;
+		};
+		A1600005000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.notchflow.app.NotchFlowTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NotchFlow.app/Contents/MacOS/NotchFlow";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -713,7 +909,34 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A1400002000 /* Build configuration list for PBXNativeTarget "NotchFlowTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1600004000 /* Debug */,
+				A1600005000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXContainerItemProxy section */
+		A1300001000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1300000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1200000000;
+			remoteInfo = NotchFlow;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		A1300002000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1200000000 /* NotchFlow */;
+			targetProxy = A1300001000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		A1500000000 /* XCLocalSwiftPackageReference "DynamicNotchKit" */ = {

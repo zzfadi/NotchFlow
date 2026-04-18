@@ -83,9 +83,11 @@ struct NotchCloseBar: View {
     }
 }
 
-/// Corner resize handle - drag to resize
+/// Corner resize handle - drag to resize.
+/// `currentApp` is a mini-app ID (`String`); size persistence is keyed on
+/// that string rather than on a now-removed `MiniApp` enum.
 struct NotchResizeHandle: View {
-    let currentApp: MiniApp
+    let currentApp: String
     @ObservedObject private var settings = SettingsManager.shared
 
     @State private var isDragging = false
@@ -149,7 +151,7 @@ struct NotchResizeHandle: View {
 
 /// Combined bottom bar with close center and resize corner
 struct NotchBottomBar: View {
-    let currentApp: MiniApp
+    let currentApp: String
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -170,7 +172,7 @@ struct NotchBottomBar: View {
         Color.black
         VStack {
             Spacer()
-            NotchBottomBar(currentApp: .fogNote)
+            NotchBottomBar(currentApp: MiniAppRegistry.fogNote.id)
         }
     }
     .frame(width: 300, height: 150)

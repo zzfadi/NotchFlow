@@ -20,12 +20,43 @@ struct MetaPlugin: Identifiable, Hashable {
     let keywords: [String]
     let source: MetaSource
     let components: ComponentSummary
+    /// P3: file inventory for file-copy installs (awesome-copilot style).
+    /// Populated by `MetaMarketplace.decode(_:)` when the manifest
+    /// includes a file listing; empty for marketplaces that hand
+    /// installs off to a CLI or deep-link. When empty, the file
+    /// installer's `canInstall(_:)` returns `false`.
+    let files: [MetaPluginFile]
     let marketplaceId: String
     let rawSource: String?
+    /// Local-only state — `LocalPluginSynthesizer` sets this to `true`
+    /// for synthesized "My Machine" cards. Remote cards keep
+    /// `isInstalled == false` here and resolve the actual installed
+    /// status dynamically via `isInstalled(given:)` against the scan
+    /// snapshot's `installedIdentities`.
     var isInstalled: Bool
     var isEnabled: Bool
 
     var title: String { displayName ?? name }
+
+    /// Canonical identity used by provenance matching. Derived from the
+    /// resolved `MetaSource` through `PluginIdentityFactory` so a remote
+    /// card and an on-disk plugin from the same source resolve to the
+    /// same identity.
+    var identity: PluginIdentity {
+        PluginIdentity(
+            canonicalSource: PluginIdentityFactory.canonicalSource(from: source),
+            marketplaceId: marketplaceId,
+            pluginName: name
+        )
+    }
+
+    /// Whether this plugin appears in the live on-disk scan. Prefer
+    /// this over reading `isInstalled` directly on remote cards —
+    /// `isInstalled` is only authoritative for local synthesized cards.
+    func isInstalledInScan(_ installed: Set<PluginIdentity>) -> Bool {
+        if isInstalled { return true }
+        return installed.contains(identity)
+    }
 }
 
 // MARK: - MetaAuthor
@@ -34,6 +65,20 @@ struct MetaAuthor: Hashable {
     let name: String
     let email: String?
     let url: URL?
+}
+
+// MARK: - MetaPluginFile
+
+/// One file a plugin contributes, resolved to an absolute remote URL
+/// and tagged with its target category (e.g. a `.prompt.md` file lands
+/// under `.github/prompts/`). Populated at manifest-decode time so the
+/// `AwesomeCopilotFileInstaller` can stream downloads without a second
+/// round-trip to the marketplace.
+struct MetaPluginFile: Codable, Hashable {
+    let relativePath: String
+    let remoteURL: URL
+    let kind: AIConfigCategory
+    let sha256: String?
 }
 
 // MARK: - MetaSource
@@ -82,6 +127,39 @@ enum MetaSource: Hashable {
         case .relative(let path, _): return path
         case .local(let url): return url.path
         case .unknown(let type): return type
+        }
+    }
+
+    /// A deep-link URL that hands the plugin off to a local client for
+    /// install (Claude Code CLI / Cursor app). When no applicable scheme
+    /// exists, the card falls back to copy-to-clipboard install commands.
+    ///
+    /// Today we emit `claude://plugin/install?source=…` for github/url
+    /// sources — the Claude Code CLI registers that handler. The Cursor
+    /// scheme is conditionally emitted only when the source points at
+    /// Cursor's marketplace (we can't safely assume every github source
+    /// belongs to Cursor), so for now this path is reserved for future
+    /// wiring inside `PluginInstallerRegistry` in Phase 3.
+    var deepLinkInstallURL: URL? {
+        switch self {
+        case .github(let repo, let ref, _):
+            var components = URLComponents()
+            components.scheme = "claude"
+            components.host = "plugin"
+            components.path = "/install"
+            var items = [URLQueryItem(name: "source", value: repo)]
+            if let ref { items.append(URLQueryItem(name: "ref", value: ref)) }
+            components.queryItems = items
+            return components.url
+        case .url(let url):
+            var components = URLComponents()
+            components.scheme = "claude"
+            components.host = "plugin"
+            components.path = "/install"
+            components.queryItems = [URLQueryItem(name: "source", value: url.absoluteString)]
+            return components.url
+        case .git, .npm, .relative, .local, .unknown:
+            return nil
         }
     }
 }
