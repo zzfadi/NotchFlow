@@ -98,18 +98,35 @@ echo -e "${GREEN}App exported to: ${APP_PATH}${NC}"
 # Create DMG
 echo -e "\n${YELLOW}Creating DMG...${NC}"
 
-# Prepare DMG contents
-cp -R "$APP_PATH" "$DMG_DIR/"
+BG="${PROJECT_DIR}/assets/dmg/background.png"
 
-# Create a symbolic link to /Applications
-ln -s /Applications "$DMG_DIR/Applications"
-
-# Create DMG using hdiutil
-hdiutil create -volname "$PROJECT_NAME" \
-    -srcfolder "$DMG_DIR" \
-    -ov \
-    -format UDZO \
-    "$DMG_PATH"
+if command -v create-dmg >/dev/null 2>&1 && [[ -f "$BG" ]]; then
+    echo -e "${GREEN}Creating styled DMG with create-dmg...${NC}"
+    create-dmg \
+        --volname "$PROJECT_NAME" \
+        --background "$BG" \
+        --window-pos 200 120 \
+        --window-size 540 380 \
+        --icon-size 128 \
+        --icon "$PROJECT_NAME.app" 135 195 \
+        --app-drop-link 405 195 \
+        --hide-extension "$PROJECT_NAME.app" \
+        --no-internet-enable \
+        "$DMG_PATH" \
+        "$APP_PATH"
+else
+    echo -e "${YELLOW}create-dmg unavailable or background missing; falling back to plain hdiutil${NC}"
+    # Prepare DMG contents
+    cp -R "$APP_PATH" "$DMG_DIR/"
+    # Create a symbolic link to /Applications
+    ln -s /Applications "$DMG_DIR/Applications"
+    # Create DMG using hdiutil
+    hdiutil create -volname "$PROJECT_NAME" \
+        -srcfolder "$DMG_DIR" \
+        -ov \
+        -format UDZO \
+        "$DMG_PATH"
+fi
 
 echo -e "${GREEN}DMG created: ${DMG_PATH}${NC}"
 

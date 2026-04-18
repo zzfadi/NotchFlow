@@ -9,6 +9,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindow: NSWindow?
     var onboardingWindow: NSWindow?
 
+    private var iconTimer: Timer?
+    private var iconPhase: CGFloat = 0.0
+
     // Store observer tokens to remove them later
     private var notificationObservers: [NSObjectProtocol] = []
 
@@ -170,9 +173,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "rectangle.topthird.inset.filled", accessibilityDescription: "NotchFlow")
+            button.image = drawMenuBarIcon()
             button.image?.isTemplate = true
         }
+
+        iconTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            self?.updateMenuBarIcon()
+        }
+        RunLoop.current.add(iconTimer!, forMode: .common)
 
         let menu = NSMenu()
 
@@ -184,6 +192,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit NotchFlow", action: #selector(quitApp), keyEquivalent: "q"))
 
         statusItem?.menu = menu
+    }
+
+    private func updateMenuBarIcon() {
+        iconPhase += 0.1
+        statusItem?.button?.image = drawMenuBarIcon()
+        statusItem?.button?.image?.isTemplate = true
+    }
+
+    private func drawMenuBarIcon() -> NSImage {
+        let size = NSSize(width: 22, height: 22)
+        let img = NSImage(size: size)
+        img.lockFocus()
+        defer { img.unlockFocus() }
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return img }
+
+        ctx.setFillColor(NSColor.black.cgColor)
+        ctx.setStrokeColor(NSColor.black.cgColor)
+        ctx.setLineWidth(1.5)
+
+        // The Notch shape
+        let notchW: CGFloat = 16.0
+        let notchH: CGFloat = 6.0
+        let notchY: CGFloat = size.height - notchH - 4.0
+        let rect = CGRect(x: (size.width - notchW) / 2, y: notchY, width: notchW, height: notchH)
+        
+        let path = CGPath(roundedRect: rect, cornerWidth: 2, cornerHeight: 2, transform: nil)
+        ctx.addPath(path)
+        ctx.fillPath()
+
+        // The flowing droplet
+        let dropOffset = abs(sin(iconPhase)) * 3.0
+        let dropY = notchY - 2.0 - dropOffset
+        let dropSize: CGFloat = 2.0
+        ctx.fillEllipse(in: CGRect(x: (size.width - dropSize) / 2, y: dropY, width: dropSize, height: dropSize))
+
+        return img
     }
 
     // MARK: - Notch Setup
