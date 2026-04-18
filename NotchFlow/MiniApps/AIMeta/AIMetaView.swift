@@ -4,12 +4,17 @@ import AppKit
 struct AIMetaView: View {
     @ObservedObject private var store = MetaMarketplaceStore.shared
     @ObservedObject private var synthesizer = LocalPluginSynthesizer.shared
+    @ObservedObject private var filter = MarketplaceFilter.shared
 
-    @State private var searchText: String = ""
     @State private var isAddingMarketplace = false
     @State private var urlInputText = ""
     @State private var urlError: String? = nil
     @FocusState private var urlFieldFocused: Bool
+
+    /// Set when embedded in a sheet from `AIConfigView`. Allows the header
+    /// to show a close control that dismisses the sheet. `nil` when
+    /// rendered as a standalone view (e.g. preview, future full-tab mode).
+    var onDismiss: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,8 +23,12 @@ struct AIMetaView: View {
                 .background(Color.white.opacity(0.1))
             content
         }
+        // `refreshIfNeeded()` only fetches on the very first view appearance
+        // across the app lifetime. Prior versions fired `refreshAll()` on
+        // every `onAppear`, which meant a remote manifest fetch happened on
+        // notch-open even when the user never visited the marketplace.
         .onAppear {
-            Task { await store.refreshAll() }
+            Task { await store.refreshIfNeeded() }
         }
     }
 
@@ -44,6 +53,16 @@ struct AIMetaView: View {
             Spacer(minLength: 0)
             addButton
             refreshButton
+            if let onDismiss {
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Close marketplace")
+                .keyboardShortcut(.cancelAction)
+            }
         }
     }
 
@@ -52,9 +71,31 @@ struct AIMetaView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
-            TextField("Search plugins", text: $searchText)
+            TextField("Search plugins", text: $filter.searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 11))
+                .disabled(filter.focusedIdentity != nil)
+            if let focused = filter.focusedIdentity {
+                Button {
+                    filter.clearFocus()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 9))
+                        Text(focused.pluginName)
+                            .font(.system(size: 10, weight: .medium))
+                            .lineLimit(1)
+                    }
+                    .foregroundColor(.cyan)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule().fill(Color.cyan.opacity(0.18))
+                    )
+                }
+                .buttonStyle(.plain)
+                .help("Clear focus on \(focused.pluginName)")
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -243,16 +284,18 @@ struct AIMetaView: View {
         }
     }
 
-    /// Search is only "active" when the search field is visible. The add
-    /// bar replaces the search field, so filtering by a stale `searchText`
-    /// behind a hidden input would surface confusing "no matches" copy.
+    /// Search is only "active" when the search field is visible AND
+    /// text is present. Focus mode (triggered by tapping a provenance
+    /// badge) sets `isSearchActive` to false even if `searchText` was
+    /// non-empty prior — `MarketplaceFilter.focus(_:)` clears search.
     private var isSearchActive: Bool {
-        !searchText.isEmpty && !isAddingMarketplace
+        guard !isAddingMarketplace, filter.focusedIdentity == nil else { return false }
+        return !filter.searchText.isEmpty
     }
 
     private func section(for marketplaceId: String) -> MetaMarketplaceSection {
         let allPlugins = store.pluginsByMarketplace[marketplaceId] ?? []
-        let filtered = filter(plugins: allPlugins)
+        let filtered = applyFilter(to: allPlugins)
         let isLocal = marketplaceId == synthesizer.marketplace.id
         let isFetching = !isLocal && store.isFetching(marketplaceId: marketplaceId)
         let subtitle: String? = store.description(forMarketplaceId: marketplaceId)
@@ -274,12 +317,18 @@ struct AIMetaView: View {
         )
     }
 
-    private func filter(plugins: [MetaPlugin]) -> [MetaPlugin] {
-        guard isSearchActive else { return plugins }
-        return plugins.filter { plugin in
-            plugin.title.localizedCaseInsensitiveContains(searchText)
-                || (plugin.description ?? "").localizedCaseInsensitiveContains(searchText)
-                || plugin.source.label.localizedCaseInsensitiveContains(searchText)
+    private func applyFilter(to plugins: [MetaPlugin]) -> [MetaPlugin] {
+        switch filter.activePredicate {
+        case .none:
+            return plugins
+        case .focus(let id):
+            return plugins.filter { $0.identity == id }
+        case .search(let text):
+            return plugins.filter { plugin in
+                plugin.title.localizedCaseInsensitiveContains(text)
+                    || (plugin.description ?? "").localizedCaseInsensitiveContains(text)
+                    || plugin.source.label.localizedCaseInsensitiveContains(text)
+            }
         }
     }
 

@@ -15,8 +15,8 @@ class WorktreeScanner: ObservableObject {
     @Published var errorMessage: String?
     @Published var scanProgress: Double = 0
 
-    private let settings = SettingsManager.shared
-    private let permissions = PermissionManager.shared
+    private let settings: SettingsProviding
+    private let permissions: PermissionsProviding
     private let gitRunner = GitCommandRunner.shared
     private var scanTask: Task<Void, Never>?
     private var statusTask: Task<Void, Never>?
@@ -24,6 +24,14 @@ class WorktreeScanner: ObservableObject {
     /// latest token publishes results / clears `isScanning`, which keeps
     /// the loading flag leak-safe across rapid cancel-and-restart cycles.
     private var latestScanToken: Int = 0
+
+    init(
+        settings: SettingsProviding = SettingsManager.shared,
+        permissions: PermissionsProviding = PermissionManager.shared
+    ) {
+        self.settings = settings
+        self.permissions = permissions
+    }
 
     // MARK: - Public Methods
 
@@ -159,7 +167,7 @@ class WorktreeScanner: ObservableObject {
     // executor dispatched by `Task.detached` in `scan()`. They take inputs as
     // parameters and never touch @MainActor state during the walk.
 
-    nonisolated private static func performScan(projectPaths: [String]) async -> [RepositoryGroup] {
+    nonisolated static func performScan(projectPaths: [String]) async -> [RepositoryGroup] {
         var allWorktrees: [Worktree] = []
 
         guard !projectPaths.isEmpty else {
@@ -179,10 +187,13 @@ class WorktreeScanner: ObservableObject {
             allWorktrees.append(contentsOf: worktrees)
         }
 
-        // Remove duplicates (same worktree can be discovered via parent repo and direct scan)
+        // Remove duplicates (same worktree can be discovered via parent
+        // repo and direct scan). `resolvingSymlinksInPath()` canonicalizes
+        // so `/private/var/…` vs `/var/…` style path variants for the same
+        // on-disk location collapse to one entry.
         var seen = Set<String>()
         let uniqueWorktrees = allWorktrees.filter { worktree in
-            let key = worktree.path.standardizedFileURL.path
+            let key = worktree.path.resolvingSymlinksInPath().path
             if seen.contains(key) {
                 return false
             }
@@ -194,7 +205,7 @@ class WorktreeScanner: ObservableObject {
         return groupWorktreesByRepo(uniqueWorktrees)
     }
 
-    nonisolated private static func scanDirectory(_ directory: URL) async -> [Worktree] {
+    nonisolated static func scanDirectory(_ directory: URL) async -> [Worktree] {
         var worktrees: [Worktree] = []
         let fileManager = FileManager.default
 
@@ -220,7 +231,7 @@ class WorktreeScanner: ObservableObject {
         return worktrees
     }
 
-    nonisolated private static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, worktrees: inout [Worktree]) async {
+    nonisolated static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, worktrees: inout [Worktree]) async {
         guard depth < maxDepth else { return }
 
         let fileManager = FileManager.default
@@ -237,6 +248,14 @@ class WorktreeScanner: ObservableObject {
 
             guard let isDirectory = try? item.resourceValues(forKeys: [.isDirectoryKey]).isDirectory,
                   isDirectory == true else { continue }
+
+            // Skip noisy / TCC-protected folders (Music, Movies, Pictures,
+            // Downloads, node_modules, Library, …). We never expect git
+            // worktrees inside these, and walking into them from a broader
+            // grant triggers macOS privacy prompts per folder.
+            if ScannerSkipList.shouldSkip(directoryName: item.lastPathComponent) {
+                continue
+            }
 
             // Check if this is a git repo
             let gitDir = item.appendingPathComponent(".git")
@@ -268,7 +287,7 @@ class WorktreeScanner: ObservableObject {
         }
     }
 
-    nonisolated private static func scanWorktreesDirectory(_ worktreesDir: URL, parentRepo: URL) -> [Worktree] {
+    nonisolated static func scanWorktreesDirectory(_ worktreesDir: URL, parentRepo: URL) -> [Worktree] {
         var worktrees: [Worktree] = []
         let fileManager = FileManager.default
 
@@ -312,7 +331,7 @@ class WorktreeScanner: ObservableObject {
         return worktrees
     }
 
-    nonisolated private static func parseMainWorktree(_ repoPath: URL) -> Worktree? {
+    nonisolated static func parseMainWorktree(_ repoPath: URL) -> Worktree? {
         let fileManager = FileManager.default
         let headFile = repoPath.appendingPathComponent(".git/HEAD")
 
@@ -334,7 +353,7 @@ class WorktreeScanner: ObservableObject {
         )
     }
 
-    nonisolated private static func parseLinkedWorktree(_ worktreePath: URL, gitFileContents: String) -> Worktree? {
+    nonisolated static func parseLinkedWorktree(_ worktreePath: URL, gitFileContents: String) -> Worktree? {
         let gitdirPath = gitFileContents
             .replacingOccurrences(of: "gitdir:", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -367,7 +386,7 @@ class WorktreeScanner: ObservableObject {
         )
     }
 
-    nonisolated private static func parseHEAD(_ headFile: URL) -> (branch: String, isDetached: Bool, commitHash: String?) {
+    nonisolated static func parseHEAD(_ headFile: URL) -> (branch: String, isDetached: Bool, commitHash: String?) {
         guard let contents = try? String(contentsOf: headFile, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines) else {
             return ("unknown", false, nil)
         }
@@ -381,7 +400,7 @@ class WorktreeScanner: ObservableObject {
         }
     }
 
-    nonisolated private static func groupWorktreesByRepo(_ worktrees: [Worktree]) -> [RepositoryGroup] {
+    nonisolated static func groupWorktreesByRepo(_ worktrees: [Worktree]) -> [RepositoryGroup] {
         var groups: [URL: RepositoryGroup] = [:]
 
         for worktree in worktrees {

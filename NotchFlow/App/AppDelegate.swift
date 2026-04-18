@@ -19,10 +19,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         prewarmMiniAppState()
 
         if SettingsManager.shared.onboardingComplete {
-            // Normal path — reveal the notch shortly after the window is ready
-            Task {
-                try? await Task.sleep(for: .milliseconds(500))
-                await notchManager?.expand()
+            // Yield one run-loop tick before expanding so AppKit finishes
+            // processing `applicationDidFinishLaunching` and any pending
+            // window setup inside DynamicNotchKit. Prior implementation
+            // used a hardcoded 500ms sleep, which was wall-clock-based and
+            // broke on cold boots / slow hardware; `Task { @MainActor }`
+            // is a scheduler-based yield that scales to whatever the
+            // system actually needs.
+            Task { @MainActor in
+                await self.notchManager?.expand()
             }
         } else {
             // First launch (or user asked to redo onboarding) — show the
@@ -32,23 +37,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Kick off every mini-app's expensive-to-load data in the background
-    /// immediately at launch, so clicking a tab for the first time doesn't
-    /// block on a disk walk or manifest fetch. Each scanner is a singleton
-    /// and publishes results back on the main actor when done.
+    /// Kick off every registered mini-app's prewarm hook. Each mini-app
+    /// decides what "prewarm" means for itself (touch a singleton, scan
+    /// disk, refresh marketplaces). Iterating the registry means adding a
+    /// new tab wires up prewarm automatically — no edits needed here.
     private func prewarmMiniAppState() {
-        // Touch the singletons once to force initialization. Their inits
-        // kick off their own background loading (NoteStorage loads from
-        // disk, LocalPluginSynthesizer starts its AIConfigScanner scan).
-        _ = NoteStorage.shared
-        _ = LocalPluginSynthesizer.shared
-
-        // Worktree + remote marketplaces don't auto-scan on init, so fire
-        // them explicitly. scan() / refreshAll() internally dispatch the
-        // expensive work off the main actor.
-        WorktreeScanner.shared.scan()
-        Task {
-            await MetaMarketplaceStore.shared.refreshAll()
+        for app in MiniAppRegistry.all {
+            app.prewarm()
         }
     }
 
@@ -146,24 +141,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.titlebarAppearsTransparent = true
         window.minSize = NSSize(width: 540, height: 460)
 
-        window.level = .floating
-        window.orderFrontRegardless()
-        window.makeKey()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
-            window?.level = .normal
-        }
-
+        window.delegate = self
+        // Assign the tracked property FIRST. `bringWindowForwardThenReset`
+        // calls `makeKey()`, which can fire `windowDidBecomeKey(_:)`
+        // synchronously — that callback guards on `window ==
+        // onboardingWindow`, so the property must already point at this
+        // window when the callback runs.
         onboardingWindow = window
+        bringWindowForwardThenReset(window)
     }
 
     private func finishOnboarding() {
         onboardingWindow?.close()
         onboardingWindow = nil
 
-        Task {
-            try? await Task.sleep(for: .milliseconds(250))
-            await notchManager?.expand()
+        // Same rationale as in `applicationDidFinishLaunching` — yield one
+        // run-loop tick after closing the onboarding window so the notch
+        // window has a clean frame to animate into, without the previous
+        // 250ms wall-clock sleep.
+        Task { @MainActor in
+            await self.notchManager?.expand()
         }
     }
 
@@ -216,13 +213,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // If we already have a settings window, just bring it forward
         if let window = settingsWindow, window.isVisible {
-            window.level = .floating
-            window.orderFrontRegardless()
-            window.makeKey()
-            // Reset level after a brief delay so it behaves normally once focused
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
-                window?.level = .normal
-            }
+            bringWindowForwardThenReset(window)
             return
         }
 
@@ -258,20 +249,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         toolbar.showsBaselineSeparator = false
         window.toolbar = toolbar
 
-        // Bring to front reliably
+        window.delegate = self
+        // Same ordering as the onboarding window: assign before the make-
+        // key dance so `windowDidBecomeKey(_:)` finds the reference if it
+        // fires synchronously.
+        settingsWindow = window
+        bringWindowForwardThenReset(window)
+    }
+
+    /// Bring `window` to the front by briefly raising its `level` to
+    /// `.floating`, then reset to `.normal` **once it actually becomes
+    /// key** via `NSWindowDelegate.windowDidBecomeKey(_:)`.
+    ///
+    /// Replaces the earlier `DispatchQueue.main.asyncAfter(deadline: .now()
+    /// + 0.1)` dance, which was a wall-clock gamble that broke on slow
+    /// systems. The window itself tells us when it's ready — that's the
+    /// right signal.
+    private func bringWindowForwardThenReset(_ window: NSWindow) {
         window.level = .floating
         window.orderFrontRegardless()
         window.makeKey()
-
-        // Reset level after a brief delay so it behaves normally once focused
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
-            window?.level = .normal
-        }
-
-        settingsWindow = window
     }
 
     @objc func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+}
+
+// MARK: - NSWindowDelegate
+
+extension AppDelegate: NSWindowDelegate {
+    /// When one of our floated-to-front windows (settings or onboarding)
+    /// actually becomes key, reset its level to `.normal` so it behaves
+    /// like an ordinary window thereafter. This used to be a timed
+    /// `asyncAfter(0.1)` gamble — now it's event-driven, so it keeps
+    /// working on slow hardware / cold boot / heavy app startup.
+    func windowDidBecomeKey(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow,
+              window.level == .floating,
+              window == settingsWindow || window == onboardingWindow
+        else { return }
+        window.level = .normal
+    }
+
+    /// Clean up our tracked references when the user closes a window. Keeps
+    /// the `settingsWindow` / `onboardingWindow` properties from holding a
+    /// stale reference that would trip up the "already visible" fast-path
+    /// in `showPreferences()`.
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window == settingsWindow { settingsWindow = nil }
+        if window == onboardingWindow { onboardingWindow = nil }
     }
 }

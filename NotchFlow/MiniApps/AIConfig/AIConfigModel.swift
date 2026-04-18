@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - AI Config Category (Primary Filter)
 
-enum AIConfigCategory: String, CaseIterable, Identifiable {
+enum AIConfigCategory: String, CaseIterable, Identifiable, Codable {
     case rules = "Rules"
     case skills = "Skills"
     case promptFiles = "Prompts"
@@ -367,6 +367,10 @@ struct AIConfigItem: Identifiable, Equatable, Hashable {
     let fileSize: Int64?
     let metadata: ConfigMetadata?
     let isGlobal: Bool
+    /// P2: when a file was placed by a plugin install (Claude Code
+    /// plugin, Cursor plugin, or an awesome-copilot sidecar), this
+    /// captures the identity + scope. `nil` for hand-written configs.
+    let sourcePlugin: PluginProvenance?
 
     init(
         id: UUID = UUID(),
@@ -376,7 +380,8 @@ struct AIConfigItem: Identifiable, Equatable, Hashable {
         lastModified: Date = Date(),
         fileSize: Int64? = nil,
         metadata: ConfigMetadata? = nil,
-        isGlobal: Bool = false
+        isGlobal: Bool = false,
+        sourcePlugin: PluginProvenance? = nil
     ) {
         self.id = id
         self.path = path
@@ -386,6 +391,7 @@ struct AIConfigItem: Identifiable, Equatable, Hashable {
         self.fileSize = fileSize
         self.metadata = metadata
         self.isGlobal = isGlobal
+        self.sourcePlugin = sourcePlugin
     }
 
     var category: AIConfigCategory {

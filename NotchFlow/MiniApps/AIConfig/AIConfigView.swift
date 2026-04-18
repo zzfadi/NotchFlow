@@ -2,15 +2,21 @@ import SwiftUI
 import AppKit
 
 struct AIConfigView: View {
-    @StateObject private var scanner = AIConfigScanner()
+    @EnvironmentObject var navigationState: NavigationState
+    @ObservedObject private var store = AIConfigStore.shared
     @State private var selectedItem: AIConfigItem?
     @State private var searchText: String = ""
     @State private var selectedCategoryFilter: AIConfigCategory?
     @State private var selectedProviderFilter: AIProvider?
     @State private var showPreview: Bool = false
+    @State private var showingMarketplace: Bool = false
+
+    private var isActive: Bool {
+        navigationState.activeApp == MiniAppRegistry.aiMeta.id
+    }
 
     var filteredItems: [AIConfigItem] {
-        var items = scanner.allItems
+        var items = store.snapshot.items
 
         // Filter by category (primary)
         if let categoryFilter = selectedCategoryFilter {
@@ -27,7 +33,9 @@ struct AIConfigView: View {
             items = items.filter {
                 $0.displayName.localizedCaseInsensitiveContains(searchText) ||
                 $0.projectName.localizedCaseInsensitiveContains(searchText) ||
-                $0.shortPath.localizedCaseInsensitiveContains(searchText)
+                $0.shortPath.localizedCaseInsensitiveContains(searchText) ||
+                $0.sourcePlugin?.identity.pluginName.localizedCaseInsensitiveContains(searchText) == true ||
+                $0.sourcePlugin?.identity.marketplaceId?.localizedCaseInsensitiveContains(searchText) == true
             }
         }
 
@@ -37,7 +45,7 @@ struct AIConfigView: View {
     /// Get providers available for the current category filter
     var availableProviders: [AIProvider] {
         guard let category = selectedCategoryFilter,
-              let group = scanner.categoryGroups.first(where: { $0.category == category }) else {
+              let group = store.snapshot.categoryGroups.first(where: { $0.category == category }) else {
             return []
         }
         return group.providers
@@ -51,9 +59,9 @@ struct AIConfigView: View {
             Divider()
 
             // Content
-            if scanner.isScanning {
+            if store.isScanning {
                 scanningView
-            } else if scanner.allItems.isEmpty {
+            } else if store.snapshot.items.isEmpty {
                 emptyStateView
             } else {
                 HSplitView {
@@ -67,11 +75,23 @@ struct AIConfigView: View {
                 }
             }
         }
-        .onAppear {
-            if scanner.allItems.isEmpty {
-                scanner.scan()
-            }
+        // Gate the initial scan on being the *active* tab so TCC prompts
+        // don't fire at notch-open time for every tab in the ZStack. See
+        // the matching pattern in `WorktreeView` for the why.
+        .onAppear { scanIfNeeded() }
+        .onChange(of: navigationState.activeApp) { _, _ in scanIfNeeded() }
+        .sheet(isPresented: $showingMarketplace, onDismiss: {
+            MarketplaceFilter.shared.reset()
+        }) {
+            AIMetaView(onDismiss: { showingMarketplace = false })
+                .environmentObject(navigationState)
+                .frame(minWidth: 460, minHeight: 400)
         }
+    }
+
+    private func scanIfNeeded() {
+        guard isActive else { return }
+        store.scanIfNeeded()
     }
 
     // MARK: - Header
@@ -104,14 +124,26 @@ struct AIConfigView: View {
                 .help("Toggle preview")
 
                 // Refresh button
-                Button(action: { scanner.scan() }) {
+                Button(action: { store.scan() }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 11))
                         .foregroundColor(.gray)
                 }
                 .buttonStyle(.plain)
-                .disabled(scanner.isScanning)
+                .disabled(store.isScanning)
                 .help("Refresh")
+
+                // Marketplace button — opens AIMetaView in a sheet.
+                // Keeps the AI Config view as the primary surface while
+                // letting the user browse / install marketplace plugins
+                // without losing their place.
+                Button(action: { showingMarketplace = true }) {
+                    Image(systemName: "globe")
+                        .font(.system(size: 11))
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
+                .help("Browse marketplaces")
             }
 
             // Category filters (primary)
@@ -121,14 +153,14 @@ struct AIConfigView: View {
                     FilterChip(
                         title: "All",
                         isSelected: selectedCategoryFilter == nil,
-                        count: scanner.allItems.count
+                        count: store.snapshot.items.count
                     ) {
                         selectedCategoryFilter = nil
                         selectedProviderFilter = nil
                     }
 
                     // Category filters
-                    ForEach(scanner.categoryGroups) { group in
+                    ForEach(store.snapshot.categoryGroups) { group in
                         FilterChip(
                             title: group.name,
                             icon: group.icon,
@@ -171,7 +203,7 @@ struct AIConfigView: View {
 
     private func filteredItemsForProvider(_ provider: AIProvider) -> Int {
         guard let category = selectedCategoryFilter,
-              let group = scanner.categoryGroups.first(where: { $0.category == category }) else {
+              let group = store.snapshot.categoryGroups.first(where: { $0.category == category }) else {
             return 0
         }
         return group.itemsByProvider[provider]?.count ?? 0
@@ -207,7 +239,7 @@ struct AIConfigView: View {
                 .font(.system(size: 11))
                 .foregroundColor(.gray.opacity(0.7))
 
-            Button(action: { scanner.scan() }) {
+            Button(action: { store.scan() }) {
                 Text("Scan Again")
                     .font(.system(size: 12))
                     .foregroundColor(.pink)
@@ -231,6 +263,10 @@ struct AIConfigView: View {
                             if !showPreview {
                                 showPreview = true
                             }
+                        },
+                        onFocusPlugin: { identity in
+                            MarketplaceFilter.shared.focus(identity)
+                            showingMarketplace = true
                         }
                     )
                 }
@@ -296,7 +332,7 @@ struct AIConfigView: View {
             }
 
             // Preview content
-            if let content = scanner.previewContent(for: item) {
+            if let content = AIConfigScanner.previewContent(for: item) {
                 ScrollView {
                     Text(content)
                         .font(.system(size: 11, design: .monospaced))
@@ -414,102 +450,143 @@ struct AIConfigRowView: View {
     let item: AIConfigItem
     let isSelected: Bool
     let onSelect: () -> Void
+    /// Notifies the parent that the user tapped the row's plugin badge.
+    /// Opens the marketplace sheet scoped to this plugin's identity.
+    /// `nil` when the row doesn't need badge-tap handling (e.g. preview
+    /// usage). Defaults to no-op for source compatibility.
+    var onFocusPlugin: ((PluginIdentity) -> Void)? = nil
 
     @State private var isHovering: Bool = false
 
     var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 8) {
-                // Category icon (primary)
-                Image(systemName: item.category.icon)
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: item.category.color) ?? .gray)
-                    .frame(width: 20)
+        // Row is a container (not a single Button) so Phase 2 can drop a
+        // tappable provenance badge inside without running into nested-
+        // Button issues in SwiftUI. Row selection is a tap gesture on the
+        // background; individual actions (inline ActionButtons, the
+        // context menu) retain their own targets.
+        HStack(spacing: 8) {
+            // Category icon (primary)
+            Image(systemName: item.category.icon)
+                .font(.system(size: 12))
+                .foregroundColor(Color(hex: item.category.color) ?? .gray)
+                .frame(width: 20)
 
-                // Info
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(item.displayName)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
+            // Info
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(item.displayName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
 
-                        // Global badge
-                        if item.isGlobal {
-                            Text("Global")
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(.cyan)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(Color.cyan.opacity(0.15))
-                                .cornerRadius(3)
-                        }
-
-                        // Provider badge (secondary)
-                        if item.provider != .generic {
-                            Text(item.provider.compactName)
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(.gray)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(Color.white.opacity(0.08))
-                                .cornerRadius(3)
-                        }
-
-                        if item.isDirectory {
-                            Image(systemName: "folder.fill")
-                                .font(.system(size: 8))
-                                .foregroundColor(.gray)
-                        }
+                    // Global badge
+                    if item.isGlobal {
+                        Text("Global")
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundColor(.cyan)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(Color.cyan.opacity(0.15))
+                            .cornerRadius(3)
                     }
 
-                    // Project name (or path for global configs)
-                    Text(item.projectName)
-                        .font(.system(size: 10))
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
+                    // Provider badge (secondary)
+                    if item.provider != .generic {
+                        Text(item.provider.compactName)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(3)
+                    }
+
+                    if item.isDirectory {
+                        Image(systemName: "folder.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(.gray)
+                    }
+
+                    // Provenance badge — indicates the file came from a
+                    // plugin install rather than being hand-edited.
+                    // Tap opens the marketplace sheet focused on the
+                    // originating plugin.
+                    if let provenance = item.sourcePlugin {
+                        Button {
+                            onFocusPlugin?(provenance.identity)
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "shippingbox.fill")
+                                    .font(.system(size: 7))
+                                Text(provenance.identity.pluginName)
+                                    .font(.system(size: 8, weight: .medium))
+                                    .lineLimit(1)
+                                if let v = provenance.version {
+                                    Text("v\(v)")
+                                        .font(.system(size: 7, design: .monospaced))
+                                        .opacity(0.7)
+                                }
+                            }
+                            .foregroundColor(.cyan)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color.cyan.opacity(0.15))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .help("From plugin \(provenance.identity.pluginName)")
+                    }
                 }
 
-                Spacer()
+                // Project name (or path for global configs)
+                Text(item.projectName)
+                    .font(.system(size: 10))
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
 
-                // Actions or metadata
-                if isHovering || isSelected {
-                    HStack(spacing: 4) {
-                        ActionButton(icon: "square.and.pencil", tooltip: "Open in editor") {
-                            NSWorkspace.shared.open(item.path)
-                        }
+            Spacer()
 
-                        ActionButton(icon: "folder", tooltip: "Show in Finder") {
-                            NSWorkspace.shared.selectFile(item.path.path, inFileViewerRootedAtPath: item.path.deletingLastPathComponent().path)
-                        }
-
-                        ActionButton(icon: "doc.on.doc", tooltip: "Copy path") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(item.path.path, forType: .string)
-                        }
+            // Actions or metadata
+            if isHovering || isSelected {
+                HStack(spacing: 4) {
+                    ActionButton(icon: "square.and.pencil", tooltip: "Open in editor") {
+                        NSWorkspace.shared.open(item.path)
                     }
-                } else {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(item.lastModified, style: .relative)
-                            .font(.system(size: 9))
-                            .foregroundColor(.gray)
 
-                        if let size = item.fileSizeFormatted {
-                            Text(size)
-                                .font(.system(size: 8))
-                                .foregroundColor(.gray.opacity(0.7))
-                        }
+                    ActionButton(icon: "folder", tooltip: "Show in Finder") {
+                        NSWorkspace.shared.selectFile(item.path.path, inFileViewerRootedAtPath: item.path.deletingLastPathComponent().path)
+                    }
+
+                    ActionButton(icon: "doc.on.doc", tooltip: "Copy path") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(item.path.path, forType: .string)
+                    }
+                }
+            } else {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(item.lastModified, style: .relative)
+                        .font(.system(size: 9))
+                        .foregroundColor(.gray)
+
+                    if let size = item.fileSizeFormatted {
+                        Text(size)
+                            .font(.system(size: 8))
+                            .foregroundColor(.gray.opacity(0.7))
                     }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? Color.pink.opacity(0.2) : (isHovering ? Color.white.opacity(0.05) : Color.clear))
-            )
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.pink.opacity(0.2) : (isHovering ? Color.white.opacity(0.05) : Color.clear))
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect() }
         .onHover { hovering in
             isHovering = hovering
         }

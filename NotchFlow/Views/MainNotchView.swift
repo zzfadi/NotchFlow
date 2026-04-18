@@ -11,34 +11,22 @@ struct MainNotchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Tab bar with mini-app icons
+            // Tab bar layout: pin button, then the primary/left-aligned app
+            // (first in the registry), a spacer, then the remaining apps
+            // right-aligned. The split mirrors the legacy hand-written
+            // layout (Worktree on the left, AI Meta + Fog Note on the
+            // right) without hardcoding any specific cases.
             HStack(spacing: 12) {
-                // Pin toggle button
                 PinButton()
-                
-                // Left side - Worktree button
-                TabButton(
-                    app: .worktree,
-                    isActive: navigationState.activeApp == .worktree
-                ) {
-                    navigationState.switchTo(.worktree)
+
+                if let primary = MiniAppRegistry.all.first {
+                    tabButton(for: primary)
                 }
 
                 Spacer()
 
-                // Right side - AI Meta and Fog Note buttons
-                TabButton(
-                    app: .aiMeta,
-                    isActive: navigationState.activeApp == .aiMeta
-                ) {
-                    navigationState.switchTo(.aiMeta)
-                }
-
-                TabButton(
-                    app: .fogNote,
-                    isActive: navigationState.activeApp == .fogNote
-                ) {
-                    navigationState.switchTo(.fogNote)
+                ForEach(MiniAppRegistry.all.dropFirst(), id: \.id) { app in
+                    tabButton(for: app)
                 }
             }
             .padding(.horizontal, 16)
@@ -71,23 +59,38 @@ struct MainNotchView: View {
                 case .glass:
                     RoundedRectangle(cornerRadius: 16)
                         .fill(.ultraThinMaterial)
-                        .environment(\.colorScheme, .dark)
                 case .glassTinted:
                     ZStack {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(.ultraThinMaterial)
-                            .environment(\.colorScheme, .dark)
                         RoundedRectangle(cornerRadius: 16)
                             .fill(settings.accentColor.opacity(0.15))
                     }
                 }
             }
         )
+        // Force dark colorScheme on the whole notch so every label in the
+        // content tree (AI Meta cards, FogNote, Worktree rows) inherits it.
+        // Previously `.dark` was scoped inside `.background(...)`, which
+        // only affected the material view — on a light-mode Mac that left
+        // `.primary`/`.secondary` text invisible against the translucent
+        // surface.
+        .environment(\.colorScheme, .dark)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             // Validate and clamp sizes when screen configuration changes
-            for app in MiniApp.allCases {
-                settings.validateSizeForCurrentScreen(app)
+            for app in MiniAppRegistry.all {
+                settings.validateSizeForCurrentScreen(app.id)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func tabButton(for app: any MiniApp) -> some View {
+        TabButton(
+            app: app,
+            isActive: navigationState.activeApp == app.id
+        ) {
+            navigationState.switchTo(id: app.id)
         }
     }
 }
@@ -114,7 +117,7 @@ struct PinButton: View {
 }
 
 struct TabButton: View {
-    let app: MiniApp
+    let app: any MiniApp
     let isActive: Bool
     let action: () -> Void
 
@@ -127,7 +130,7 @@ struct TabButton: View {
                     .font(.system(size: 14, weight: .medium))
 
                 if isActive {
-                    Text(app.rawValue)
+                    Text(app.title)
                         .font(.system(size: 12, weight: .medium))
                 }
             }

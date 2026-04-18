@@ -1,60 +1,386 @@
 import Foundation
-import Combine
 
+/// Stateless disk-walk service for AI configuration files.
+///
+/// Scan lifecycle (state, tokens, cancellation, publication) lives in
+/// `AIConfigStore`. This type is just the walk logic + any per-scan
+/// dependencies (filesystem, home directory, settings/permissions
+/// providers). It's deliberately not `ObservableObject` and carries no
+/// `@Published` fields — multiple instances can exist harmlessly (tests
+/// freely construct fakes).
+///
+/// Paths come in via `performScan(projectPaths:)`. The store collects
+/// them on the main actor before handing off to a detached task that
+/// calls this method. The `settings` / `permissions` deps are still held
+/// on this type because Phase 2's plugin-directory walks need them
+/// (per-project `.claude/settings.json` lookup), even though Phase 0
+/// itself doesn't read them.
 @MainActor
-class AIConfigScanner: ObservableObject {
-    @Published var categoryGroups: [AIConfigCategoryGroup] = []
-    @Published var allItems: [AIConfigItem] = []
-    @Published var isScanning: Bool = false
-    @Published var lastScanDate: Date?
-    @Published var errorMessage: String?
+final class AIConfigScanner {
+    private let settings: SettingsProviding
+    private let permissions: PermissionsProviding
+    private let home: HomeDirectoryProviding
+    private let fs: FileSystemProviding
 
-    private let settings = SettingsManager.shared
-    private let permissions = PermissionManager.shared
-    private var scanTask: Task<Void, Never>?
-    /// Monotonic id for the most recent scan. `isScanning` is only cleared
-    /// by the task that owns the latest token — prevents a cancelled scan
-    /// from clobbering `isScanning` after a newer scan has set it to true.
-    private var latestScanToken: Int = 0
+    init(
+        settings: SettingsProviding = SettingsManager.shared,
+        permissions: PermissionsProviding = PermissionManager.shared,
+        home: HomeDirectoryProviding = DefaultHomeDirectoryProvider(),
+        fs: FileSystemProviding = DefaultFileSystem()
+    ) {
+        self.settings = settings
+        self.permissions = permissions
+        self.home = home
+        self.fs = fs
+    }
 
-    // MARK: - Public Methods
+    // MARK: - Public
 
-    func scan() {
-        scanTask?.cancel()
-        latestScanToken &+= 1
-        let myToken = latestScanToken
+    /// Scan the given project paths for AI-config files, group into
+    /// category buckets, and return a `ScanResult`. Pure — no
+    /// `@Published` state is mutated. Safe to call from a detached task
+    /// (the disk walk delegates to `nonisolated static` helpers that
+    /// don't touch this instance).
+    nonisolated func performScan(projectPaths: [String]) async -> ScanResult {
+        // Capture the home URL up front so all plugin walks share it.
+        // `home` is Sendable, so this is safe across the await.
+        let homeURL = await MainActor.run { self.home.home }
 
-        // Capture scan inputs on the main actor before hopping off. The
-        // disk walk that follows runs on a background executor and must not
-        // touch @MainActor state mid-flight.
-        let grantedPaths = permissions.grantedFolders.map { $0.url.path }
-        let legacyPaths = settings.aiConfigScanPaths
-        let combinedPaths = Array(Set(grantedPaths + legacyPaths))
+        // 1. Base project walk — unchanged from P0.
+        let baseItems = await Self.performScan(projectPaths: projectPaths)
 
-        isScanning = true
-        errorMessage = nil
+        // 2. Plugin cache walks — produce provenance + additional items
+        //    whose `sourcePlugin` is stamped in place.
+        let claudeProv = await Self.scanInstalledClaudeCodePlugins(home: homeURL)
+        let cursorProv = await Self.scanInstalledCursorPlugins(home: homeURL)
+        let sidecarProv = await Self.scanSidecarProvenance(projectPaths: projectPaths)
 
-        scanTask = Task.detached(priority: .userInitiated) {
-            let items = await Self.performScan(projectPaths: combinedPaths)
+        // Merge provenance maps; later entries win on key collisions —
+        // project-scoped sidecar provenance beats user-scoped plugin
+        // directory provenance for the same file (closer to the user's
+        // intent when they manually install into a project).
+        var provenance = claudeProv
+        for (k, v) in cursorProv { provenance[k] = v }
+        for (k, v) in sidecarProv { provenance[k] = v }
 
-            await MainActor.run { [weak self] in
-                guard let self else { return }
-                // Only publish if this is still the latest scan. The token
-                // check makes the isScanning flag leak-safe: a cancelled
-                // scan can never flip isScanning back to false behind the
-                // back of a newer scan that already set it to true.
-                guard self.latestScanToken == myToken else { return }
-                self.allItems = items
-                self.categoryGroups = self.groupItemsByCategory(items)
-                self.lastScanDate = Date()
-                self.isScanning = false
+        // Stamp `sourcePlugin` onto any base item whose canonicalized
+        // path has a provenance entry. Items from the plugin walks
+        // themselves are already stamped — but they share canonical
+        // paths with possible project-walk duplicates, so dedupe again.
+        var byPath: [URL: AIConfigItem] = [:]
+        for item in baseItems {
+            let key = item.path.resolvingSymlinksInPath()
+            if let prov = provenance[key] {
+                byPath[key] = AIConfigItem(
+                    id: item.id,
+                    path: item.path,
+                    fileType: item.fileType,
+                    projectPath: item.projectPath,
+                    lastModified: item.lastModified,
+                    fileSize: item.fileSize,
+                    metadata: item.metadata,
+                    isGlobal: item.isGlobal,
+                    sourcePlugin: prov
+                )
+            } else {
+                byPath[key] = item
             }
+        }
+
+        // Also surface plugin-directory items that the project walk
+        // didn't see (because the plugin cache isn't a granted folder).
+        let pluginCacheItems = await Self.scanPluginCacheItems(
+            home: homeURL,
+            provenance: provenance
+        )
+        for item in pluginCacheItems {
+            let key = item.path.resolvingSymlinksInPath()
+            if byPath[key] == nil { byPath[key] = item }
+        }
+
+        let items = Array(byPath.values).sorted { $0.lastModified > $1.lastModified }
+        let groups = Self.groupItemsByCategory(items)
+
+        let enabled = await Self.parseEnabledPlugins(home: homeURL)
+
+        return ScanResult(
+            items: items,
+            categoryGroups: groups,
+            lastScanDate: Date(),
+            provenanceByPath: provenance,
+            enabledIdentities: enabled
+        )
+    }
+
+    // MARK: - Plugin-directory walks (P2)
+
+    /// Walk `~/.claude/plugins/*`. For each plugin subdirectory, parse
+    /// `plugin.json` (if present) to build a `PluginIdentity`, then
+    /// enumerate AI-config files inside the plugin directory and stamp
+    /// provenance entries keyed by resolved path.
+    nonisolated static func scanInstalledClaudeCodePlugins(
+        home: URL
+    ) async -> [URL: PluginProvenance] {
+        let pluginsDir = home.appendingPathComponent(".claude/plugins", isDirectory: true)
+        return scanPluginDir(
+            pluginsDir: pluginsDir,
+            manifestFilenames: ["plugin.json", ".claude-plugin/plugin.json"],
+            scope: .user
+        )
+    }
+
+    /// Walk `~/.cursor/plugins/*`. Identical to the Claude variant but
+    /// with Cursor's manifest filename (`.cursor-plugin/plugin.json`).
+    nonisolated static func scanInstalledCursorPlugins(
+        home: URL
+    ) async -> [URL: PluginProvenance] {
+        let pluginsDir = home.appendingPathComponent(".cursor/plugins", isDirectory: true)
+        return scanPluginDir(
+            pluginsDir: pluginsDir,
+            manifestFilenames: ["plugin.json", ".cursor-plugin/plugin.json"],
+            scope: .user
+        )
+    }
+
+    /// Shared walker for a plugin cache directory. Skips silently when
+    /// the directory doesn't exist (plugin system never used).
+    nonisolated static func scanPluginDir(
+        pluginsDir: URL,
+        manifestFilenames: [String],
+        scope: PluginProvenance.Scope
+    ) -> [URL: PluginProvenance] {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: pluginsDir.path) else { return [:] }
+
+        var out: [URL: PluginProvenance] = [:]
+        guard let children = try? fm.contentsOfDirectory(
+            at: pluginsDir,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return out }
+
+        for dir in children {
+            let isDir = (try? dir.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+            guard isDir else { continue }
+
+            // Locate manifest.
+            var manifest: [String: Any]?
+            for filename in manifestFilenames {
+                let path = dir.appendingPathComponent(filename)
+                if fm.fileExists(atPath: path.path),
+                   let data = try? Data(contentsOf: path),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    manifest = json
+                    break
+                }
+            }
+
+            let pluginName = (manifest?["name"] as? String) ?? dir.lastPathComponent
+            let version = manifest?["version"] as? String
+            let canonical = PluginIdentityFactory.canonicalSource(
+                fromPluginJson: manifest ?? [:],
+                fallbackName: pluginName
+            )
+            let identity = PluginIdentity(
+                canonicalSource: canonical,
+                marketplaceId: nil,
+                pluginName: pluginName
+            )
+            let provenance = PluginProvenance(
+                identity: identity,
+                version: version,
+                scope: scope,
+                isEnabled: true
+            )
+
+            // Stamp every AI-config-looking file inside the plugin dir.
+            enumerate(dir: dir) { url in
+                out[url.resolvingSymlinksInPath()] = provenance
+            }
+        }
+
+        return out
+    }
+
+    /// Shallow-recursive enumeration of `dir`, invoking `handler` for
+    /// each regular file. `ScannerSkipList` is intentionally NOT
+    /// consulted here — plugin directories are small and we want
+    /// exhaustive coverage.
+    nonisolated static func enumerate(dir: URL, handler: (URL) -> Void) {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: dir,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsPackageDescendants]
+        ) else { return }
+
+        for case let url as URL in enumerator {
+            let isRegular = (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) ?? false
+            if isRegular { handler(url) }
         }
     }
 
-    func cancelScan() {
-        scanTask?.cancel()
-        isScanning = false
+    /// Walk project folders for `.notchflow-provenance.json` sidecars.
+    /// Written by the P3 `AwesomeCopilotFileInstaller` to remember which
+    /// files it placed in a user-chosen directory (the
+    /// awesome-copilot convention is pure file-copy — there's no plugin
+    /// cache to walk, so the installer stores provenance locally).
+    nonisolated static func scanSidecarProvenance(
+        projectPaths: [String]
+    ) async -> [URL: PluginProvenance] {
+        var out: [URL: PluginProvenance] = [:]
+        let fm = FileManager.default
+
+        for path in projectPaths {
+            let root = URL(fileURLWithPath: path)
+            guard let enumerator = fm.enumerator(
+                at: root,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            ) else { continue }
+
+            while let anyObj = enumerator.nextObject() {
+                guard let url = anyObj as? URL else { continue }
+                guard url.lastPathComponent == ".notchflow-provenance.json" else { continue }
+                guard let data = try? Data(contentsOf: url),
+                      let rawJson = try? JSONSerialization.jsonObject(with: data),
+                      let json = rawJson as? [String: [String: Any]]
+                else { continue }
+
+                let folder = url.deletingLastPathComponent()
+                for (filename, entry) in json {
+                    let canonical = (entry["canonicalSource"] as? String) ?? "name:\(filename)"
+                    let pluginName = (entry["pluginName"] as? String) ?? filename
+                    let marketplaceId = entry["marketplaceId"] as? String
+                    let version = entry["version"] as? String
+                    let identity = PluginIdentity(
+                        canonicalSource: canonical,
+                        marketplaceId: marketplaceId,
+                        pluginName: pluginName
+                    )
+                    let provenance = PluginProvenance(
+                        identity: identity,
+                        version: version,
+                        scope: .sidecar,
+                        isEnabled: true
+                    )
+                    let fileURL = folder.appendingPathComponent(filename)
+                    out[fileURL.resolvingSymlinksInPath()] = provenance
+                }
+            }
+        }
+
+        return out
+    }
+
+    /// Surface AI-config items found inside the plugin cache
+    /// directories as first-class `AIConfigItem`s. The base scanner
+    /// doesn't walk `~/.claude/plugins/` (it's not a granted folder);
+    /// we do it here so the AI Config list shows every provenance-
+    /// tagged file even when the plugin lives outside project roots.
+    nonisolated static func scanPluginCacheItems(
+        home: URL,
+        provenance: [URL: PluginProvenance]
+    ) async -> [AIConfigItem] {
+        var items: [AIConfigItem] = []
+        for (resolvedPath, prov) in provenance {
+            // Only surface files under the plugin cache dirs; sidecars
+            // already live under project paths and are caught by the
+            // normal scan pass.
+            guard prov.scope != .sidecar else { continue }
+
+            // Infer a file type from the filename. Non-matching files
+            // (READMEs, license files, scripts) are skipped because
+            // the AI Config view only knows how to render known types.
+            guard let fileType = inferFileType(for: resolvedPath) else { continue }
+
+            let fm = FileManager.default
+            let attrs = try? fm.attributesOfItem(atPath: resolvedPath.path)
+            let lastModified = (attrs?[.modificationDate] as? Date) ?? Date()
+            let fileSize = attrs?[.size] as? Int64
+
+            // `projectPath` for plugin items is the plugin directory
+            // itself (the nearest subdir under `~/.claude/plugins/` or
+            // `~/.cursor/plugins/`). Resolved best-effort by walking
+            // up from the file.
+            let projectPath = pluginRoot(for: resolvedPath, home: home) ?? resolvedPath.deletingLastPathComponent()
+
+            items.append(AIConfigItem(
+                path: resolvedPath,
+                fileType: fileType,
+                projectPath: projectPath,
+                lastModified: lastModified,
+                fileSize: fileSize,
+                metadata: nil,
+                isGlobal: false,
+                sourcePlugin: prov
+            ))
+        }
+        return items
+    }
+
+    nonisolated static func inferFileType(for url: URL) -> AIConfigFileType? {
+        let name = url.lastPathComponent
+        if name == "CLAUDE.md" { return .claudeMd }
+        if name == "AGENTS.md" { return .agentsMd }
+        if name == "SKILL.md" { return .skillMd }
+        if name == ".cursorrules" { return .cursorRules }
+        if name.hasSuffix(".prompt.md") { return .promptMd }
+        if name.hasSuffix(".instructions.md") && name != "copilot-instructions.md" {
+            return .instructionsMd
+        }
+        if url.pathExtension == "mdc" { return .cursorMdcFile }
+        if name == "mcp.json" || name == ".mcp.json" { return .mcpJson }
+        return nil
+    }
+
+    nonisolated static func pluginRoot(for file: URL, home: URL) -> URL? {
+        let claudePluginsDir = home.appendingPathComponent(".claude/plugins", isDirectory: true)
+            .resolvingSymlinksInPath()
+        let cursorPluginsDir = home.appendingPathComponent(".cursor/plugins", isDirectory: true)
+            .resolvingSymlinksInPath()
+
+        let filePath = file.resolvingSymlinksInPath().path
+
+        for root in [claudePluginsDir, cursorPluginsDir] {
+            let rootPath = root.path
+            guard filePath.hasPrefix(rootPath + "/") else { continue }
+            let tail = filePath.dropFirst(rootPath.count + 1)
+            guard let firstSlash = tail.firstIndex(of: "/") else {
+                return root.appendingPathComponent(String(tail))
+            }
+            return root.appendingPathComponent(String(tail[..<firstSlash]))
+        }
+        return nil
+    }
+
+    /// Read `~/.claude/settings.json` and extract enabled plugin
+    /// identities. Best-effort: returns empty on any parse failure —
+    /// enabled state is a UI hint, not a correctness requirement.
+    nonisolated static func parseEnabledPlugins(home: URL) async -> Set<PluginIdentity> {
+        let settingsURL = home.appendingPathComponent(".claude/settings.json")
+        guard FileManager.default.fileExists(atPath: settingsURL.path),
+              let data = try? Data(contentsOf: settingsURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return [] }
+
+        var enabled: Set<PluginIdentity> = []
+        if let plugins = json["plugins"] as? [String: Any] {
+            for (name, value) in plugins {
+                let isOn: Bool = {
+                    if let b = value as? Bool { return b }
+                    if let d = value as? [String: Any], let b = d["enabled"] as? Bool { return b }
+                    return true
+                }()
+                guard isOn else { continue }
+                enabled.insert(PluginIdentity(
+                    canonicalSource: "name:\(name)",
+                    marketplaceId: nil,
+                    pluginName: name
+                ))
+            }
+        }
+        return enabled
     }
 
     // MARK: - Private Scanning Methods
@@ -65,7 +391,7 @@ class AIConfigScanner: ObservableObject {
     // `self` or any @MainActor state, so there's no risk of priority
     // inversion or UI stalls from deep directory recursion.
 
-    nonisolated private static func performScan(projectPaths: [String]) async -> [AIConfigItem] {
+    nonisolated static func performScan(projectPaths: [String]) async -> [AIConfigItem] {
         var items: [AIConfigItem] = []
 
         // 1. Scan global config locations (MCP configs, user settings)
@@ -85,10 +411,15 @@ class AIConfigScanner: ObservableObject {
             items.append(contentsOf: foundItems)
         }
 
-        // Remove duplicates
+        // Remove duplicates. `resolvingSymlinksInPath()` canonicalizes the
+        // path string so the same on-disk file seen as `/private/var/...`
+        // from one walk and `/var/...` from another collapses to a single
+        // entry. `NSOpenPanel` in particular returns resolved paths, while
+        // manually-added legacy paths may not be resolved — without this,
+        // overlapping scan roots slip past dedupe.
         var seen = Set<String>()
         items = items.filter { item in
-            let key = item.path.path
+            let key = item.path.resolvingSymlinksInPath().path
             if seen.contains(key) {
                 return false
             }
@@ -100,7 +431,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Scan global config locations (user-level configs)
-    nonisolated private static func scanGlobalConfigs() -> [AIConfigItem] {
+    nonisolated static func scanGlobalConfigs() -> [AIConfigItem] {
         var items: [AIConfigItem] = []
         let fileManager = FileManager.default
 
@@ -119,7 +450,7 @@ class AIConfigScanner: ObservableObject {
         return items
     }
 
-    nonisolated private static func scanDirectory(_ directory: URL) async -> [AIConfigItem] {
+    nonisolated static func scanDirectory(_ directory: URL) async -> [AIConfigItem] {
         var items: [AIConfigItem] = []
         let fileManager = FileManager.default
 
@@ -148,7 +479,7 @@ class AIConfigScanner: ObservableObject {
         return items
     }
 
-    nonisolated private static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, items: inout [AIConfigItem]) async {
+    nonisolated static func scanSubdirectories(_ directory: URL, depth: Int, maxDepth: Int, items: inout [AIConfigItem]) async {
         guard depth < maxDepth else { return }
 
         let fileManager = FileManager.default
@@ -196,7 +527,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Scan for glob pattern matches (*.prompt.md, *.mdc, *.instructions.md)
-    nonisolated private static func scanGlobPatterns(_ directory: URL, items: inout [AIConfigItem]) async {
+    nonisolated static func scanGlobPatterns(_ directory: URL, items: inout [AIConfigItem]) async {
         let fileManager = FileManager.default
 
         guard let contents = try? fileManager.contentsOfDirectory(
@@ -256,27 +587,11 @@ class AIConfigScanner: ObservableObject {
         }
     }
 
-    nonisolated private static func shouldSkipDirectory(_ name: String) -> Bool {
-        let skipDirs = [
-            "node_modules",
-            ".git",
-            "build",
-            "dist",
-            "DerivedData",
-            ".build",
-            "Pods",
-            "Carthage",
-            ".Trash",
-            "Library",
-            "Applications",
-            ".npm",
-            ".cargo",
-            ".rustup"
-        ]
-        return skipDirs.contains(name)
+    nonisolated static func shouldSkipDirectory(_ name: String) -> Bool {
+        ScannerSkipList.shouldSkip(directoryName: name)
     }
 
-    nonisolated private static func createConfigItem(
+    nonisolated static func createConfigItem(
         at path: URL,
         fileType: AIConfigFileType,
         projectPath: URL,
@@ -309,7 +624,7 @@ class AIConfigScanner: ObservableObject {
     }
 
     /// Extract YAML frontmatter metadata from a file (for SKILL.md, agent.yaml, etc.)
-    nonisolated private static func extractYAMLFrontmatter(from path: URL) -> ConfigMetadata? {
+    nonisolated static func extractYAMLFrontmatter(from path: URL) -> ConfigMetadata? {
         // Ensure the path points to a regular file before attempting to read
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: path.path, isDirectory: &isDirectory),
@@ -355,7 +670,7 @@ class AIConfigScanner: ObservableObject {
         return nil
     }
 
-    nonisolated private static func extractYAMLValue(from line: String, key: String) -> String? {
+    nonisolated static func extractYAMLValue(from line: String, key: String) -> String? {
         let value = line
             .replacingOccurrences(of: "\(key):", with: "")
             .trimmingCharacters(in: .whitespaces)
@@ -364,7 +679,7 @@ class AIConfigScanner: ObservableObject {
         return value.isEmpty ? nil : value
     }
 
-    private func groupItemsByCategory(_ items: [AIConfigItem]) -> [AIConfigCategoryGroup] {
+    nonisolated static func groupItemsByCategory(_ items: [AIConfigItem]) -> [AIConfigCategoryGroup] {
         var groups: [AIConfigCategory: AIConfigCategoryGroup] = [:]
 
         for item in items {
@@ -386,8 +701,12 @@ class AIConfigScanner: ObservableObject {
     }
 
     // MARK: - Preview Content
+    //
+    // Preview is a pure read operation — no scanner state involved.
+    // Exposed as static so consumers (view layer) don't need a scanner
+    // instance to show a file preview.
 
-    func previewContent(for item: AIConfigItem, maxLines: Int = 20) -> String? {
+    nonisolated static func previewContent(for item: AIConfigItem, maxLines: Int = 20) -> String? {
         if item.isDirectory {
             return previewDirectoryContent(item.path)
         }
@@ -404,7 +723,7 @@ class AIConfigScanner: ObservableObject {
         return lines.prefix(maxLines).joined(separator: "\n") + "\n..."
     }
 
-    private func previewDirectoryContent(_ path: URL) -> String? {
+    nonisolated private static func previewDirectoryContent(_ path: URL) -> String? {
         let fileManager = FileManager.default
 
         guard let contents = try? fileManager.contentsOfDirectory(at: path, includingPropertiesForKeys: nil, options: []) else {
@@ -414,4 +733,35 @@ class AIConfigScanner: ObservableObject {
         let items = contents.map { $0.lastPathComponent }.sorted()
         return "Directory contents:\n" + items.map { "  - \($0)" }.joined(separator: "\n")
     }
+}
+
+// MARK: - ScanResult
+
+/// Everything one scan pass produces. Extended in P2 with
+/// `provenanceByPath` (items attributed to a plugin, keyed by resolved
+/// path) and `enabledIdentities` (set of plugin identities the user has
+/// enabled in Claude Code's settings.json). The first two fields remain
+/// the P0 shape for view-layer consumers.
+struct ScanResult {
+    let items: [AIConfigItem]
+    let categoryGroups: [AIConfigCategoryGroup]
+    let lastScanDate: Date
+    let provenanceByPath: [URL: PluginProvenance]
+    let enabledIdentities: Set<PluginIdentity>
+
+    init(
+        items: [AIConfigItem],
+        categoryGroups: [AIConfigCategoryGroup],
+        lastScanDate: Date,
+        provenanceByPath: [URL: PluginProvenance] = [:],
+        enabledIdentities: Set<PluginIdentity> = []
+    ) {
+        self.items = items
+        self.categoryGroups = categoryGroups
+        self.lastScanDate = lastScanDate
+        self.provenanceByPath = provenanceByPath
+        self.enabledIdentities = enabledIdentities
+    }
+
+    static let empty = ScanResult(items: [], categoryGroups: [], lastScanDate: .distantPast)
 }

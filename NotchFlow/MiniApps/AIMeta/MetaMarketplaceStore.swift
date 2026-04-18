@@ -26,6 +26,12 @@ final class MetaMarketplaceStore: ObservableObject {
     @Published private(set) var localMarketplace: SyntheticMarketplace?
     @Published private(set) var isRefreshing: Bool = false
 
+    /// Flipped the first time `refreshAll()` runs. The marketplace sheet
+    /// uses this as a first-open gate — we don't want remote manifest
+    /// fetches happening on app launch or tab switch, only when the user
+    /// actually opens the sheet.
+    @Published private(set) var hasEverRefreshed: Bool = false
+
     /// Fetch errors keyed by marketplace id. Per-marketplace so concurrent
     /// refreshes don't clobber each other's state — a previous PR iteration
     /// used a single `lastFetchError: String?` which was nondeterministic
@@ -37,13 +43,32 @@ final class MetaMarketplaceStore: ObservableObject {
     /// add or per-marketplace refresh is in flight.
     @Published private(set) var fetchingMarketplaces: Set<String> = []
 
-    private let urlDefaultsKey = "metaMarketplaceURLs"
+    /// Mirrors `AIConfigStore.shared.snapshot.installedIdentities` so
+    /// card views can render "Installed" state synchronously without
+    /// reaching into another store. Updated reactively via Combine on
+    /// every scan completion.
+    @Published private(set) var installedIdentities: Set<PluginIdentity> = []
+
     private let synthesizer = LocalPluginSynthesizer.shared
+    private let configStore: AIConfigStore
+    private let fetcher: ManifestFetching
+    private let defaults: DefaultsStoring
     private var cancellables: Set<AnyCancellable> = []
 
-    private init() {
+    /// `internal` (not `private`) so tests can construct an instance with
+    /// fake dependencies — no network, no shared `UserDefaults`. Callers
+    /// in production code should use `MetaMarketplaceStore.shared`.
+    init(
+        fetcher: ManifestFetching = URLSessionManifestFetcher(),
+        defaults: DefaultsStoring = SystemDefaultsStore.shared,
+        configStore: AIConfigStore = AIConfigStore.shared
+    ) {
+        self.fetcher = fetcher
+        self.defaults = defaults
+        self.configStore = configStore
         loadSubscribedURLs()
         bindLocalSynthesizer()
+        bindInstalledIdentities()
     }
 
     // MARK: - Marketplace ordering
@@ -118,6 +143,16 @@ final class MetaMarketplaceStore: ObservableObject {
                 group.addTask { await self.refreshMarketplace(url) }
             }
         }
+
+        hasEverRefreshed = true
+    }
+
+    /// Refresh only if we've never refreshed before. Drives the "fetch on
+    /// first sheet-open" UX from Phase 1 — safe to call from `.onAppear`
+    /// without producing re-fetches on every re-render.
+    func refreshIfNeeded() async {
+        guard !hasEverRefreshed else { return }
+        await refreshAll()
     }
 
     func refreshMarketplace(_ url: URL) async {
@@ -126,7 +161,7 @@ final class MetaMarketplaceStore: ObservableObject {
         defer { fetchingMarketplaces.remove(marketplaceId) }
 
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let data = try await fetcher.fetchManifest(from: url)
             let baseURL = url.deletingLastPathComponent()
             let (_, plugins) = try MetaMarketplace.decode(
                 data,
@@ -143,6 +178,13 @@ final class MetaMarketplaceStore: ObservableObject {
 
     // MARK: - Private
 
+    private func bindInstalledIdentities() {
+        configStore.$snapshot
+            .map { $0.installedIdentities }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$installedIdentities)
+    }
+
     private func bindLocalSynthesizer() {
         localMarketplace = synthesizer.marketplace
 
@@ -156,12 +198,12 @@ final class MetaMarketplaceStore: ObservableObject {
     }
 
     private func loadSubscribedURLs() {
-        let raw = UserDefaults.standard.stringArray(forKey: urlDefaultsKey) ?? []
+        let raw = defaults.stringArray(forKey: DefaultsKeys.metaMarketplaceURLs) ?? []
         subscribedURLs = raw.compactMap(URL.init(string:))
     }
 
     private func persistURLs() {
         let strings = subscribedURLs.map { $0.absoluteString }
-        UserDefaults.standard.set(strings, forKey: urlDefaultsKey)
+        defaults.setStringArray(strings, forKey: DefaultsKeys.metaMarketplaceURLs)
     }
 }

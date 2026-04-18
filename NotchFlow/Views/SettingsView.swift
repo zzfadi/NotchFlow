@@ -61,7 +61,7 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @ObservedObject private var settings = SettingsManager.shared
-    @State private var selectedApp: MiniApp = .fogNote
+    @State private var selectedApp: String = MiniAppRegistry.defaultApp.id
 
     var body: some View {
         Form {
@@ -69,8 +69,8 @@ struct GeneralSettingsView: View {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
 
                 Picker("Default Mini-App", selection: $settings.defaultApp) {
-                    ForEach(MiniApp.allCases) { app in
-                        Text(app.rawValue).tag(app.rawValue)
+                    ForEach(MiniAppRegistry.all, id: \.id) { app in
+                        Text(app.title).tag(app.id)
                     }
                 }
             }
@@ -81,8 +81,8 @@ struct GeneralSettingsView: View {
 
             Section("Notch Size") {
                 Picker("Configure for", selection: $selectedApp) {
-                    ForEach(MiniApp.allCases) { app in
-                        Text(app.rawValue).tag(app)
+                    ForEach(MiniAppRegistry.all, id: \.id) { app in
+                        Text(app.title).tag(app.id)
                     }
                 }
                 .pickerStyle(.segmented)

@@ -161,28 +161,20 @@ class SettingsManager: ObservableObject {
         screenSafeMaxSize().height
     }
 
-    // MARK: - User Defaults Keys
-
-    private enum Keys {
-        static let launchAtLogin = "launchAtLogin"
-        static let defaultApp = "defaultApp"
-        static let worktreeScanPaths = "worktreeScanPaths"
-        static let aiConfigScanPaths = "aiConfigScanPaths"
-        static let fogNotesDirectory = "fogNotesDirectory"
-        static let accentColor = "accentColor"
-        static let appSizes = "appSizes"
-        static let isPinned = "isPinned"
-    }
-
     // MARK: - Published Properties
+    //
+    // `@AppStorage` takes a string literal, which is the one case where we
+    // can't funnel through `Defaults` helpers. The literals here must match
+    // the values declared in `DefaultsKeys` — the constants are cross-
+    // referenced in comments so a future rename catches both places.
 
-    @AppStorage("launchAtLogin") var launchAtLogin: Bool = false
-    @AppStorage("defaultApp") var defaultApp: String = MiniApp.fogNote.rawValue
-    @AppStorage("accentColor") var accentColorHex: String = "FF69B4" // Pink
-    @AppStorage("isPinned") var isPinned: Bool = false
-    @AppStorage("uiScale") var uiScaleRawValue: String = UIScale.default.rawValue
-    @AppStorage("notchTheme") var notchThemeRawValue: String = NotchTheme.solid.rawValue
-    @AppStorage("onboardingComplete") var onboardingComplete: Bool = false
+    @AppStorage(DefaultsKeys.launchAtLogin) var launchAtLogin: Bool = false
+    @AppStorage(DefaultsKeys.defaultApp) var defaultApp: String = MiniAppRegistry.defaultApp.id
+    @AppStorage(DefaultsKeys.accentColor) var accentColorHex: String = "FF69B4" // Pink
+    @AppStorage(DefaultsKeys.isPinned) var isPinned: Bool = false
+    @AppStorage(DefaultsKeys.uiScale) var uiScaleRawValue: String = UIScale.default.rawValue
+    @AppStorage(DefaultsKeys.notchTheme) var notchThemeRawValue: String = NotchTheme.solid.rawValue
+    @AppStorage(DefaultsKeys.onboardingComplete) var onboardingComplete: Bool = false
 
     @Published var worktreeScanPaths: [String] = []
     @Published var aiConfigScanPaths: [String] = []
@@ -191,9 +183,11 @@ class SettingsManager: ObservableObject {
 
     // MARK: - Computed Properties
 
-    var defaultMiniApp: MiniApp {
-        get { MiniApp(rawValue: defaultApp) ?? .fogNote }
-        set { defaultApp = newValue.rawValue }
+    /// Resolved default mini-app. Falls back to the registry's declared
+    /// default if the persisted ID is unknown (e.g. a removed tab).
+    var defaultMiniApp: any MiniApp {
+        get { MiniAppRegistry.app(forId: defaultApp) ?? MiniAppRegistry.defaultApp }
+        set { defaultApp = newValue.id }
     }
 
     var accentColor: Color {
@@ -211,9 +205,13 @@ class SettingsManager: ObservableObject {
     }
 
     // MARK: - Per-App Size Methods
+    //
+    // Sizes are keyed on the mini-app's string ID. The ID values match the
+    // previous enum's rawValues so persisted `appSizes` dictionaries from
+    // earlier builds keep working.
 
-    func sizeForApp(_ app: MiniApp) -> CGSize {
-        if let sizeDict = appSizes[app.rawValue],
+    func sizeForApp(_ id: String) -> CGSize {
+        if let sizeDict = appSizes[id],
            let width = sizeDict["width"],
            let height = sizeDict["height"] {
             return CGSize(width: width, height: height)
@@ -221,17 +219,29 @@ class SettingsManager: ObservableObject {
         return NotchSizePreset.default.size
     }
 
-    func setSize(_ size: CGSize, for app: MiniApp) {
+    func sizeForApp(_ app: any MiniApp) -> CGSize {
+        sizeForApp(app.id)
+    }
+
+    func setSize(_ size: CGSize, for id: String) {
         let clamped = Self.clampedSize(size)
-        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
+        appSizes[id] = ["width": clamped.width, "height": clamped.height]
         saveSettings()
+    }
+
+    func setSize(_ size: CGSize, for app: any MiniApp) {
+        setSize(size, for: app.id)
     }
 
     /// Updates size in memory for live UI updates during drag, without persisting to disk.
     /// Call `setSize(_:for:)` when the drag ends to persist.
-    func updateSizeWithoutSaving(_ size: CGSize, for app: MiniApp) {
+    func updateSizeWithoutSaving(_ size: CGSize, for id: String) {
         let clamped = Self.clampedSize(size)
-        appSizes[app.rawValue] = ["width": clamped.width, "height": clamped.height]
+        appSizes[id] = ["width": clamped.width, "height": clamped.height]
+    }
+
+    func updateSizeWithoutSaving(_ size: CGSize, for app: any MiniApp) {
+        updateSizeWithoutSaving(size, for: app.id)
     }
     
     /// Clamps a size to the current screen's safe bounds
@@ -244,25 +254,25 @@ class SettingsManager: ObservableObject {
     }
     
     /// Validates and clamps the current size for an app (useful after screen changes)
-    func validateSizeForCurrentScreen(_ app: MiniApp) {
-        let currentSize = sizeForApp(app)
+    func validateSizeForCurrentScreen(_ id: String) {
+        let currentSize = sizeForApp(id)
         let clamped = Self.clampedSize(currentSize)
         if currentSize != clamped {
-            log.info("Clamping \(app.rawValue, privacy: .public) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
-            setSize(clamped, for: app)
+            log.info("Clamping \(id, privacy: .public) from \(Int(currentSize.width))x\(Int(currentSize.height)) to \(Int(clamped.width))x\(Int(clamped.height))")
+            setSize(clamped, for: id)
         }
     }
 
-    func presetForApp(_ app: MiniApp) -> NotchSizePreset {
-        return NotchSizePreset.preset(for: sizeForApp(app))
+    func presetForApp(_ id: String) -> NotchSizePreset {
+        return NotchSizePreset.preset(for: sizeForApp(id))
     }
 
-    func applyPreset(_ preset: NotchSizePreset, to app: MiniApp) {
+    func applyPreset(_ preset: NotchSizePreset, to id: String) {
         if preset != .custom {
             // Defer the state change to the next run loop tick to avoid publishing during view updates
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                self.setSize(preset.size, for: app)
+                self.setSize(preset.size, for: id)
             }
         }
     }
@@ -281,31 +291,25 @@ class SettingsManager: ObservableObject {
     // MARK: - Methods
 
     func loadSettings() {
-        let defaults = UserDefaults.standard
-
-        // Load worktree scan paths
-        if let paths = defaults.stringArray(forKey: Keys.worktreeScanPaths) {
+        if let paths = Defaults.stringArray(DefaultsKeys.worktreeScanPaths) {
             worktreeScanPaths = paths
         } else {
             worktreeScanPaths = defaultWorktreePaths()
         }
 
-        // Load AI config scan paths
-        if let paths = defaults.stringArray(forKey: Keys.aiConfigScanPaths) {
+        if let paths = Defaults.stringArray(DefaultsKeys.aiConfigScanPaths) {
             aiConfigScanPaths = paths
         } else {
             aiConfigScanPaths = defaultAIConfigPaths()
         }
 
-        // Load fog notes directory
-        if let dir = defaults.string(forKey: Keys.fogNotesDirectory), !dir.isEmpty {
+        if let dir = Defaults.string(DefaultsKeys.fogNotesDirectory), !dir.isEmpty {
             fogNotesDirectory = dir
         } else {
             fogNotesDirectory = defaultFogNotesDirectory()
         }
 
-        // Load per-app sizes
-        if let sizesData = defaults.dictionary(forKey: Keys.appSizes) as? [String: [String: CGFloat]] {
+        if let sizesData = Defaults.dictionary(DefaultsKeys.appSizes) as? [String: [String: CGFloat]] {
             appSizes = sizesData
         }
 
@@ -316,12 +320,12 @@ class SettingsManager: ObservableObject {
     /// rename. Idempotent — a no-op once the rename has run once.
     private func migrateAIConfigToAIMeta() {
         let legacyKey = "AI Config"
-        let newKey = MiniApp.aiMeta.rawValue
+        let newKey = MiniAppRegistry.aiMeta.id
 
         if let legacySize = appSizes[legacyKey], appSizes[newKey] == nil {
             appSizes[newKey] = legacySize
             appSizes.removeValue(forKey: legacyKey)
-            UserDefaults.standard.set(appSizes, forKey: Keys.appSizes)
+            Defaults.setDictionary(DefaultsKeys.appSizes, appSizes)
         }
 
         if defaultApp == legacyKey {
@@ -330,11 +334,10 @@ class SettingsManager: ObservableObject {
     }
 
     func saveSettings() {
-        let defaults = UserDefaults.standard
-        defaults.set(worktreeScanPaths, forKey: Keys.worktreeScanPaths)
-        defaults.set(aiConfigScanPaths, forKey: Keys.aiConfigScanPaths)
-        defaults.set(fogNotesDirectory, forKey: Keys.fogNotesDirectory)
-        defaults.set(appSizes, forKey: Keys.appSizes)
+        Defaults.setStringArray(DefaultsKeys.worktreeScanPaths, worktreeScanPaths)
+        Defaults.setStringArray(DefaultsKeys.aiConfigScanPaths, aiConfigScanPaths)
+        Defaults.setString(DefaultsKeys.fogNotesDirectory, fogNotesDirectory)
+        Defaults.setDictionary(DefaultsKeys.appSizes, appSizes)
     }
 
     func resetToDefaults() {
@@ -342,7 +345,7 @@ class SettingsManager: ObservableObject {
         aiConfigScanPaths = defaultAIConfigPaths()
         fogNotesDirectory = defaultFogNotesDirectory()
         launchAtLogin = false
-        defaultApp = MiniApp.fogNote.rawValue
+        defaultApp = MiniAppRegistry.defaultApp.id
         accentColorHex = "FF69B4"
         appSizes = [:]
         saveSettings()

@@ -25,9 +25,9 @@ struct GeneralSettingsSection: View {
                             Text("Default Mini-App")
                             Spacer()
                             Picker("", selection: $settings.defaultApp) {
-                                ForEach(MiniApp.allCases) { app in
-                                    Label(app.rawValue, systemImage: app.icon)
-                                        .tag(app.rawValue)
+                                ForEach(MiniAppRegistry.all, id: \.id) { app in
+                                    Label(app.title, systemImage: app.icon)
+                                        .tag(app.id)
                                 }
                             }
                             .labelsHidden()

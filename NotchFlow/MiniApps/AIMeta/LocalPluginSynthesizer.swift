@@ -44,40 +44,37 @@ final class LocalPluginSynthesizer: ObservableObject {
     @Published private(set) var isScanning: Bool = false
     @Published private(set) var lastScanDate: Date?
 
-    private let scanner = AIConfigScanner()
+    private let store: AIConfigStore
     private var cancellables: Set<AnyCancellable> = []
 
-    private init() {
-        bindScanner()
-        scanner.scan()
+    private init(store: AIConfigStore = AIConfigStore.shared) {
+        self.store = store
+        bindStore()
     }
 
     // MARK: - Public API
 
-    /// Trigger a fresh on-disk scan. The scanner runs async and re-publishes
-    /// `allItems` when done; this synthesizer picks those up through the
-    /// Combine bindings set up in `bindScanner()`.
+    /// Trigger a fresh on-disk scan through the shared store. No scan
+    /// fires at init — the store decides when to scan (first visit to
+    /// AI Config tab). This just forwards when the user taps refresh.
     func refresh() {
-        scanner.scan()
+        store.scan()
     }
 
     // MARK: - Private
 
-    private func bindScanner() {
-        scanner.$allItems
+    private func bindStore() {
+        store.$snapshot
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] items in
-                self?.synthesize(from: items)
+            .sink { [weak self] snapshot in
+                self?.synthesize(from: snapshot.items)
+                self?.lastScanDate = snapshot.lastScanDate
             }
             .store(in: &cancellables)
 
-        scanner.$isScanning
+        store.$isScanning
             .receive(on: DispatchQueue.main)
             .assign(to: &$isScanning)
-
-        scanner.$lastScanDate
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$lastScanDate)
     }
 
     private func synthesize(from items: [AIConfigItem]) {
@@ -101,6 +98,7 @@ final class LocalPluginSynthesizer: ObservableObject {
                     keywords: [],
                     source: .local(projectPath),
                     components: summary,
+                    files: [],
                     marketplaceId: marketplace.id,
                     rawSource: projectPath.path,
                     isInstalled: true,
